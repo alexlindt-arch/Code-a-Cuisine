@@ -1,0 +1,170 @@
+@use '../../scss/components/variablen' as var;
+@use '../../scss/abstract/mixings' as mixin;
+
+p {
+  font-family: var.$font-family;
+  font-size: var.$font-size-subheadline;
+  margin: 15px 0;
+  width: 100%;
+}
+
+h1 {
+  width: 100%;
+  text-align: start;
+  font-family: var.$font-family;
+  font-size: var.$font-size-headline;
+  font-weight: var.$font-weight-large;
+  margin: 0;
+}
+
+section {
+  height: calc(100svh - 132px);
+  background-color: var.$primary-bg;
+  color: var.$primary-text-color;
+  padding: var.$pd-medium;
+}
+
+.content-limited {
+  @include mixin.flex-between();
+  @include mixin.max-width(var.$max-width);
+  width: 100%;
+}
+
+.content-left {
+  position: relative;
+  @include mixin.flex-start();
+  width: 45%;
+  min-height: 100%;
+  height: calc(100vh - 150px);
+  padding-left: 50px;
+}
+
+.content-left>p {
+  text-align: left;
+  width: 100%;
+  padding-top: 100px;
+}
+
+.content-right {
+  @include mixin.flex-start();
+  position: relative;
+  width: 40%;
+  min-height: 100%;
+  height: calc(905px - 150px);
+  padding-right: 50px;
+}
+
+.button-content {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 55px;
+}
+
+.bottom-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  text-align: start;
+  margin-top: calc(40svh - 132px);
+  padding-bottom: 0;
+}
+
+
+app-images-component:nth-child(1) {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 7%;
+  right: 2%;
+  transform: translate(0%, -50%);
+  max-width: 460px;
+  max-height: 460px;
+}
+
+app-images-component:nth-child(2) {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 45%;
+  right: 4%;
+  transform: translate(0%, -50%);
+  max-width: 460px;
+  max-height: 460px;
+}
+
+app-images-component:nth-child(3) {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 85%;
+  right: 3%;
+  transform: translate(0%, -50%);
+  max-width: 460px;
+  max-height: 460px;
+}
+
+app-images-component:nth-child(4) {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  width: 100%;
+  height: auto;
+  top: 130%;
+  right: 4%;
+  transform: translate(0%, -50%);
+  max-width: 460px;
+  max-height: 460px;
+}
+
+app-images-component:nth-child(5) {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 175%;
+  right: 1%;
+  transform: translate(0%, -50%);
+  max-width: 460px;
+  max-height: 460px;
+}
+
+app-images-component:has(.arrow-icon) {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 0px;
+  margin-left: 10px;
+  text-align: center;
+}
+
+a.router-link:hover {
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 20px;
+
+  & app-images-component:has(.arrow-icon) {
+    margin-left: 15px;
+  }
+}
+
+@include mixin.respond-to('xxl') {
+  app-images-component:nth-child(4) {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  app-images-component:nth-child(5) {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .bottom-section {
+    margin-top: calc(45svh - 132px);
+  }
+}
+
+

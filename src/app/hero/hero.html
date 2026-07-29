@@ -1,0 +1,25 @@
+<section class="home">
+  <div class="content-limited">
+  <div class="content-left">
+    <p>AI-Powered recipe generator</p>
+    <h1>Code à Cuisine</h1>
+    <div class="button-content">
+      <app-button [routerLink]="recipeRouterLink"></app-button>
+    </div>
+    <div class="bottom-section">
+      <p>Hungry for inspiration?</p>
+        <a class="router-link">Go to cookbook<app-images-component [class]="arrowClass" [src]="heroImageArrow" label="Arrow Icon"></app-images-component></a>
+
+
+    </div>
+  </div>
+  <div class="content-right">
+    <app-images-component [class]="heroImageClass" [src]="heroImageThree" label="Hero Image 3"></app-images-component>
+    <app-images-component [class]="heroImageClass" [src]="heroImageTwo" label="Hero Image 2"></app-images-component>
+    <app-images-component [class]="heroImageClass" [src]="heroImageOne" label="Hero Image 1"></app-images-component>
+    <app-images-component [class]="heroImageClass" [src]="heroImageFour" label="Hero Image 4"></app-images-component>
+    <app-images-component [class]="heroImageClass" [src]="heroImageFive" label="Hero Image 5"></app-images-component>
+  </div>
+  </div>
+
+</section>

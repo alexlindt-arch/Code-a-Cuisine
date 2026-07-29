@@ -1,0 +1,22 @@
+
+@use '../themes/theme-dark' as dark;
+@use '../themes/theme-lighte' as light;
+
+@mixin apply-theme($theme-name) {
+  @if $theme-name == 'dark' {
+    body {
+      background-color: dark.$background-color;
+      color: dark.$text-color;
+      a { color: dark.$primary-color; }
+    }
+  } @else if $theme-name == 'light' {
+    body {
+      background-color: light.$background-color;
+      color: light.$text-color;
+      a { color: light.$primary-color; }
+    }
+  }
+}
+
+.theme-light { @include apply-theme('light'); }
+.theme-dark { @include apply-theme('dark'); }

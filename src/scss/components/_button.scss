@@ -1,0 +1,31 @@
+@use '_variablen.scss' as var;
+
+.btn {
+  padding: var.$pd-medium var.$pd-large;
+  font-family: var.$font-family;
+  font-size: var.$font-size-medium;
+  font-weight: var.$font-weight-medium;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border: unset;
+
+  &.--primary {
+    background-color: var.$btn-bg;
+    color: var.$btn-text-color;
+    font-family: var.$font-family;
+    font-size: var.$font-size-lg;
+
+    &:hover {
+      background-color: var.$btn-bg;
+    }
+  }
+
+  &.--secondary {
+    background-color: var.$secondary-bg;
+    color: var.$secondary-text-color;
+
+    &:hover {
+      background-color: var.$secondary-bg;
+    }
+  }
+}
