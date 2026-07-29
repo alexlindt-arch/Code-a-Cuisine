@@ -41,7 +41,7 @@ $breakpoints: (
   'small':  ( min-width:  767px ),
   'medium': ( min-width:  992px ),
   'large':  ( min-width: 1200px ),
-  'xxl':  ( min-width: 1900px ),
+  'xxl':  ( min-width: 2024px ),
 ) !default;
 
 @mixin respond-to($breakpoint) {

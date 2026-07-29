@@ -6,7 +6,7 @@ export const routes: Routes = [
   { path: '',
     component: Hero,
     data: { headerStyle: 'dark' },
-    title: 'Welcome to Code-a-Cuisine'
+    title: 'Code-a-Cuisine'
   },
   { path: 'generate-recipe',
     component: GenerateRecipe,
