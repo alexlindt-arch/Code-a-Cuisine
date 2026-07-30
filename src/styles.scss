@@ -1,8 +1,39 @@
 /* You can add global styles to this file, and also import other style files */
-@use './scss/base/base' as var  ;
+@use './scss/base/base' as base;
+@use './scss/abstract/mixings' as mixin;
+@use './scss/components/variablen' as var;
 
 body {
   min-width: 100%;
   margin: 0;
   overflow: hidden;
+}
+
+p {
+  font-family: var.$font-family;
+  font-size: var.$font-size-subheadline-md;
+  margin: 15px 0;
+  width: 100%;
+}
+
+h1 {
+  width: 100%;
+  text-align: start;
+  font-family: var.$font-family;
+  font-size: var.$font-size-headline;
+  font-weight: var.$font-weight-large;
+  margin: 0;
+}
+
+section {
+  height: calc(100svh - 132px);
+  background-color: var.$primary-bg;
+  color: var.$primary-text-color;
+  padding: var.$pd-medium;
+}
+
+.content-limited {
+  @include mixin.flex-between();
+  @include mixin.max-width(var.$max-width);
+  width: 100%;
 }

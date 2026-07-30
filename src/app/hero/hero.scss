@@ -1,42 +1,13 @@
 @use '../../scss/components/variablen' as var;
 @use '../../scss/abstract/mixings' as mixin;
 
-p {
-  font-family: var.$font-family;
-  font-size: var.$font-size-subheadline;
-  margin: 15px 0;
-  width: 100%;
-}
-
-h1 {
-  width: 100%;
-  text-align: start;
-  font-family: var.$font-family;
-  font-size: var.$font-size-headline;
-  font-weight: var.$font-weight-large;
-  margin: 0;
-}
-
-section {
-  height: calc(100svh - 132px);
-  background-color: var.$primary-bg;
-  color: var.$primary-text-color;
-  padding: var.$pd-medium;
-}
-
-.content-limited {
-  @include mixin.flex-between();
-  @include mixin.max-width(var.$max-width);
-  width: 100%;
-}
-
 .content-left {
   position: relative;
   @include mixin.flex-start();
-  width: 45%;
+  width: 60%;
   min-height: 100%;
   height: calc(100vh - 150px);
-  padding-left: 50px;
+  padding-left: 25px;
 }
 
 .content-left>p {

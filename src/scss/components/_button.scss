@@ -1,5 +1,8 @@
 @use '_variablen.scss' as var;
 
+
+
+
 .btn {
   padding: var.$pd-medium var.$pd-large;
   font-family: var.$font-family;
@@ -28,4 +31,46 @@
       background-color: var.$secondary-bg;
     }
   }
+
+  &.--generate-btn {
+    background-color: var.$primary-bg;
+    color: var.$primary-text-color;
+    font-family: var.$font-family;
+    font-size: var.$font-size-lg;
+    padding: var.$pd-medium var.$pd-large;
+    border-radius: var.$border-radius;
+    width: 200px;
+
+    &:hover {
+      background-color: var.$primary-bg;
+    }
+  }
+}
+
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  app-images-component {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+  & app-images-component img {
+    width: 36px;
+    height: 36px;
+  }
+
+  &:hover {
+    background-color: var.$primary-text-color;
+    border-radius: var.$border-radius;
+  }
+
+
 }

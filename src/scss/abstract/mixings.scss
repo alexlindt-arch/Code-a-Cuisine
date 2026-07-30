@@ -31,6 +31,12 @@
     align-items: center;
 }
 
+@mixin flex-around(){
+    display: flex;
+    flex-direction: Row;
+    justify-content: space-around;
+    align-items: center;
+}
 @mixin max-width($max-width){
     max-width: $max-width;
     margin: 0 auto;

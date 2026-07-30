@@ -1,1 +1,130 @@
-<p>generate-recipe works!</p>
+<section class="generate-recipe">
+  <div class="content-limited">
+    <h1>Generate recipe</h1>
+    <p>Got random stuff in your kitchen? Pop it in—we’ve got the perfect recipe waiting.</p>
+    <div class="card-content">
+      <div class="card">
+        <form class="form" autocomplete="off" (submit)="onSubmit($event)">
+          <div class="form-group">
+            <div class="label-content">
+              <label for="ingredients">Ingredients</label>
+            </div>
+            <div class="ingredient-field">
+              <input class="form-control-input" type="text" id="ingredients" name="ingredients" autocomplete="off" autocorrect="off" spellcheck="false"
+                [value]="ingredientsSignal().name" (input)="setIngredientName($event)" (focus)="onIngredientFieldFocus()"
+                (blur)="onIngredientFieldBlur()">
+              @if (isIngredientSuggestionsOpen() && ingredientSuggestions().length > 0) {
+              <ul class="ingredient-suggestions" role="listbox" aria-label="Ingredient suggestions">
+                @for (suggestion of ingredientSuggestions(); track suggestion) {
+                <li>
+                  <button type="button" (mousedown)="selectIngredientSuggestion(suggestion)">{{suggestion}}</button>
+                </li>
+                }
+              </ul>
+              }
+            </div>
+          </div>
+          <div class="form-group-selection">
+            <div class="label-content">
+              <label for="quantity">Serving size</label>
+            </div>
+            <div class="selection-content">
+              <div class="number-stepper">
+                <button class="stepper-btn" type="button" aria-label="Reduce quantity" (click)="decrementIngredientQuantity()">-</button>
+                <input class="form-control-input" id="quantity" name="quantity" type="number" min="1" step="1"
+                  [value]="ingredientsSignal().quantity || ''" (input)="setIngredientQuantity($event)" placeholder="100">
+                <button class="stepper-btn" type="button" aria-label="Increase quantity" (click)="incrementIngredientQuantity()">+</button>
+              </div>
+              <div class="unit-selection custom-select" [class.open]="isCreateUnitMenuOpen()">
+                <button class="form-control-input unit-trigger" type="button" (click)="toggleCreateUnitMenu()">
+                  {{ingredientsSignal().unit}}
+                </button>
+                <app-images-component [class]="'arrow'" [src]="arrowDropDownIcon"></app-images-component>
+                @if (isCreateUnitMenuOpen()) {
+                <ul class="unit-options" role="listbox" aria-label="Unit selection">
+                  @for (unit of unitOptions; track unit) {
+                  <li>
+                    <button type="button" [class.selected]="ingredientsSignal().unit === unit"
+                      (click)="selectCreateUnit(unit)">{{unit}}</button>
+                  </li>
+                  }
+                </ul>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="icon-button" type="submit">
+              <app-images-component [class]="class" [src]="addIcon"></app-images-component>
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="card --ingredients ">
+        <h2>List of your Ingredients</h2>
+        <ul class="ingredients-list">
+          @for (ingredient of ingredients(); track $index) {
+          <li class="ingredient-item">
+            @if (editingIndex() === $index) {
+            <div class="ingredient-edit-row">
+
+              <div class="selection-content ingredient-edit-controls">
+                <div class="number-stepper number-stepper-edit">
+                  <button class="stepper-btn" type="button" aria-label="Reduce edit quantity" (click)="decrementEditingIngredientQuantity()">-</button>
+                  <input class="form-control-input" id="edit-quantity-{{$index}}" name="edit-quantity-{{$index}}"
+                    type="number" min="1" step="1" [value]="editingIngredient().quantity || ''"
+                    (input)="setEditingIngredientQuantity($event)">
+                  <button class="stepper-btn" type="button" aria-label="Increase edit quantity" (click)="incrementEditingIngredientQuantity()">+</button>
+                </div>
+                <div class="unit-selection-edit custom-select" [class.open]="isEditUnitMenuOpen()">
+                  <button class="form-control-input unit-trigger" type="button" (click)="toggleEditUnitMenu()">
+                    {{editingIngredient().unit}}
+                  </button>
+                  <app-images-component [class]="'arrow'" [src]="arrowDropDownIcon"></app-images-component>
+                  @if (isEditUnitMenuOpen()) {
+                  <ul class="unit-options" role="listbox" aria-label="Edit unit selection">
+                    @for (unit of unitOptions; track unit) {
+                    <li>
+                      <button type="button" [class.selected]="editingIngredient().unit === unit"
+                        (click)="selectEditUnit(unit)">{{unit}}</button>
+                    </li>
+                    }
+                  </ul>
+                  }
+                </div>
+                <span class="ingredient-name">{{ingredient.name}}</span>
+              </div>
+              <span class="button-content">
+                <button class="icon-button" type="button" (click)="saveIngredientEdit($index)">
+                  <app-images-component [class]="class" [src]="checkIcon"></app-images-component>
+                </button>
+                <button class="icon-button" type="button" (click)="cancelEdit()">
+                  <app-images-component [class]="class" [src]="deleteIcon"></app-images-component>
+                </button>
+              </span>
+            </div>
+            } @else {
+            <div class="ingredient-display-row">
+              <div class="ingredient-display-content">
+                <span class="ingredient-quantity">{{ingredient.quantity}} <span>{{formatUnit(ingredient.unit)}}</span></span>
+                <span class="ingredient-name">{{ingredient.name}}</span>
+              </div>
+              <span class="button-content">
+                <button class="icon-button" type="button" (click)="editIngredient($index)"><app-images-component
+                    [class]="class" [src]="editIcon"></app-images-component></button>
+                <button class="icon-button" type="button" (click)="deleteIngredient($index)"><app-images-component
+                    [class]="class" [src]="deleteIcon"></app-images-component></button></span>
+            </div>
+            }
+          </li>
+          }
+        </ul>
+      </div>
+    </div>
+    <div class="recipe-button-content">
+      @if (hasIngredients()) {
+      <button class="btn --generate-btn" (click)="generateRecipe()">Next Step</button>
+      }
+    </div>
+  </div>
+</section>
