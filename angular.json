@@ -23,6 +23,8 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "baseHref": "/angular-projects/Code-a-Cuisine/",
+            "deployUrl": "/angular-projects/Code-a-Cuisine/",
             "assets": [
               "src/assets",
               {
@@ -44,8 +46,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
                 }
               ],
               "outputHashing": "all"
