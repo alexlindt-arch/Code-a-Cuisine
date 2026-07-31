@@ -1,18 +1,6 @@
 @use '../abstract/mixings' as flex;
 @use '../components/variablen' as var;
 
-body {
-  @include flex.flex-center();
-  flex-direction: column;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-app-root {
-  width: 100%;
-  margin: 0;
-}
-
 .router-link {
   text-decoration: none;
   color: var.$primary-text-color;

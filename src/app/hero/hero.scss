@@ -21,8 +21,10 @@
   position: relative;
   width: 40%;
   min-height: 100%;
-  height: calc(905px - 150px);
+  height: calc(100vh);
   padding-right: 50px;
+  margin-top: -118px;
+  overflow: hidden;
 }
 
 .button-content {
@@ -39,66 +41,53 @@
   align-items: center;
   width: 100%;
   text-align: start;
-  margin-top: calc(40svh - 132px);
+  margin-top: calc(40vh - 132px);
   padding-bottom: 0;
 }
 
 
 app-images-component:nth-child(1) {
-  position: absolute;
   width: 100%;
   height: auto;
-  top: 7%;
-  right: 2%;
-  transform: translate(0%, -50%);
+  margin-top: -7%;
   max-width: 460px;
   max-height: 460px;
 }
 
 app-images-component:nth-child(2) {
-  position: absolute;
   width: 100%;
   height: auto;
-  top: 45%;
-  right: 4%;
-  transform: translate(0%, -50%);
+  margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
 }
 
 app-images-component:nth-child(3) {
-  position: absolute;
   width: 100%;
   height: auto;
-  top: 85%;
-  right: 3%;
-  transform: translate(0%, -50%);
+  margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
 }
 
 app-images-component:nth-child(4) {
-  position: absolute;
+  display: none;
   opacity: 0;
   visibility: hidden;
   width: 100%;
   height: auto;
-  top: 130%;
-  right: 4%;
-  transform: translate(0%, -50%);
+  margin-top: -20%;
   max-width: 460px;
   max-height: 460px;
 }
 
 app-images-component:nth-child(5) {
+  display: none;
   opacity: 0;
   visibility: hidden;
-  position: absolute;
   width: 100%;
   height: auto;
-  top: 175%;
-  right: 1%;
-  transform: translate(0%, -50%);
+  margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
 }
@@ -108,27 +97,27 @@ app-images-component:has(.arrow-icon) {
   display: inline-block;
   width: 30px;
   height: 0px;
-  margin-left: 10px;
+  margin-left: 15px;
   text-align: center;
 }
 
 a.router-link:hover {
-  text-decoration: underline;
   cursor: pointer;
-  margin-left: 20px;
 
   & app-images-component:has(.arrow-icon) {
-    margin-left: 15px;
+    margin-left: 25px;
   }
 }
 
-@include mixin.respond-to('xxl') {
+@include mixin.respond-to('medium') {
   app-images-component:nth-child(4) {
+    display: block;
     opacity: 1;
     visibility: visible;
   }
 
   app-images-component:nth-child(5) {
+    display: block;
     opacity: 1;
     visibility: visible;
   }

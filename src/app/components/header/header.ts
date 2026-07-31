@@ -1,17 +1,18 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, startWith } from 'rxjs';
 @Component({
   selector: 'app-header',
-  imports: [],
+  imports: [RouterLink],
+  providers: [],
   templateUrl: './header.html',
   styleUrls: ['./header.scss'],
 })
 /** * The Header class represents the header component of the application.
  * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
  * */
-
 export class Header {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -53,7 +54,6 @@ export class Header {
     while (currentRoute.firstChild) {
       currentRoute = currentRoute.firstChild;
     }
-
     return currentRoute;
   }
 }

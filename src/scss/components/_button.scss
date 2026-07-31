@@ -1,8 +1,5 @@
 @use '_variablen.scss' as var;
 
-
-
-
 .btn {
   padding: var.$pd-medium var.$pd-large;
   font-family: var.$font-family;
@@ -47,30 +44,20 @@
   }
 }
 
-
 .icon-button {
   background: none;
   border: none;
+  padding: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  app-images-component {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-  }
-  & app-images-component img {
-    width: 36px;
-    height: 36px;
-  }
+  width: 36px;
+  height: 30px;
+  padding: 0;
 
   &:hover {
     background-color: var.$primary-text-color;
     border-radius: var.$border-radius;
   }
-
-
 }

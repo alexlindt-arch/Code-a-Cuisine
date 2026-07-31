@@ -29,7 +29,7 @@ h2 {
 }
 
 section {
-  height: calc(100svh - 132px);
+  height: calc(100svh - 100px);
   background-color: var.$secondary-bg;
   color: var.$secondary-text-color;
   padding: var.$pd-medium;
@@ -443,6 +443,7 @@ ul {
   width: 100%;
   gap: var.$mgr-large;
   min-width: 50%;
+  font-size: var.$font-size-lg;
 
   & .ingredient-name {
     display: flex;

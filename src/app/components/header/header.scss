@@ -1,4 +1,6 @@
 @use '../../../scss/components/variablen' as var;
 @use '../../../scss/components/header' as hed;
 
-
+.logo:hover {
+  cursor: pointer;
+}
