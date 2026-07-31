@@ -33,7 +33,7 @@
 
 @mixin flex-around(){
     display: flex;
-    flex-direction: Row;
+    flex-direction: row;
     justify-content: space-around;
     align-items: center;
 }
@@ -41,7 +41,6 @@
     max-width: $max-width;
     margin: 0 auto;
 }
-
 
 $breakpoints: (
   'small':  ( min-width:  767px ),
@@ -58,10 +57,8 @@ $breakpoints: (
       @content;
     }
   }
-
   // If the key doesn't exist in the map
   @else {
-    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "
-        + "Available breakpoints are: #{map.keys($breakpoints)}.";
+    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. " + "Available breakpoints are: #{map.keys($breakpoints)}.";
   }
 }

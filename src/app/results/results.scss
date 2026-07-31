@@ -1,0 +1,241 @@
+@use '../../scss/components/variablen' as var;
+
+.results-page {
+  background-color: var.$primary-bg;
+  min-height: calc(100vh - 72px);
+  padding: 30px 18px 40px;
+}
+
+.results-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: var.$primary-text-color;
+}
+
+.brand-row {
+  margin-bottom: 18px;
+}
+
+.brand-logo {
+  width: 92px;
+  height: auto;
+  display: block;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: var.$font-weight-large;
+}
+
+.results-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hero-image-wrap {
+  background: rgba(var.$primary-text-color, 0.1);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.hero-image {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 10px;
+  display: block;
+}
+
+.results-copy {
+  margin: 10px 0 0;
+  max-width: 560px;
+  color: rgba(var.$primary-text-color, 0.88);
+}
+
+.persistence-note {
+  margin: 12px 0 0;
+  font-size: var.$font-size-sm;
+  color: rgba(var.$primary-text-color, 0.84);
+}
+
+.persistence-note-success {
+  color: #dce8cc;
+}
+
+.persistence-note-error {
+  color: #ffd8d8;
+}
+
+.result-tags {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background-color: var.$btn-bg;
+  color: var.$secondary-text-color;
+  border-radius: 18px;
+  padding: 4px 10px;
+  font-size: var.$font-size-sm;
+}
+
+.result-grid {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.recipe-card {
+  background: linear-gradient(180deg, #dbe4d7 0%, #d4dfcf 100%);
+  color: var.$secondary-text-color;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 228px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 120ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
+    min-height: 58px;
+  }
+}
+
+.recipe-index {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var.$font-weight-medium;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+
+.recipe-time,
+.recipe-description {
+  margin: 0;
+  font-size: var.$font-size-sm;
+}
+
+.recipe-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  img {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.recipe-duration-tag {
+  margin: 0;
+  align-self: flex-start;
+  border-radius: 12px;
+  background: rgba(var.$primary-bg, 0.18);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: var.$font-weight-medium;
+}
+
+.view-btn {
+  margin-top: 6px;
+  align-self: flex-start;
+  border: 0;
+  background-color: var.$btn-bg;
+  color: var.$secondary-text-color;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: var.$font-weight-medium;
+  text-decoration: none;
+}
+
+.bottom-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.generate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var.$primary-text-color;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(var.$primary-text-color, 0.4);
+  padding-bottom: 2px;
+
+  img {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.empty-state {
+  background-color: rgba(var.$primary-text-color, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+
+  p {
+    margin: 10px 0 16px;
+  }
+}
+
+.empty-link {
+  display: inline-block;
+}
+
+@media (max-width: 980px) {
+  .results-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-image {
+    height: 190px;
+  }
+
+  .result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-card h2 {
+    font-size: 22px;
+    min-height: unset;
+  }
+
+  .bottom-actions {
+    justify-content: flex-start;
+  }
+}

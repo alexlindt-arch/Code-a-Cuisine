@@ -1,0 +1,141 @@
+{
+  "name": "Code-a-Cuisine Recipe Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "code-a-cuisine-recipe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "4788d900-6155-4206-96a3-d2fba48ca72f",
+      "name": "Recipe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        32
+      ],
+      "webhookId": "c0a2d42a-08c5-4693-b802-1fbacc27f886"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];\nconst preferences = body.preferences ?? {};\n\nif (ingredients.length === 0) {\n  throw new Error('Missing ingredients array in request payload');\n}\n\nconst normalizedPreferences = {\n  portions: Number(preferences.portions ?? 1),\n  cooks: Number(preferences.cooks ?? 1),\n  cookingTime: String(preferences.cookingTime ?? 'medium'),\n  cuisine: String(preferences.cuisine ?? 'fusion'),\n  diets: Array.isArray(preferences.diets) ? preferences.diets : ['none'],\n};\n\nconst ingredientSummary = ingredients\n  .map((item) => `${item.quantity} ${item.unit} ${item.name}`.trim())\n  .join(', ');\n\nconst prompt = `You are a culinary AI planner. Create exactly 3 recipe suggestions based on the provided data.\n\nIngredients: ${ingredientSummary}\nPortions: ${normalizedPreferences.portions}\nPeople cooking: ${normalizedPreferences.cooks}\nCooking time preference: ${normalizedPreferences.cookingTime}\nCuisine preference: ${normalizedPreferences.cuisine}\nDiet preferences: ${normalizedPreferences.diets.join(', ')}\n\nOutput strict JSON with this schema:\n{\n  \"recipes\": [\n    {\n      \"title\": \"string\",\n      \"description\": \"string\",\n      \"estimatedMinutes\": number,\n      \"ingredients\": [\"string\"],\n      \"steps\": [\"string\"]\n    }\n  ]\n}`;\n\nreturn [{\n  json: {\n    ingredients,\n    preferences: normalizedPreferences,\n    prompt,\n  },\n}];"
+      },
+      "id": "b3939f13-2ef6-488a-afbf-5746752342fd",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are an expert recipe generator. Return only valid JSON. Keep recipes practical for home cooking and match dietary limits exactly."
+        }
+      },
+      "id": "4273c10d-aab0-4b73-8a83-1146c03afddc",
+      "name": "Recipe AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        144,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  request: {\n    ingredients: $json.ingredients,\n    preferences: $json.preferences\n  },\n  requesterIp: $json.requesterIp,\n  generatedAt: new Date().toISOString(),\n  result: $json.output ?? $json.text ?? $json\n} }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "be7008c5-bfb2-46ef-b252-3cab83bca2d5",
+      "name": "Return Recipes",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        128,
+        320
+      ],
+      "id": "cd8cfedc-ffa9-493d-b319-1c52b97ca0e4",
+      "name": "Ollama Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recipe Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Recipe AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recipe AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Return Recipes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Recipe AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "aef6863f-53cd-4a03-93cd-a1e92dfe3de7",
+  "meta": {
+    "instanceId": "746245f1c6ec62aa55918a867056cbb40c36cc56bdbf9066b650db0c63b1b122"
+  },
+  "nodeGroups": [],
+  "id": "HI9teV1yHHM9d1rU",
+  "tags": []
+}

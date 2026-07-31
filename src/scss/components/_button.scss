@@ -1,9 +1,10 @@
 @use '_variablen.scss' as var;
+@use '../../scss/abstract/mixings' as mixin;
 
 .btn {
   padding: var.$pd-medium var.$pd-large;
   font-family: var.$font-family;
-  font-size: var.$font-size-medium;
+  font-size: var.$font-size-md;
   font-weight: var.$font-weight-medium;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -35,7 +36,7 @@
     font-family: var.$font-family;
     font-size: var.$font-size-lg;
     padding: var.$pd-medium var.$pd-large;
-    border-radius: var.$border-radius;
+
     width: 200px;
 
     &:hover {
@@ -61,3 +62,91 @@
     border-radius: var.$border-radius;
   }
 }
+/** Generate-Recipe Form Number input style  Global*/
+.form-control-input {
+  @include mixin.flex-column-center();
+  width: 100%;
+  text-align: start;
+  border: unset;
+  background-color: var.$input-bg-color;
+  font-family: var.$font-family;
+  font-size: var.$font-size-md;
+  padding: 9px 8px;
+  color: var.$secondary-text-color;
+  border-radius: var.$border-radius-xxl;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+input[type='number'].form-control-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number'].form-control-input::-webkit-outer-spin-button,
+input[type='number'].form-control-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-stepper {
+  display: grid;
+  grid-template-columns: 0 1fr 0;
+  align-items: center;
+  border-radius: var.$border-radius-xxl;
+  background-color: var.$input-bg-color;
+  overflow: hidden;
+  min-width: 110px;
+  transition: grid-template-columns 140ms ease-in-out;
+
+  &:focus-within {
+    outline: none;
+    grid-template-columns: 30px 1fr 30px;
+  }
+
+  .form-control-input {
+    border-radius: 0;
+    text-align: center;
+    padding: 9px 4px;
+    min-width: 0;
+    outline: none;
+    border: unset;
+  }
+}
+
+.stepper-btn {
+  border: none;
+  background-color: var.$primary-text-color;
+  color: var.$secondary-text-color;
+  font-family: var.$font-family;
+  font-size: var.$font-size-md;
+  font-weight: var.$font-weight-large;
+  cursor: pointer;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-in-out;
+
+  &:hover {
+    background-color: rgba(var.$primary-bg, 0.4);
+  }
+}
+
+.number-stepper:focus-within .stepper-btn {
+  opacity: 1;
+  pointer-events: auto;
+  outline: none;
+  border: unset;
+}
+
+.number-stepper-edit {
+  min-width: 90px;
+
+  .form-control-input {
+    width: 100%;
+  }
+}
+
+/** End */

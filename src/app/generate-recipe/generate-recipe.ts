@@ -1,6 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
 import {  ImagesComponent } from "../components/images-component/images-component";
 
@@ -10,15 +10,30 @@ interface Ingredients {
   unit: string;
 }
 
+interface StoredPreferences {
+  portions: number;
+  cooks: number;
+  cookingTime: 'quick' | 'medium' | 'complex';
+  cuisine: string;
+  diets: string[];
+}
+
+interface StoredRecipeContext {
+  ingredients: Ingredients[];
+  preferences?: StoredPreferences;
+}
+
 @Component({
   selector: 'app-generate-recipe',
-  imports: [ImagesComponent],
+  imports: [ImagesComponent, RouterLink],
   templateUrl: './generate-recipe.html',
   styleUrls: ['./generate-recipe.scss'],
 })
 
 export class GenerateRecipe {
   private readonly storageKey = 'cac-ingredients';
+  private readonly recipePayloadKey = 'cac-recipe-request';
+  private readonly recipesResponseKey = 'cac-recipe-results';
   readonly unitOptions = ['gram', 'ml', 'piece'];
   private readonly ingredientCatalog = [
     'Apple',
@@ -350,9 +365,25 @@ addIcon = 'assets/icons/add-icon.png';
 
   private persistIngredients() {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.ingredients()));
+      const currentContext = this.getStoredRecipeContext();
+      const nextContext: StoredRecipeContext = {
+        ...currentContext,
+        ingredients: this.ingredients(),
+      };
+      localStorage.setItem(this.storageKey, JSON.stringify(nextContext));
+      // Ingredients changed: invalidate old request/response to avoid stale recipes.
+      this.clearRecipeGenerationCache();
     } catch (error) {
       console.error('Unable to persist ingredients:', error);
+    }
+  }
+
+  private clearRecipeGenerationCache() {
+    try {
+      localStorage.removeItem(this.recipePayloadKey);
+      localStorage.removeItem(this.recipesResponseKey);
+    } catch (error) {
+      console.error('Unable to clear cached recipe data:', error);
     }
   }
 
@@ -369,11 +400,42 @@ addIcon = 'assets/icons/add-icon.png';
 
       if (Array.isArray(parsed) && parsed.every((item) => this.isValidIngredient(item))) {
         this.ingredients.set(parsed);
+        return;
       }
+
+      if (this.isStoredRecipeContext(parsed)) {
+        this.ingredients.set(parsed.ingredients);
+        return;
+      }
+
+      this.ingredients.set([]);
     } catch (error) {
       console.error('Unable to load ingredients:', error);
       this.ingredients.set([]);
     }
+  }
+
+  private getStoredRecipeContext(): StoredRecipeContext {
+    const storedValue = localStorage.getItem(this.storageKey);
+
+    if (!storedValue) {
+      return { ingredients: [] };
+    }
+
+    try {
+      const parsed = JSON.parse(storedValue);
+      if (Array.isArray(parsed) && parsed.every((item) => this.isValidIngredient(item))) {
+        return { ingredients: parsed };
+      }
+
+      if (this.isStoredRecipeContext(parsed)) {
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Unable to parse stored recipe context:', error);
+    }
+
+    return { ingredients: [] };
   }
 
   private isValidIngredient(value: unknown): value is Ingredients {
@@ -385,6 +447,16 @@ addIcon = 'assets/icons/add-icon.png';
     return typeof ingredient.name === 'string'
       && typeof ingredient.quantity === 'number'
       && typeof ingredient.unit === 'string';
+  }
+
+  private isStoredRecipeContext(value: unknown): value is StoredRecipeContext {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    const maybeContext = value as Partial<StoredRecipeContext>;
+    return Array.isArray(maybeContext.ingredients)
+      && maybeContext.ingredients.every((item) => this.isValidIngredient(item));
   }
 
 generateRecipe(){

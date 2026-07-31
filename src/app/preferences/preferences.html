@@ -1,0 +1,104 @@
+<section class="preferences">
+  @if (submitState() === 'loading') {
+  <div class="generate-loading" aria-live="polite" aria-busy="true">
+    <div class="spinner"></div>
+    <p>Generating ...</p>
+  </div>
+  } @else {
+  <div class="content-limited">
+    <div class="top-section">
+      <a [routerLink]="'/generate-recipe'" class="router-link"><app-images-component [class]="arrowClass"
+          [src]="heroImageArrow" label="Arrow Icon"></app-images-component>Ingredients</a>
+    </div>
+
+    <div class="preferences-content">
+      <h1>Choose your preferences</h1>
+
+      @if (quotaStatus(); as quota) {
+      <article class="quota-card" aria-live="polite">
+        <div>
+          <h2>Daily quota</h2>
+          <p>{{ quota.perIpRemaining }} of {{ quota.perIpLimit }} recipe requests left for this IP today.</p>
+        </div>
+        <div>
+          <h2>System quota</h2>
+          <p>{{ quota.globalRemaining }} of {{ quota.globalLimit }} requests left across the app today.</p>
+        </div>
+      </article>
+      }
+
+      @if (quotaMessage(); as message) {
+      <p class="quota-message" aria-live="assertive">{{ message }}</p>
+      }
+
+      <article class="preferences-intro">
+        <div class="pref-selection-content">
+          <h2>How many portions you need?</h2>
+          <div class="pref-number-stepper" role="group" aria-label="Portions">
+            <button class="pref-stepper-btn" type="button" aria-label="Reduce portions" (click)="decrementPortions()">-</button>
+            <span class="pref-value">{{ portions() }}</span>
+            <span class="pref-value-label">Portions</span>
+            <button class="pref-stepper-btn" type="button" aria-label="Increase portions" (click)="incrementPortions()">+</button>
+          </div>
+        </div>
+
+        <div class="pref-selection-content">
+          <h2>How many are cooking?</h2>
+          <div class="pref-number-stepper" role="group" aria-label="Number of cooks">
+            <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks" (click)="decrementCooks()">-</button>
+            <span class="pref-value">{{ cooks() }}</span>
+            <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'People' }}</span>
+            <button class="pref-stepper-btn" type="button" aria-label="Increase cooks" (click)="incrementCooks()">+</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="pref-block">
+          <h2>Cooking time:</h2>
+          <div class="chip-grid chip-grid-time" role="radiogroup" aria-label="Cooking time">
+            @for (option of cookingTimeOptions; track option.id) {
+            <button
+              type="button"
+              class="chip chip-time"
+              [class.selected]="selectedCookingTime() === option.id"
+              (click)="selectCookingTime(option.id)">
+              <span class="chip-title">{{ option.label }}</span>
+              <span class="chip-subtitle">{{ option.hint }}</span>
+            </button>
+            }
+          </div>
+        </div>
+
+        <div class="pref-block">
+          <h2>Cuisine</h2>
+          <div class="chip-grid" role="radiogroup" aria-label="Cuisine">
+            @for (option of cuisineOptions; track option.id) {
+            <button type="button" class="chip" [class.selected]="selectedCuisine() === option.id" (click)="selectCuisine(option.id)">
+              {{ option.label }}
+            </button>
+            }
+          </div>
+        </div>
+
+        <div class="pref-block">
+          <h2>Diet preferences</h2>
+          <div class="chip-grid" role="group" aria-label="Diet preferences">
+            @for (option of dietOptions; track option.id) {
+            <button type="button" class="chip" [class.selected]="isDietSelected(option.id)" (click)="toggleDiet(option.id)">
+              {{ option.label }}
+            </button>
+            }
+          </div>
+        </div>
+      </article>
+
+      <div class="footer-actions">
+        <button class="btn --generate-btn" type="button" [disabled]="submitState() === 'loading'" (click)="generateRecipe()">
+          {{ submitState() === 'loading' ? 'Generating...' : 'Generate a recipe' }}
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</section>

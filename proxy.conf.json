@@ -1,0 +1,20 @@
+{
+  "/n8n-local": {
+    "target": "http://localhost:5678",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/n8n-local": ""
+    },
+    "logLevel": "warn"
+  },
+  "/n8n-strato": {
+    "target": "http://212.227.187.170:5678",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/n8n-strato": ""
+    },
+    "logLevel": "warn"
+  }
+}

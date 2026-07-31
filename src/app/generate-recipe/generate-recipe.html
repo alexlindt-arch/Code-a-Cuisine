@@ -123,7 +123,7 @@
     </div>
     <div class="recipe-button-content">
       @if (hasIngredients()) {
-      <button class="btn --generate-btn" (click)="generateRecipe()">Next Step</button>
+      <button class="btn --generate-btn" type="button" [routerLink]="'/preferences'">Next Step</button>
       }
     </div>
   </div>

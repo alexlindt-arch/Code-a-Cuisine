@@ -1,0 +1,65 @@
+<section class="results-page">
+  <div class="results-shell">
+    @if (hasResults()) {
+
+    <div class="results-hero">
+      <div class="hero-content">
+        <h1>The recipe results</h1>
+
+        <p class="results-copy">
+          We took what you have and let our AI do the thinking.
+          Here are {{ recipes().length }} easy recipes you can make right now.
+        </p>
+
+        @if (requestPayload(); as request) {
+        <div class="result-tags">
+          <span class="tag">{{ request.preferences.cuisine }}</span>
+          <span class="tag">{{ request.preferences.cookingTime }}</span>
+        </div>
+        }
+
+        @if (persistenceState() === 'saving') {
+        <p class="persistence-note">Saving these recipes to the cookbook database...</p>
+        } @else if (persistenceState() === 'saved') {
+        <p class="persistence-note persistence-note-success">Saved to the cookbook database.</p>
+        } @else if (persistenceState() === 'error') {
+        <p class="persistence-note persistence-note-error">The recipes were generated, but saving them to the database failed.</p>
+        }
+      </div>
+
+      <div class="hero-image-wrap">
+        <img [src]="getHeroImage()" alt="AI generated recipe visual" class="hero-image">
+      </div>
+    </div>
+
+    <div class="result-grid">
+      @for (recipe of recipes(); track recipe.title; let i = $index) {
+      <article class="recipe-card">
+        <p class="recipe-index"><img [src]="getRecipeCardIcon()" alt="Recipe icon"> Recipe {{ i + 1 }}</p>
+        <h2>{{ recipe.title }}</h2>
+        <p class="recipe-time"><img src="assets/icons/clock-iconm.png" alt="Clock icon"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
+        <p class="recipe-duration-tag">{{ getDurationLabel(recipe.estimatedMinutes) }}</p>
+        <p class="recipe-description">{{ recipe.description }}</p>
+        <a class="view-btn" [routerLink]="['/results', i]">View</a>
+      </article>
+      }
+    </div>
+
+    <div class="bottom-actions">
+      <a [routerLink]="'/generate-recipe'" class="generate-link" (click)="startNewRecipeSession($event)">Generate new recipe <img src="assets/icons/Arrow-right.png" alt="Arrow right"></a>
+    </div>
+    } @else {
+    <div class="empty-state">
+      <h1>No results yet</h1>
+      @if (generationError(); as error) {
+      <p>{{ error }}</p>
+      } @else if (hasStoredResponse()) {
+      <p>A response from n8n was found, but no recipes could be parsed. Check your workflow response JSON structure.</p>
+      } @else {
+      <p>Generate a recipe first. The n8n workflow response will appear here.</p>
+      }
+      <a [routerLink]="'/preferences'" class="view-btn empty-link">Back to preferences</a>
+    </div>
+    }
+  </div>
+</section>

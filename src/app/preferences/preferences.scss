@@ -1,0 +1,334 @@
+@use '../../scss/components/variablen' as var;
+@use '../../scss/abstract/mixings' as mix;
+@use '../../scss/components/_button' as btn;
+
+.preferences {
+  background-color: var.$secondary-bg;
+}
+
+.generate-loading {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  background-color: var.$primary-bg;
+  color: var.$primary-text-color;
+
+  p {
+    margin: 0;
+    font-size: 34px;
+    font-weight: var.$font-weight-large;
+  }
+}
+
+.spinner {
+  width: 90px;
+  height: 90px;
+  border: 10px solid rgba(var.$primary-text-color, 0.25);
+  border-top-color: var.$primary-text-color;
+  border-radius: 14px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+h1{
+  font-size: 48px !important;
+}
+
+.content-limited {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.top-section {
+  @include mix.flex-between();
+  align-items: center;
+  padding: var.$mgr-medium var.$mgr-large;
+  width: 100%;
+  background-color: var.$secondary-bg;
+}
+
+.router-link {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row;
+  color: var.$secondary-text-color;
+  text-decoration: none;
+  gap: var.$mgr-small;
+  font-size: var.$font-size-sm;
+  font-weight: var.$font-weight-medium;
+
+  & app-images-component:has(img) {
+    height: auto;
+    width: 20px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  &:hover app-images-component:has(img) {
+    filter: opacity(70%);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+.preferences-content {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var.$mgr-medium;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var.$mgr-small var.$mgr-large var.$mgr-large;
+  color: var.$secondary-text-color;
+
+  > h1 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    font-family: 'quicksand-light-regular', sans-serif;
+    font-weight: var.$font-weight-medium;
+    letter-spacing: 0.3px;
+    margin: 8px 0 6px;
+    text-align: center;
+  }
+}
+
+.preferences-intro {
+  @include mix.flex-around();
+  width: 100%;
+  gap: 18px;
+  padding: var.$mgr-small 0 var.$mgr-medium;
+}
+
+.quota-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(var.$primary-bg, 0.14) 0%, rgba(var.$primary-bg, 0.08) 100%);
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: var.$font-size-xl;
+    font-weight: var.$font-weight-medium;
+  }
+
+  p {
+    margin: 0;
+    font-size: var.$font-size-md;
+    color: rgba(var.$secondary-text-color, 0.92);
+  }
+}
+
+.quota-message {
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(163, 33, 33, 0.08);
+  color: #7a1d1d;
+  font-size: var.$font-size-md;
+}
+
+.pref-selection-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;
+  gap: var.$mgr-small;
+
+  > h2 {
+    margin: 0;
+    font-size: var.$font-size-xl;
+    font-weight: var.$font-weight-medium;
+  }
+}
+
+.pref-number-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pref-stepper-btn {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var.$secondary-text-color;
+  border-radius: 6px;
+  background: transparent;
+  color: var.$secondary-text-color;
+  font-weight: var.$font-weight-large;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(var.$primary-bg, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$primary-bg;
+    outline-offset: 2px;
+  }
+}
+
+.pref-value {
+  min-width: 26px;
+  padding: 1px 6px;
+  text-align: center;
+  border-radius: 4px;
+  background-color: rgba(var.$primary-bg, 0.12);
+  font-weight: var.$font-weight-medium;
+}
+
+.pref-value-label {
+  font-size: var.$font-size-lg;
+}
+
+.card {
+  width: 100%;
+  padding: 22px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(var.$primary-bg, 0.24) 0%, rgba(var.$primary-bg, 0.18) 100%);
+}
+
+.pref-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &:not(:first-child) {
+    margin-top: 24px;
+  }
+
+  > h2 {
+    margin: 0;
+    font-size: var.$font-size-xxl;
+    font-weight: var.$font-weight-medium;
+  }
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip-grid-time {
+  gap: 12px;
+}
+
+.chip {
+  border: 1px solid rgba(var.$primary-bg, 0.24);
+  border-radius: var.$border-radius-xxl;
+  background-color: var.$btn-bg;
+  color: var.$secondary-text-color;
+  font-family: var.$font-family;
+  font-size: var.$font-size-lg;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: rgba(var.$primary-bg, 0.5);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$primary-bg;
+    outline-offset: 2px;
+  }
+
+  &.selected {
+    background-color: var.$primary-bg;
+    color: var.$primary-text-color;
+    border-color: var.$primary-bg;
+  }
+}
+
+.chip-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 116px;
+  text-align: left;
+}
+
+.chip-title {
+  font-size: var.$font-size-xl;
+}
+
+.chip-subtitle {
+  font-size: var.$font-size-sm;
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: var.$mgr-small;
+
+  .btn[disabled] {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 900px) {
+  .quota-card {
+    grid-template-columns: 1fr;
+  }
+
+  .preferences-intro {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .pref-selection-content {
+    max-width: 100%;
+  }
+
+  .preferences-content {
+    padding: var.$mgr-small var.$mgr-medium var.$mgr-large;
+  }
+}
+
+@media (max-width: 560px) {
+  .top-section {
+    padding: var.$mgr-medium;
+  }
+
+  .preferences-content > h1 {
+    font-size: 30px;
+  }
+
+  .pref-selection-content > h2 {
+    font-size: var.$font-size-lg;
+  }
+
+  .pref-value-label {
+    font-size: var.$font-size-md;
+  }
+
+  .pref-block > h2 {
+    font-size: var.$font-size-xl;
+  }
+
+  .chip {
+    font-size: var.$font-size-md;
+    padding: 6px 12px;
+  }
+
+  .chip-time {
+    min-width: 104px;
+  }
+
+}

@@ -1,0 +1,50 @@
+<section class="cookbook-page">
+  <div class="cookbook-shell">
+    <a [routerLink]="'/results'" class="back-link"><img src="assets/icons/Arrow-left-dark.png" alt="Back"> Back</a>
+
+    <article class="hero-card">
+      <div class="hero-copy">
+        <h1>Cookbook</h1>
+        <p>From quick bites to gourmet delights, explore them all in our ultimate cookbook and get inspired for your next culinary adventure.</p>
+      </div>
+
+      <div class="hero-favorites">
+        <div class="favorites-heading">
+          <h2>Most liked recipes</h2>
+          <img src="assets/icons/heart.png" alt="Liked recipes">
+        </div>
+
+        @if (loadingState() === 'loading') {
+        <p class="favorites-status">Loading recipes from cookbook database...</p>
+        } @else if (loadingState() === 'error') {
+        <p class="favorites-status favorites-status-error">Could not load recipes from database.</p>
+        } @else if (featuredRecipes().length === 0) {
+        <p class="favorites-status">No recipes saved in the database yet.</p>
+        } @else {
+        <div class="favorite-cards">
+          @for (recipe of featuredRecipes(); track recipe.id) {
+          <article class="favorite-card">
+            <p class="recipe-meta"><img src="assets/icons/clock-iconm.png" alt="Cooking time"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
+            <h3>{{ recipe.title }}</h3>
+            <p class="likes-pill"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</p>
+          </article>
+          }
+        </div>
+        }
+      </div>
+    </article>
+
+    <div class="category-grid">
+      @for (category of categories; track category.slug) {
+      <a class="category-card" [routerLink]="['/cookbook', category.slug]">
+        <h2>{{ category.title }} <span>{{ category.accent }}</span></h2>
+        <img [src]="category.image" [alt]="category.title">
+      </a>
+      }
+    </div>
+
+    <div class="bottom-actions">
+      <a [routerLink]="'/generate-recipe'" class="generate-link">Generate new recipe <img src="assets/icons/Arrow-right.png" alt="Arrow right"></a>
+    </div>
+  </div>
+</section>
