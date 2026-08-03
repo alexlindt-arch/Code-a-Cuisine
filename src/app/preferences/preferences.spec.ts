@@ -19,4 +19,8 @@ describe('Preferences', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should show the loading state temporarily on startup for spinner previewing', () => {
+    expect(component.submitState()).toBe('loading');
+  });
 });

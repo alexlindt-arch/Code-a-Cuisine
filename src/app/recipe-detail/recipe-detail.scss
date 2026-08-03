@@ -1,9 +1,10 @@
 @use '../../scss/components/variablen' as var;
+@use '../../scss/abstract/mixings' as mix;
 
 .recipe-detail-page {
   background-color: var.$secondary-bg;
   min-height: calc(100vh - 72px);
-  padding: 26px 18px 40px;
+  padding: 0px 18px 40px;
 }
 
 .detail-shell {
@@ -13,27 +14,49 @@
   font-family: 'quicksand-book-regular', sans-serif;
 }
 
+.content-limited {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0 30px;
+
+}
+
+.top-section {
+  @include mix.flex-between();
+  align-items: center;
+  padding: 40px;
+  width: 100%;
+}
+
+.router-link {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row;
+  gap: var.$mgr-small;
+  color: var.$secondary-text-color;
+  text-decoration: none;
+  font-size: var.$font-size-sm;
+  font-weight: var.$font-weight-medium;
+
+  & app-images-component:has(img) {
+    height: auto;
+    width: 20px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  &:hover app-images-component:has(img) {
+    filter: opacity(70%);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
 .brand-logo {
   width: 96px;
   height: auto;
   display: block;
   margin-bottom: 12px;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 18px;
-  color: var.$secondary-text-color;
-  text-decoration: none;
-  font-size: var.$font-size-sm;
-  font-family: 'quicksand-book-regular', sans-serif;
-
-  img {
-    width: 12px;
-    height: 12px;
-  }
 }
 
 .recipe-card-shell {
@@ -72,15 +95,15 @@
 
 .meta-line {
   margin: 0;
-  font-size: var.$font-size-sm;
+  font-size: var.$font-size-lg;
   font-family: 'quicksand-book-regular', sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 
   img {
-    width: 14px;
-    height: 14px;
+    width:20px;
+    height: 20px;
   }
 }
 
@@ -94,8 +117,11 @@
 
 .cook-count {
   margin: 10px 0 0;
-  font-size: var.$font-size-sm;
+  font-size: var.$font-size-xl;
   font-family: 'quicksand-book-regular', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chef-badge {
@@ -103,31 +129,31 @@
   align-items: center;
   gap: 4px;
   margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 12px;
+  border-radius: 6px;
   background: rgba(var.$primary-bg, 0.12);
-  font-size: 12px;
+  font-size: var.$font-size-md;
   font-family: 'quicksand-book-regular', sans-serif;
 
   img {
-    width: 14px;
-    height: 14px;
+    width: 90px;
+    height: auto;
   }
 }
 
 .meta-tags {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .tag {
   background-color: rgba(var.$primary-bg, 0.16);
   color: var.$secondary-text-color;
-  border-radius: 16px;
-  padding: 4px 10px;
-  font-size: var.$font-size-sm;
+  border-radius: 30px ;
+  padding: 6px 12px;
+  font-size: var.$font-size-lg;
   font-family: 'quicksand-book-regular', sans-serif;
+  font-weight: var.$font-weight-medium;
 }
 
 .nutrition {
@@ -138,7 +164,8 @@
 
 .nutrition-title {
   margin: 0;
-  font-size: 12px;
+  font-size: var.$font-size-lg;
+ font-weight: var.$font-weight-medium;
   color: rgba(var.$secondary-text-color, 0.85);
   font-family: 'quicksand-bold-regular', sans-serif;
 }
@@ -152,16 +179,17 @@
   div {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 8px;
   }
 
   span {
-    font-size: 12px;
+    font-size: var.$font-size-lg;
+    font-weight: var.$font-weight-medium;
     font-family: 'quicksand-book-regular', sans-serif;
   }
 
   strong {
-    font-size: 13px;
+    font-size: var.$font-size-md;
     font-family: 'quicksand-bold-regular', sans-serif;
   }
 }
@@ -259,10 +287,11 @@
   font-family: 'quicksand-bold-regular', sans-serif;
   font-size: var.$font-size-xxl;
   line-height: 1.1;
+  padding: 4px 10px;
 
   img {
     width: 90px;
-    height: 27px;
+    height: auto;
     margin-left: 50%;
   }
 }
@@ -271,9 +300,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 6px;
-  border-radius: 12px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: var.$font-size-md;
   font-family: 'quicksand-book-regular', sans-serif;
 }
 
@@ -293,8 +321,8 @@
   }
 
   img {
-    width: 22px;
-    height: 22px;
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -324,6 +352,9 @@
   text-align: center;
   font-size: var.$font-size-sm;
   color: rgba(var.$secondary-text-color, 0.82);
+  background-color: rgba(var.$primary-bg, 0.12);
+  border-radius: var.$mgr-small;
+  width: 100%;
 }
 
 .like-status-success {
@@ -358,6 +389,13 @@
     border-radius: 2px;
     font-family: 'quicksand-bold-regular', sans-serif;
     font-size: var.$font-size-xxl;
+    font-weight: var.$font-weight-bold;
+  }
+
+  & a:hover {
+    background: rgba(5, 94, 5, 0.9);
+    color: var.$primary-text-color;
+    font-weight: var.$font-weight-large;
   }
 }
 
@@ -378,6 +416,12 @@
   margin: 8px 0 0;
 }
 
+.bottom-actions {
+  margin-top: 24px;
+  padding-bottom: 25px;
+  display: flex;
+  justify-content: flex-end;
+}
 @media (max-width: 820px) {
   .recipe-hero-card {
     grid-template-columns: 1fr;

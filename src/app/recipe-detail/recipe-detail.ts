@@ -1,6 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { RecipeLibraryService } from '../recipe-library.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ImagesComponent } from '../components/images-component/images-component';
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
+import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
 
 interface Recipe {
   title: string;
@@ -23,7 +26,7 @@ interface RecipeRequestPayload {
 
 @Component({
   selector: 'app-recipe-detail',
-  imports: [RouterLink],
+  imports: [ImagesComponent, RouterLink, RouterlinkComponente],
   templateUrl: './recipe-detail.html',
   styleUrls: ['./recipe-detail.scss'],
 })
@@ -43,6 +46,24 @@ export class RecipeDetail {
   readonly likedRecipeIds = signal<string[]>([]);
   readonly likeCount = signal<number | null>(null);
   readonly likeState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  readonly backLink = signal('/results');
+  readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  readonly arrowClass = 'arrow-icon';
+
+  readonly cookIconCount = computed(() => {
+    const cooks = this.requestPayload()?.preferences.cooks;
+    if (typeof cooks !== 'number' || !Number.isFinite(cooks)) {
+      return 1;
+    }
+
+    return Math.min(2, Math.max(1, Math.floor(cooks)));
+  });
+
+  readonly cookIconIndexes = computed(() =>
+    Array.from({ length: this.cookIconCount() }, (_, index) => index + 1)
+  );
+
+  readonly hasSecondChef = computed(() => this.cookIconCount() > 1);
 
   readonly isLikedByUser = computed(() => {
     const selectedRecipeId = this.selectedRecipeId();
@@ -97,11 +118,20 @@ export class RecipeDetail {
     this.loadRecipes();
     this.loadSavedRecipeIds();
     this.loadLikedRecipeIds();
-    this.selectRecipeFromRoute();
+
+    this.activatedRoute.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const recipeId = params.get('recipeId');
+      if (recipeId) {
+        void this.selectCookbookRecipeFromRoute(recipeId);
+        return;
+      }
+
+      this.selectResultRecipeFromRoute(params.get('index'));
+    });
   }
 
-  private selectRecipeFromRoute() {
-    const indexParam = this.activatedRoute.snapshot.paramMap.get('index');
+  private selectResultRecipeFromRoute(indexParam: string | null) {
+    this.backLink.set('/results');
     const index = Number(indexParam);
 
     if (!Number.isInteger(index) || index < 0 || index >= this.recipes().length) {
@@ -116,6 +146,50 @@ export class RecipeDetail {
     this.selectedRecipeId.set(this.savedRecipeIds()[index] ?? null);
     this.likeCount.set(null);
     this.likeState.set('idle');
+  }
+
+  private async selectCookbookRecipeFromRoute(recipeId: string) {
+    this.backLink.set('/cookbook');
+    this.selectedRecipeId.set(recipeId);
+    this.likeCount.set(null);
+    this.likeState.set('idle');
+
+    try {
+      const recipe = await this.recipeLibraryService.getRecipeById(recipeId);
+      if (!recipe) {
+        this.selectedRecipe.set(null);
+        return;
+      }
+
+      this.selectedRecipe.set(this.toRecipe(recipe));
+      this.requestPayload.set(this.toRequestPayload(recipe));
+    } catch (error) {
+      console.error('Failed to load cookbook recipe details:', error);
+      this.selectedRecipe.set(null);
+    }
+  }
+
+  private toRecipe(recipe: CookbookRecipeRecord): Recipe {
+    return {
+      title: recipe.title,
+      description: recipe.description,
+      estimatedMinutes: recipe.estimatedMinutes,
+      ingredients: recipe.ingredients,
+      steps: recipe.steps,
+    };
+  }
+
+  private toRequestPayload(recipe: CookbookRecipeRecord): RecipeRequestPayload {
+    return {
+      ingredients: recipe.sourceIngredients,
+      preferences: {
+        portions: recipe.portions,
+        cooks: recipe.cooks,
+        cookingTime: recipe.cookingTime,
+        cuisine: recipe.cuisine,
+        diets: recipe.diets.length > 0 ? recipe.diets : ['none'],
+      },
+    };
   }
 
   async likeRecipe() {

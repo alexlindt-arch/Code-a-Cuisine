@@ -3,50 +3,57 @@ export interface CookbookCategory {
   title: string;
   description: string;
   image: string;
+  banner: string;
   accent: string;
 }
 
 export const cookbookCategories: CookbookCategory[] = [
   {
-    slug: 'italian',
+    slug: 'Italian',
     title: 'Italian cuisine',
     description: 'Sun-soaked pasta, vibrant sauces and warm comfort classics.',
-    image: 'assets/img/Italian-section.png',
-    accent: '🍝',
+    image: 'assets/img/cookboog-gericht6.png',
+    banner: 'assets/img/Italian-section.png',
+    accent: 'assets/icons/hand.png',
   },
   {
-    slug: 'german',
+    slug: 'German',
     title: 'German cuisine',
     description: 'Hearty plates, familiar flavors and rich home-style cooking.',
-    image: 'assets/img/German-section.png',
-    accent: '🥨',
+    image: 'assets/img/cookboog-gericht1.png',
+    banner: 'assets/img/German-section.png',
+    accent: 'assets/icons/brezel.png',
   },
   {
-    slug: 'japanese',
+    slug: 'Japanese',
     title: 'Japanese cuisine',
     description: 'Clean compositions, careful technique and precise balance.',
-    image: 'assets/img/Japanese-section.png',
-    accent: '🥢',
+    image: 'assets/img/cookboog-gericht2.png',
+    banner: 'assets/img/Japanese-section.png',
+    accent: 'assets/icons/stapchen.png',
   },
   {
-    slug: 'gourmet',
+    slug: 'Gourmet',
     title: 'Gourmet cuisine',
     description: 'Plated elegance with restaurant-inspired combinations.',
-    image: 'assets/img/Gourmet-section.png',
-    accent: '✨',
+    image: 'assets/img/cookboog-gericht3.png',
+    banner: 'assets/img/Gourmet-section.png',
+    accent: 'assets/icons/sterne.png',
   },
   {
-    slug: 'indian',
+    slug: 'Indian',
     title: 'Indian cuisine',
     description: 'Aromatic spice layers, cozy bowls and bold depth.',
-    image: 'assets/img/menu-4.png',
-    accent: '🥘',
+    image: 'assets/img/cookboog-gericht4.png',
+    banner: 'assets/img/Ingredients-section.png',
+    accent: 'assets/icons/suppen.png',
   },
   {
-    slug: 'fusion',
+    slug: 'Fusion',
     title: 'Fusion cuisine',
     description: 'Unexpected pairings that still feel thoughtful and complete.',
-    image: 'assets/img/Fusion-section.png',
-    accent: '🍢',
+    image: 'assets/img/cookboog-gericht5.png',
+    banner: 'assets/img/Fusion-section.png',
+    accent: 'assets/icons/spieß.png',
   },
 ];

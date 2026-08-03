@@ -1,6 +1,4 @@
-
-
-$primary-bg: #396039;
+$primary-bg: rgb(57, 96, 57);
 $primary-text-color: #FAF0E6;
 $secondary-bg: #ffffff;
 $secondary-text-color: #1E5515;
@@ -14,6 +12,7 @@ $font-size-md: 16px;
 $font-size-lg: 18px;
 $font-size-xl: 20px;
 $font-size-xxl: 24px;
+$font-size-xxxl: 32px;
 $font-size-sub-headline-sm: 24px;
 $font-size-sub-headline-md: 48px;
 $font-size-headline: 54px;
@@ -21,6 +20,7 @@ $font-size-headline: 54px;
 
 $font-weight-small: 400;
 $font-weight-medium: 500;
+$font-weight-bold: 600;
 $font-weight-large: 700;
 $spacing-small: 8px;
 $spacing-medium: 16px;
@@ -40,7 +40,6 @@ $mgr-xll: 32px;
 // -------------------------------
 $pd-small: 8px;
 $pd-medium: 16px;
-$pd-large: 24px;
 $pd-large: 24px;
 $pd-xxl: 32px;
 

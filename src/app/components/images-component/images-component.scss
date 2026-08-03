@@ -1,4 +1,13 @@
-img{
+@use '../../../scss/abstract/mixings' as mix;
+
+img {
   width: 100%;
   height: auto;
+}
+
+@include mix.respond-to('x-small') {
+  img {
+    width: 296px;
+    height: auto;
+  }
 }

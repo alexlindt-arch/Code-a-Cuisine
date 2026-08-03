@@ -41,6 +41,11 @@ export const routes: Routes = [
     data: { headerStyle: 'light' },
     title: 'Cookbook'
   },
+  { path: 'cookbook/recipe/:recipeId',
+    component: RecipeDetail,
+    data: { headerStyle: 'light' },
+    title: 'Cookbook Recipe Detail'
+  },
   { path: 'cookbook/:category',
     component: CookbookCategoryPage,
     data: { headerStyle: 'light' },

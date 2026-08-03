@@ -1,36 +1,61 @@
 @use '../../scss/components/variablen' as var;
+@use '../../scss/abstract/mixings.scss' as mixin;
 
 .cookbook-category-page {
-  min-height: calc(100vh - 72px);
+  min-height: calc(100vh - 100px);
   background: #ffffff;
   padding: 24px 18px 40px;
 }
 
 .category-shell {
-  max-width: 1120px;
+  max-width: 1143px;
   margin: 0 auto;
+  padding-bottom: var.$mgr-large;
   color: var.$secondary-text-color;
   font-family: 'quicksand-book-regular', sans-serif;
 }
 
-.page-top {
+.content-limited {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  width: 100%;
 }
 
-.back-link {
+.top-section {
+  @include mixin.flex-between();
+  align-items: center;
+  padding: var.$mgr-medium 68px 0;
+  width: 100%;
+}
+
+.generate-recipe-content{
+  @include mixin.flex-end();
+}
+
+.router-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var.$secondary-text-color;
   text-decoration: none;
-  font-size: 13px;
+  font-size: var.$font-size-sm;
+  font-weight: var.$font-weight-medium;
+
+  & app-images-component:has(img) {
+    height: auto;
+    width: 20px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  &:hover app-images-component:has(img) {
+    filter: opacity(70%);
+    transition: all 0.2s ease-in-out;
+  }
+
 
   img {
-    width: 12px;
-    height: 12px;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -59,7 +84,7 @@
 
   img {
     width: 100%;
-    height: 92px;
+    height: auto;
     object-fit: cover;
     border-radius: 10px;
     display: block;
@@ -104,11 +129,21 @@
 }
 
 .recipe-list li {
+  padding: 6px 10px;
+  &:hover {
+    background: #FFF7EE;
+    border-radius: 16px;
+  }
+}
+
+.recipe-entry-link {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: 2fr 1fr;
   gap: 14px;
-  align-items: start;
-  padding: 10px 0;
+  align-items: center;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
 }
 
 .recipe-index {
@@ -118,17 +153,29 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(var.$primary-bg, 0.08);
+  background: #FFF7EE;
   font-family: 'quicksand-bold-regular', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
+}
+
+.recipe-entry-title {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
 }
 
 .recipe-entry-main {
   h2 {
     margin: 4px 0 0;
     font-family: 'quicksand-bold-regular', sans-serif;
-    font-size: 31px;
+    font-size: 24px;
     line-height: 1.15;
+    width: 100%;
+    line-break: unset;
+
   }
 }
 
@@ -137,11 +184,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  padding-left: 35px;
+  font-size: var.$font-size-md;
 
   img {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
   }
 }
 
@@ -156,10 +204,12 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 6px 12px;
+  border-radius: 30px;
   background: rgba(var.$primary-bg, 0.12);
-  font-size: 13px;
+  font-size: var.$font-size-lg;
+  font-family: 'quicksand-book-regular', sans-serif;
+  font-weight: var.$font-weight-medium;
 
   img {
     width: 13px;
@@ -170,6 +220,8 @@
 .pagination {
   margin-top: 20px;
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
 
@@ -179,11 +231,33 @@
     color: var.$secondary-text-color;
     font-family: 'quicksand-book-regular', sans-serif;
     cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .page-nav {
+    font-size: 18px;
+    margin: 0 4px;
+    &:hover {
+      background: rgba(var.$primary-bg, 0.12);
+    }
+  }
+
+  .page-nav[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .active {
     font-family: 'quicksand-bold-regular', sans-serif;
+    background: rgba(var.$primary-bg, 0.18);
   }
+}
+
+.pagination-status {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(var.$secondary-text-color, 0.72);
 }
 
 .empty-panel {
@@ -206,7 +280,7 @@
     align-items: flex-start;
   }
 
-  .recipe-list li {
+  .recipe-entry-link {
     grid-template-columns: 36px 1fr;
   }
 

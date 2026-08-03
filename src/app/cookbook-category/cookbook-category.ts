@@ -1,12 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { cookbookCategories, type CookbookCategory } from '../cookbook/cookbook-data';
 import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
 
 @Component({
   selector: 'app-cookbook-category',
-  imports: [RouterLink],
+  imports: [RouterLink, RouterlinkComponente],
   templateUrl: './cookbook-category.html',
   styleUrls: ['./cookbook-category.scss'],
 })
@@ -14,6 +15,8 @@ export class CookbookCategoryPage {
   private readonly route = inject(ActivatedRoute);
   private readonly recipeLibraryService = inject(RecipeLibraryService);
   private readonly pageSize = 15;
+  readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  readonly arrowClass = 'arrow-icon';
 
   readonly selectedCategory = signal<CookbookCategory | null>(null);
   readonly recipes = signal<CookbookRecipeRecord[]>([]);
@@ -52,6 +55,9 @@ export class CookbookCategoryPage {
     Array.from({ length: this.totalPages() }, (_, index) => index + 1)
   );
 
+  readonly hasPreviousPage = computed(() => this.currentPage() > 1);
+  readonly hasNextPage = computed(() => this.currentPage() < this.totalPages());
+
   constructor() {
     void this.loadRecipes();
 
@@ -78,5 +84,21 @@ export class CookbookCategoryPage {
 
   selectPage(pageNumber: number) {
     this.currentPage.set(pageNumber);
+  }
+
+  goToPreviousPage() {
+    if (!this.hasPreviousPage()) {
+      return;
+    }
+
+    this.currentPage.update((page) => page - 1);
+  }
+
+  goToNextPage() {
+    if (!this.hasNextPage()) {
+      return;
+    }
+
+    this.currentPage.update((page) => page + 1);
   }
 }

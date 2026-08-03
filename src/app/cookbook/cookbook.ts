@@ -1,16 +1,21 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { cookbookCategories } from './cookbook-data';
 import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
 
 @Component({
   selector: 'app-cookbook',
-  imports: [RouterLink],
+  imports: [ RouterLink, RouterlinkComponente],
   templateUrl: './cookbook.html',
   styleUrls: ['./cookbook.scss'],
 })
 export class Cookbook {
+  cookbookRouterLink: string = '/results';
   private readonly recipeLibraryService = inject(RecipeLibraryService);
+
+  readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  readonly arrowClass = 'arrow-icon';
 
   readonly categories = cookbookCategories;
   readonly recipes = signal<CookbookRecipeRecord[]>([]);

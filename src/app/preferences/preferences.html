@@ -1,8 +1,22 @@
 <section class="preferences">
   @if (submitState() === 'loading') {
-  <div class="generate-loading" aria-live="polite" aria-busy="true">
-    <div class="spinner"></div>
-    <p>Generating ...</p>
+  <div class="content-limited">
+    <div class="generate-loading" aria-live="polite" aria-busy="true">
+      <app-images-component class="loading-hero-image" [class]="'hero-image'" [src]="heroImage"
+        label="Hero Image"></app-images-component>
+      <div class="loading-card">
+        <span class="loading-icon">
+
+          <img [src]="schusselIcon" alt="Schüssel Icon" />
+          <img [src]="loffelIcon" alt="Löffel Icon" />
+          <img [src]="karotteIcon" alt="Karotte Icon" />
+          <img [src]="kohlIcon2" alt="Kohl Icon" />
+          <img [src]="rettichIcon3" alt="Rettich Icon" />
+        </span>
+
+      </div>
+      <p>Generating ...</p>
+    </div>
   </div>
   } @else {
   <div class="content-limited">
@@ -35,46 +49,58 @@
         <div class="pref-selection-content">
           <h2>How many portions you need?</h2>
           <div class="pref-number-stepper" role="group" aria-label="Portions">
-            <button class="pref-stepper-btn" type="button" aria-label="Reduce portions" (click)="decrementPortions()">-</button>
+            <button class="pref-stepper-btn" type="button" aria-label="Reduce portions"
+              (click)="decrementPortions()">-</button>
             <span class="pref-value">{{ portions() }}</span>
             <span class="pref-value-label">Portions</span>
-            <button class="pref-stepper-btn" type="button" aria-label="Increase portions" (click)="incrementPortions()">+</button>
+            <button class="pref-stepper-btn" type="button" aria-label="Increase portions"
+              (click)="incrementPortions()">+</button>
           </div>
         </div>
 
         <div class="pref-selection-content">
           <h2>How many are cooking?</h2>
           <div class="pref-number-stepper" role="group" aria-label="Number of cooks">
-            <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks" (click)="decrementCooks()">-</button>
+            <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks"
+              (click)="decrementCooks()"><span>-</span></button>
             <span class="pref-value">{{ cooks() }}</span>
             <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'People' }}</span>
-            <button class="pref-stepper-btn" type="button" aria-label="Increase cooks" (click)="incrementCooks()">+</button>
+            <button class="pref-stepper-btn" type="button" aria-label="Increase cooks"
+              (click)="incrementCooks()"><span>+</span></button>
           </div>
         </div>
       </article>
 
       <article class="card">
         <div class="pref-block">
-          <h2>Cooking time:</h2>
+          <div class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconClock"
+              label="Hero Image"></app-images-component>
+            <h2>Cooking time:</h2>
+          </div>
           <div class="chip-grid chip-grid-time" role="radiogroup" aria-label="Cooking time">
             @for (option of cookingTimeOptions; track option.id) {
-            <button
-              type="button"
-              class="chip chip-time"
-              [class.selected]="selectedCookingTime() === option.id"
-              (click)="selectCookingTime(option.id)">
-              <span class="chip-title">{{ option.label }}</span>
+            <div class="chip-time-wrapper">
+              <button type="button" class="chip chip-time" [class.selected]="selectedCookingTime() === option.id"
+                (click)="selectCookingTime(option.id)">
+                <span class="chip-title">{{ option.label }}</span>
+              </button>
               <span class="chip-subtitle">{{ option.hint }}</span>
-            </button>
+            </div>
             }
           </div>
         </div>
 
         <div class="pref-block">
-          <h2>Cuisine</h2>
+          <div class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconCuisine"
+              label="Hero Image"></app-images-component>
+            <h2>Cuisine</h2>
+          </div>
           <div class="chip-grid" role="radiogroup" aria-label="Cuisine">
             @for (option of cuisineOptions; track option.id) {
-            <button type="button" class="chip" [class.selected]="selectedCuisine() === option.id" (click)="selectCuisine(option.id)">
+            <button type="button" class="chip" [class.selected]="selectedCuisine() === option.id"
+              (click)="selectCuisine(option.id)">
               {{ option.label }}
             </button>
             }
@@ -82,10 +108,15 @@
         </div>
 
         <div class="pref-block">
-          <h2>Diet preferences</h2>
+          <div class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconDiet"
+              label="Hero Image"></app-images-component>
+            <h2>Diet preferences</h2>
+          </div>
           <div class="chip-grid" role="group" aria-label="Diet preferences">
             @for (option of dietOptions; track option.id) {
-            <button type="button" class="chip" [class.selected]="isDietSelected(option.id)" (click)="toggleDiet(option.id)">
+            <button type="button" class="chip" [class.selected]="isDietSelected(option.id)"
+              (click)="toggleDiet(option.id)">
               {{ option.label }}
             </button>
             }
@@ -94,7 +125,8 @@
       </article>
 
       <div class="footer-actions">
-        <button class="btn --generate-btn" type="button" [disabled]="submitState() === 'loading'" (click)="generateRecipe()">
+        <button class="btn --generate-btn" type="button" [disabled]="submitState() === 'loading'"
+          (click)="generateRecipe()">
           {{ submitState() === 'loading' ? 'Generating...' : 'Generate a recipe' }}
         </button>
       </div>

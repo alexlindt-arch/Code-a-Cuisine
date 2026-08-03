@@ -1,18 +1,22 @@
 <section class="recipe-detail-page">
+  <div class="top-section">
+    <div class="content-limited">
+     <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'" [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
+    </div>
+  </div>
   <div class="detail-shell">
-    <a [routerLink]="'/results'" class="back-link"><img src="assets/icons/Arrow-left-dark.png" alt="Back"> Recipe results</a>
 
     @if (selectedRecipe(); as recipe) {
     <div class="recipe-card-shell">
       <article class="recipe-hero-card">
         <div class="hero-main">
-          <p class="meta-line"><img src="assets/icons/clock-iconm.png" alt="Clock"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
+          <p class="meta-line"><img src="assets/icons/clock_Icon.png" alt="Clock"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
           <h1>{{ recipe.title }}</h1>
-          <p class="summary">{{ recipe.description }}</p>
           @if (requestPayload(); as request) {
           <p class="cook-count">Cooking person: {{ request.preferences.cooks }}
-            <span class="chef-badge"><img src="assets/icons/Cook-icon-1.png" alt="Chef 1"> Chef 1</span>
-            <span class="chef-badge"><img src="assets/icons/Cook-icon-2.png" alt="Chef 2"> Chef 2</span>
+            @for (chef of cookIconIndexes(); track chef) {
+            <span class="chef-badge"><img [src]="'assets/icons/Cook-icon-' + chef + '.png'" [alt]="'Chef ' + chef"> </span>
+            }
           </p>
           }
         </div>
@@ -31,10 +35,10 @@
           <div class="nutrition">
             <p class="nutrition-title">Nutritional information</p>
             <div class="nutrition-grid">
-              <div><span>Energy</span><strong>{{ estimatedNutrition().energy }} kcal</strong></div>
-              <div><span>Protein</span><strong>{{ estimatedNutrition().protein }}g</strong></div>
-              <div><span>Fat</span><strong>{{ estimatedNutrition().fat }}g</strong></div>
-              <div><span>Carbs</span><strong>{{ estimatedNutrition().carbs }}g</strong></div>
+               <div><strong>Energy</strong><span>{{ estimatedNutrition().energy }} kcal</span></div>
+               <div><strong>Protein</strong><span>{{ estimatedNutrition().protein }}g</span></div>
+               <div><strong>Fat</strong><span>{{ estimatedNutrition().fat }}g</span></div>
+               <div><strong>Carbs</strong><span>{{ estimatedNutrition().carbs }}g</span></div>
             </div>
           </div>
         </div>
@@ -80,7 +84,7 @@
             @for (step of stepColumns().right; track step; let i = $index) {
             <li>
               <p class="step-headline"><span>{{ i + stepColumns().left.length + 1 }}.</span> Step
-                <img class="step-chef-badge" src="assets/icons/Cook-icon-2.png" alt="Chef 2">
+                <img class="step-chef-badge" [src]="hasSecondChef() ? 'assets/icons/Cook-icon-2.png' : 'assets/icons/Cook-icon-1.png'" [alt]="hasSecondChef() ? 'Chef 2' : 'Chef 1'">
               </p>
               <p>{{ step }}</p>
             </li>
@@ -106,7 +110,7 @@
       @if (likeState() === 'saving') {
       <p class="like-status">Saving your like...</p>
       } @else if (likeState() === 'saved') {
-      <p class="like-status like-status-success">Thanks, your like was saved{{ likeCount() ? ' (' + likeCount() + ')' : '' }}.</p>
+      <p class="like-status like-status-success">Thanks, your like was saved{{ likeCount() ? ' ( ' + likeCount() + ' )' : '' }}</p>
       } @else if (likeState() === 'error') {
       <p class="like-status like-status-error">Could not save the like right now. Please try again.</p>
       }
@@ -116,9 +120,9 @@
         <a [routerLink]="'/cookbook'">Cookbook</a>
       </div>
     </div>
-
-    <a [routerLink]="'/generate-recipe'" class="generate-link">Generate new recipe</a>
-    } @else {
+ <div class="bottom-actions">
+     <app-routerlink-componente [targetClass]="'--dark-bottom'" [linkText]="'Generate a recipe'" [targetPath]="'/generate-recipe'" [imageArrow]="'assets/icons/Arrow-right-dark.png'"></app-routerlink-componente>
+  </div>    } @else {
     <article class="panel empty-state">
       <h1>Recipe not found</h1>
       <p>Select a recipe from the results list first.</p>

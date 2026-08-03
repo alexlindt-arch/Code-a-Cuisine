@@ -1,13 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { ImagesComponent } from '../components/images-component/images-component';
 import { Router, RouterLink } from "@angular/router";
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { LoadingStateService } from '../loading-state.service';
 
 type CookingTimeId = 'quick' | 'medium' | 'complex';
 type CuisineId = 'german' | 'italian' | 'indian' | 'japanese' | 'gourmet' | 'fusion';
 type DietId = 'vegetarian' | 'vegan' | 'keto' | 'none';
+
 
 interface CookingTimeOption {
   id: CookingTimeId;
@@ -71,23 +73,23 @@ interface QuotaResponsePayload {
   quota?: QuotaStatus;
 }
 
+
 @Component({
   selector: 'app-preferences',
-  imports: [ImagesComponent, RouterLink],
+  imports: [ImagesComponent, RouterlinkComponente, RouterLink],
   templateUrl: './preferences.html',
   styleUrls: ['./preferences.scss'],
 })
 export class Preferences {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly loadingStateService = inject(LoadingStateService);
   private readonly storageKey = 'cac-ingredients';
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   private readonly recipeErrorKey = 'cac-recipe-error';
-  private readonly localWebhookUrl = '/n8n-local/webhook/code-a-cuisine-recipe';
-  private readonly localWebhookTestUrl = '/n8n-local/webhook-test/code-a-cuisine-recipe';
-  private readonly localQuotaUrl = '/n8n-local/webhook/code-a-cuisine-quota';
-  private readonly localQuotaTestUrl = '/n8n-local/webhook-test/code-a-cuisine-quota';
+  private readonly stratoWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-recipe';
+  private readonly stratoQuotaUrl = '/n8n-strato/webhook/code-a-cuisine-quota';
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -97,6 +99,10 @@ export class Preferences {
   readonly submitState = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
   readonly quotaStatus = signal<QuotaStatus | null>(null);
   readonly quotaMessage = signal<string | null>(null);
+
+  prefBlockIconClock = 'assets/icons/clock_Icon.png';
+  prefBlockIconCuisine = 'assets/icons/word_Icon.png';
+  prefBlockIconDiet = 'assets/icons/fork_spoon.png';
 
   readonly cookingTimeOptions: CookingTimeOption[] = [
     { id: 'quick', label: 'Quick', hint: 'up to 20min' },
@@ -121,10 +127,24 @@ export class Preferences {
   ];
 
   heroImageArrow = 'assets/icons/Arrow-left-dark.png';
-
   arrowClass = 'arrow-icon';
+  heroImage = 'assets/img/logo-light.png';
+  schusselIcon = 'assets/icons/schussel(2).png';
+  loffelIcon = 'assets/icons/loffel(1).png';
+  karotteIcon = 'assets/icons/karotte.png';
+  kohlIcon2 = 'assets/icons/kohl.png';
+  rettichIcon3 = 'assets/icons/rettich.png';
+
 
   constructor() {
+    // Temporary preview: show the loading state immediately without sending a request.
+   //his.submitState.set('loading');
+   //his.loadingStateService.setLoading(true);
+   //etTimeout(() => {
+     //his.submitState.set('idle');
+     //his.loadingStateService.setLoading(false);
+   //, 50000);
+
     void this.loadQuotaStatus();
   }
 
@@ -182,6 +202,7 @@ export class Preferences {
     }
 
     this.submitState.set('loading');
+    this.loadingStateService.setLoading(true);
     this.clearRecipeResponseCache();
     this.clearRecipeErrorCache();
     this.quotaMessage.set(null);
@@ -225,12 +246,14 @@ export class Preferences {
       this.updateQuotaFromPayload(response);
       this.persistJson(this.recipesResponseKey, response);
       this.submitState.set('success');
+      this.loadingStateService.setLoading(false);
       await this.router.navigate(['/results']);
     } catch (error) {
       console.error('Recipe generation request failed:', error);
       this.clearRecipeResponseCache();
       this.updateQuotaFromError(error);
       this.submitState.set('error');
+      this.loadingStateService.setLoading(false);
       const errorMessage = this.toRequestErrorMessage(error);
       this.persistJson(this.recipeErrorKey, errorMessage);
       console.error(errorMessage);
@@ -247,7 +270,7 @@ export class Preferences {
 
   private async loadQuotaStatus() {
     try {
-      const response = await this.getQuotaStatusRequest(this.localQuotaUrl);
+      const response = await this.getQuotaStatusRequest(this.stratoQuotaUrl);
       this.updateQuotaFromPayload(response);
     } catch (error) {
       console.error('Unable to load quota status:', error);
@@ -271,40 +294,15 @@ export class Preferences {
   }
 
   private async sendRecipeRequest(payload: RecipeRequestPayload, webhookUrl: string): Promise<unknown> {
-    try {
-      return await firstValueFrom(this.http.post(webhookUrl, payload));
-    } catch (error) {
-      const shouldTryWebhookTest = webhookUrl === this.localWebhookUrl
-        && error instanceof HttpErrorResponse
-        && error.status === 404;
-
-      if (!shouldTryWebhookTest) {
-        throw error;
-      }
-
-      // Local n8n often uses webhook-test while workflow is open in editor.
-      return firstValueFrom(this.http.post(this.localWebhookTestUrl, payload));
-    }
+    return firstValueFrom(this.http.post(webhookUrl, payload));
   }
 
   private async getQuotaStatusRequest(webhookUrl: string): Promise<QuotaResponsePayload> {
-    try {
-      return await firstValueFrom(this.http.get<QuotaResponsePayload>(webhookUrl));
-    } catch (error) {
-      const shouldTryWebhookTest = webhookUrl === this.localQuotaUrl
-        && error instanceof HttpErrorResponse
-        && error.status === 404;
-
-      if (!shouldTryWebhookTest) {
-        throw error;
-      }
-
-      return firstValueFrom(this.http.get<QuotaResponsePayload>(this.localQuotaTestUrl));
-    }
+    return firstValueFrom(this.http.get<QuotaResponsePayload>(webhookUrl));
   }
 
   private getWebhookUrl(): string {
-    return this.localWebhookUrl;
+    return this.stratoWebhookUrl;
   }
 
   private toRequestErrorMessage(error: unknown): string {
@@ -319,7 +317,7 @@ export class Preferences {
       }
 
       if (error.status === 404) {
-        return 'Webhook not found (404). In n8n, activate the workflow or keep the editor test workflow open so /webhook-test can answer.';
+        return 'Webhook not found (404). In n8n, activate the workflow for the production /webhook endpoint.';
       }
 
       return `n8n request failed (${error.status} ${error.statusText || 'Error'}).`;

@@ -1,4 +1,4 @@
-<header [class.header-light]="isLightHeader()">
+<header [class.header-light]="isLightHeader() || isLoading()">
 <div class="header-content">
     <div class="logo">
        <a [routerLink]="'/'" aria-label="Zur Startseite"><img [src]="logoSrc()" alt="Code-a-Cuisine Logo" /></a>

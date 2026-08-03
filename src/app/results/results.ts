@@ -1,17 +1,19 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
+
 import { RecipeLibraryService, type StoredRecipeRequestPayload, type StoredRecipeResult } from '../recipe-library.service';
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 
 interface Recipe extends StoredRecipeResult {}
 
 @Component({
   selector: 'app-results',
-  imports: [RouterLink],
+  imports: [ RouterLink, RouterlinkComponente],
   templateUrl: './results.html',
   styleUrls: ['./results.scss'],
 })
-export class Results {
+export class Results implements OnDestroy {
   private readonly responseKey = 'cac-recipe-results';
   private readonly requestKey = 'cac-recipe-request';
   private readonly ingredientsKey = 'cac-ingredients';
@@ -20,12 +22,15 @@ export class Results {
   private readonly savedRecipeIdsKey = 'cac-saved-recipe-ids';
   private readonly router = inject(Router);
   private readonly recipeLibraryService = inject(RecipeLibraryService);
+  private savedNoticeTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
 
   readonly recipes = signal<Recipe[]>([]);
   readonly requestPayload = signal<StoredRecipeRequestPayload | null>(null);
   readonly hasStoredResponse = signal(false);
   readonly generationError = signal<string | null>(null);
   readonly persistenceState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  readonly arrowClass = 'arrow-icon';
 
   readonly hasResults = computed(() => this.recipes().length > 0);
 
@@ -94,7 +99,7 @@ export class Results {
 
     const persistedMarker = localStorage.getItem(this.persistedMarkerKey);
     if (persistedMarker === requestPayload.requestedAt) {
-      this.persistenceState.set('saved');
+      this.showSavedStateTemporarily();
       return;
     }
 
@@ -104,10 +109,27 @@ export class Results {
       const savedRecipeIds = await this.recipeLibraryService.saveGeneratedRecipes(recipes, requestPayload);
       localStorage.setItem(this.persistedMarkerKey, requestPayload.requestedAt);
       localStorage.setItem(this.savedRecipeIdsKey, JSON.stringify(savedRecipeIds));
-      this.persistenceState.set('saved');
+      this.showSavedStateTemporarily();
     } catch (error) {
       console.error('Failed to persist generated recipes to Firebase:', error);
+      this.clearSavedNoticeTimer();
       this.persistenceState.set('error');
+    }
+  }
+
+  private showSavedStateTemporarily(): void {
+    this.clearSavedNoticeTimer();
+    this.persistenceState.set('saved');
+    this.savedNoticeTimeoutId = window.setTimeout(() => {
+      this.persistenceState.set('idle');
+      this.savedNoticeTimeoutId = null;
+    }, 4000);
+  }
+
+  private clearSavedNoticeTimer(): void {
+    if (this.savedNoticeTimeoutId !== null) {
+      clearTimeout(this.savedNoticeTimeoutId);
+      this.savedNoticeTimeoutId = null;
     }
   }
 
@@ -192,7 +214,7 @@ export class Results {
     try {
       return JSON.parse(trimmed);
     } catch {
-      // Keep trying with markdown/code-block wrappers.
+      console.warn('Failed to parse JSON from text, attempting to extract JSON from fenced code block or object literal.');
     }
 
     const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
@@ -251,6 +273,10 @@ export class Results {
     }
 
     return 'Complex';
+  }
+
+  ngOnDestroy(): void {
+    this.clearSavedNoticeTimer();
   }
 
   async startNewRecipeSession(event: Event): Promise<void> {

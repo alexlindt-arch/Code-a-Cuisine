@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { Button } from '../components/button/button';
 import { ImagesComponent } from '../components/images-component/images-component';
+import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { RouterLink } from "@angular/router";
+
 
 @Component({
   selector: 'app-hero',
-  imports: [Button, ImagesComponent, RouterLink],
+  imports: [Button, ImagesComponent, RouterLink, RouterlinkComponente],
   templateUrl: './hero.html',
   styleUrls: ['./hero.scss'],
 })
@@ -24,6 +26,8 @@ export class Hero {
   arrowClass = 'arrow-icon';
   heroImageArrow = 'assets/icons/Arrow-right.png';
   recipeRouterLink: string = '/generate-recipe';
+  cookbookRouterLink: string = '/cookbook';
+
 
 }
 

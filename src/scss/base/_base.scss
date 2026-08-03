@@ -7,5 +7,9 @@
   font-family: var.$font-family;
   font-size: 20px;
   font-weight: var.$font-weight-medium;
-  width: 50%;
+  width: 100%;
+  @include flex.respond-to('x-small') {
+    text-align: center;
+     font-size: var.$font-size-md;
+  }
 }

@@ -1,0 +1,63 @@
+@use '../../../scss/base/base' as base;
+@use '../../../scss/components/variablen' as var;
+@use '../../../scss/abstract/mixings' as mix;
+
+a.router-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 16px 26px;
+  &:hover {
+    background-color: rgba(236, 240, 236, 0.7);
+  }
+   @include mix.respond-to('x-small') {
+    padding: 0;
+    font-size: var.$font-size-lg;
+  }
+}
+
+a.router-link app-images-component {
+  display: inline-flex;
+  width: 20px;
+  min-width: 20px;
+  margin-left: 5px;
+  transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+}
+//--------------------------------------------------------
+a.router-link.--light {
+  color: var.$primary-text-color;
+}
+
+a.router-link:hover {
+  cursor: pointer;
+}
+
+a.router-link.--light:hover app-images-component {
+  transform: translateX(4px);
+}
+//--------------------------------------------------------
+a.router-link.--dark {
+  display: inline-flex;
+  color: var.$secondary-text-color;
+  flex-direction: row-reverse;
+  gap: 8px;
+  width: 100%;
+}
+
+a.router-link.--dark:hover app-images-component {
+  transform: translateX(-8px);
+
+}
+//--------------------------------------------------------
+a.router-link.--dark-bottom {
+  display: inline-flex;
+  justify-content: end;
+  color: var.$secondary-text-color;
+  gap: 8px;
+  width: 100%;
+}
+
+a.router-link.--dark-bottom:hover app-images-component {
+  transform: translateX(8px);
+}

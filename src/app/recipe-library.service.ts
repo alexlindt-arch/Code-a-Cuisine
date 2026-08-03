@@ -66,6 +66,7 @@ export interface CookbookRecipeRecord {
   likes: number;
   createdAt: string;
   requestedAt: string;
+  sourceIngredients: StoredRecipeIngredient[];
 }
 
 type FirebaseRecipesResponse = Record<string, Partial<FirebaseRecipeRecord>>;
@@ -113,6 +114,15 @@ export class RecipeLibraryService {
       });
   }
 
+  async getRecipeById(recipeId: string): Promise<CookbookRecipeRecord | null> {
+    const response = await firstValueFrom(this.http.get<Partial<FirebaseRecipeRecord> | null>(`${this.databaseUrl}/recipes/${recipeId}.json`));
+    if (!response) {
+      return null;
+    }
+
+    return this.toCookbookRecipeRecord(recipeId, response);
+  }
+
   private toFirebaseRecord(recipe: StoredRecipeResult, requestPayload: StoredRecipeRequestPayload): FirebaseRecipeRecord {
     const cuisine = requestPayload.preferences.cuisine;
     const diets = requestPayload.preferences.diets.filter((diet) => diet !== 'none');
@@ -139,32 +149,32 @@ export class RecipeLibraryService {
   }
 
   private toCategorySlug(cuisine: string): string {
-    const normalizedCuisine = cuisine.trim().toLowerCase();
-    if (normalizedCuisine.includes('german')) {
-      return 'german';
+    const normalizedCuisine = cuisine.trim();
+    if (normalizedCuisine.includes('German')) {
+      return 'German';
     }
 
-    if (normalizedCuisine.includes('italian')) {
-      return 'italian';
+    if (normalizedCuisine.includes('Italian')) {
+      return 'Italian';
     }
 
-    if (normalizedCuisine.includes('indian')) {
-      return 'indian';
+    if (normalizedCuisine.includes('Indian')) {
+      return 'Indian';
     }
 
-    if (normalizedCuisine.includes('japanese')) {
-      return 'japanese';
+    if (normalizedCuisine.includes('Japanese')) {
+      return 'Japanese';
     }
 
-    if (normalizedCuisine.includes('gourmet')) {
-      return 'gourmet';
+    if (normalizedCuisine.includes('Gourmet')) {
+      return 'Gourmet';
     }
 
-    if (normalizedCuisine.includes('fusion')) {
-      return 'fusion';
+    if (normalizedCuisine.includes('Fusion')) {
+      return 'Fusion';
     }
 
-    return 'fusion';
+    return 'Fusion';
   }
 
   private toDifficulty(minutes: number, fallback: string): 'Quick' | 'Medium' | 'Complex' {
@@ -176,7 +186,7 @@ export class RecipeLibraryService {
       return 'Medium';
     }
 
-    const normalizedFallback = fallback.trim().toLowerCase();
+    const normalizedFallback = fallback.trim();
     if (normalizedFallback === 'quick') {
       return 'Quick';
     }
@@ -209,6 +219,17 @@ export class RecipeLibraryService {
 
     const diets = Array.isArray(recipe.diets)
       ? recipe.diets.filter((diet): diet is string => typeof diet === 'string')
+      : [];
+
+    const sourceIngredients = Array.isArray(recipe.sourceIngredients)
+      ? recipe.sourceIngredients.filter((ingredient): ingredient is StoredRecipeIngredient => (
+        typeof ingredient === 'object'
+        && ingredient !== null
+        && typeof ingredient.name === 'string'
+        && typeof ingredient.quantity === 'number'
+        && Number.isFinite(ingredient.quantity)
+        && typeof ingredient.unit === 'string'
+      ))
       : [];
 
     const cookingTime = typeof recipe.cookingTime === 'string' && recipe.cookingTime.trim()
@@ -249,23 +270,24 @@ export class RecipeLibraryService {
       likes,
       createdAt,
       requestedAt,
+      sourceIngredients,
     };
   }
 
   private toCookingTimeFallback(estimatedMinutes: number | null): string {
     if (typeof estimatedMinutes !== 'number') {
-      return 'medium';
+      return 'Medium';
     }
 
     if (estimatedMinutes <= 20) {
-      return 'quick';
+      return 'Quick';
     }
 
     if (estimatedMinutes <= 40) {
-      return 'medium';
+      return 'Medium';
     }
 
-    return 'complex';
+    return 'Complex';
   }
 
   private toNumber(value: unknown): number | null {

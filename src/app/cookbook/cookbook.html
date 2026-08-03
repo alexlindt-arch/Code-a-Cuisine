@@ -1,11 +1,15 @@
 <section class="cookbook-page">
+  <div class="content-limited">
+    <div class="top-section">
+      <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Back'" [targetPath]="'/results'" [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
+    </div>
+  </div>
   <div class="cookbook-shell">
-    <a [routerLink]="'/results'" class="back-link"><img src="assets/icons/Arrow-left-dark.png" alt="Back"> Back</a>
-
     <article class="hero-card">
       <div class="hero-copy">
         <h1>Cookbook</h1>
-        <p>From quick bites to gourmet delights, explore them all in our ultimate cookbook and get inspired for your next culinary adventure.</p>
+        <p>From quick bites to gourmet delights, explore them all in our ultimate cookbook and get inspired for your
+          next culinary adventure.</p>
       </div>
 
       <div class="hero-favorites">
@@ -24,9 +28,12 @@
         <div class="favorite-cards">
           @for (recipe of featuredRecipes(); track recipe.id) {
           <article class="favorite-card">
-            <p class="recipe-meta"><img src="assets/icons/clock-iconm.png" alt="Cooking time"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
+            <span class="recipe-image-wrapper">
+              <p class="recipe-meta"><img src="assets/icons/clock_Icon.png" alt="Cooking time"> Cooking time: {{
+                recipe.estimatedMinutes }}min</p>
+                <p class="likes-pill"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</p>
+            </span>
             <h3>{{ recipe.title }}</h3>
-            <p class="likes-pill"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</p>
           </article>
           }
         </div>
@@ -37,14 +44,15 @@
     <div class="category-grid">
       @for (category of categories; track category.slug) {
       <a class="category-card" [routerLink]="['/cookbook', category.slug]">
-        <h2>{{ category.title }} <span>{{ category.accent }}</span></h2>
-        <img [src]="category.image" [alt]="category.title">
-      </a>
-      }
+        <h2>{{ category.title }} <img class="headlin-icon" src="{{ category.accent }}" alt="{{ category.accent }}"></h2>
+        <div class="category-description">
+          <img class="category-image" [src]="category.image" [alt]="category.title">
+        </div>
+      </a>      }
     </div>
 
     <div class="bottom-actions">
-      <a [routerLink]="'/generate-recipe'" class="generate-link">Generate new recipe <img src="assets/icons/Arrow-right.png" alt="Arrow right"></a>
-    </div>
+     <app-routerlink-componente [targetClass]="'--dark-bottom'" [linkText]="'Generate a recipe'" [targetPath]="'/generate-recipe'" [imageArrow]="'assets/icons/Arrow-right-dark.png'"></app-routerlink-componente>
+  </div>
   </div>
 </section>

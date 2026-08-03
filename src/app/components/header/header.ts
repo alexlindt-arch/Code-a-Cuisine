@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, startWith } from 'rxjs';
+import { LoadingStateService } from '../../loading-state.service';
 @Component({
   selector: 'app-header',
   imports: [RouterLink],
@@ -16,11 +17,17 @@ import { filter, startWith } from 'rxjs';
 export class Header {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly loadingStateService = inject(LoadingStateService);
 
   readonly isLightHeader = signal(false);
-  readonly logoSrc = computed(() =>
-    this.isLightHeader() ? 'assets/img/logo-dark.png' : 'assets/img/logo-light.png'
-  );
+  readonly isLoading = this.loadingStateService.isLoading;
+  readonly logoSrc = computed(() => {
+    if (this.isLoading()) {
+      return 'assets/img/logo-light.png';
+    }
+
+    return this.isLightHeader() ? 'assets/img/logo-dark.png' : 'assets/img/logo-light.png';
+  });
 /**
  * The Header class represents the header component of the application.
  * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
@@ -33,6 +40,7 @@ export class Header {
         takeUntilDestroyed()
       )
       .subscribe(() => this.syncHeaderStateFromRoute());
+
   }
 /** * Synchronizes the header state based on the current route's data.
  * It retrieves the deepest activated route and checks for the 'headerStyle' data property.
