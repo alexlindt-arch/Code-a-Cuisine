@@ -1,15 +1,27 @@
-import { Component, computed, signal } from '@angular/core';
+/**
+ * @file generate-recipe.ts
+ * @description TypeScript module for generate recipe.
+ */
+import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
 import {  ImagesComponent } from "../components/images-component/images-component";
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
+/**
+ * @description Interface Ingredients.
+ */
 interface Ingredients {
   name: string;
   quantity: number;
   unit: string;
 }
 
+/**
+ * @description Interface StoredPreferences.
+ */
 interface StoredPreferences {
   portions: number;
   cooks: number;
@@ -18,6 +30,9 @@ interface StoredPreferences {
   diets: string[];
 }
 
+/**
+ * @description Interface StoredRecipeContext.
+ */
 interface StoredRecipeContext {
   ingredients: Ingredients[];
   preferences?: StoredPreferences;
@@ -30,11 +45,35 @@ interface StoredRecipeContext {
   styleUrls: ['./generate-recipe.scss'],
 })
 
-export class GenerateRecipe {
+/**
+ * @description Component or service class GenerateRecipe.
+ */
+export class GenerateRecipe implements OnDestroy {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly databaseUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';
+  private readonly ingredientHintMessage = 'Keine Sonderzeichen erlaubt. Maximal 40 Zeichen.';
+  readonly emptyIngredientHintMessage = 'Bitte gib eine Zutat ein.';
+  firebaseIngredientNames = signal<string[]>([]);
+  ingredientValidationMessage = signal('');
   private readonly storageKey = 'cac-ingredients';
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   readonly unitOptions = ['gram', 'ml', 'piece'];
+  private readonly ingredientNamePattern = /[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
+  private readonly maxIngredientNameLength = 40;
+
+  /**
+   * @description Method sanitizeIngredientName.
+   */
+  private sanitizeIngredientName(value: string): string {
+    return value
+      .trim()
+      .replace(/[<>]/g, '')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/\s{2,}/g, ' ');
+  }
+
   private readonly ingredientCatalog = [
     'Apple',
     'Apfel',
@@ -96,6 +135,8 @@ export class GenerateRecipe {
     unit: 'gram'
   });
 
+
+
   editingIndex = signal<number | null>(null);
   isIngredientSuggestionsOpen = signal(false);
   isCreateUnitMenuOpen = signal(false);
@@ -105,66 +146,127 @@ export class GenerateRecipe {
     unit: 'gram'
   });
 
-label = 'recipe add icon';
-class = 'recipe-image';
-editIcon = 'assets/icons/edit-icon.png';
-checkIcon = 'assets/icons/check.png';
-deleteIcon = 'assets/icons/delete.png';
-arrowDropDownIcon = 'assets/icons/arrow_drop_down.png';
-index: number = 0;
+  label = 'recipe add icon';
+  class = 'recipe-image';
+  addIcon = 'assets/icons/add-icon.png';
+  editIcon = 'assets/icons/edit-icon.png';
+  checkIcon = 'assets/icons/check.png';
+  deleteIcon = 'assets/icons/delete.png';
+  arrowDropDownIcon = 'assets/icons/arrow_drop_down.png';
+  index: number = 0;
 
+  ingredients = signal<Ingredients[]>([]);
 
-ingredients = signal<Ingredients[]>([]);
+  hasIngredients = computed(() => this.ingredients().length > 0);
 
-hasIngredients = computed(() => this.ingredients().length > 0);
+  ingredientSuggestions = computed(() => {
+    const query = this.ingredientsSignal().name.trim().toLowerCase();
 
-ingredientSuggestions = computed(() => {
-  const query = this.ingredientsSignal().name.trim().toLowerCase();
+    if (query.length < 3) {
+      return [];
+    }
 
-  if (query.length < 3) {
-    return [];
-  }
+    const combinedCatalog = Array.from(
+      new Set([...this.firebaseIngredientNames(), ...this.ingredientCatalog])
+    );
 
-  return this.ingredientCatalog
-    .filter((ingredientName) => ingredientName.toLowerCase().startsWith(query))
-    .slice(0, 8);
-});
-
-addIcon = 'assets/icons/add-icon.png';
+    return combinedCatalog
+      .filter((ingredientName) => ingredientName.toLowerCase().startsWith(query))
+      .slice(0, 8);
+  });
   private activatedRoute = inject(ActivatedRoute);
   title = this.activatedRoute.data.pipe(
     map((data) => data['title'] || 'recipe-generator')
   );
 
+  /**
+   * @description Creates an instance of GenerateRecipe.
+   */
   constructor() {
     this.loadIngredientsFromStorage();
+    void this.loadIngredientsFromFirebase();
   }
 
+  /**
+   * @description Method ngOnDestroy.
+   */
+  ngOnDestroy(): void {
+    const target = this.router.getCurrentNavigation()?.extractedUrl.toString() ?? '';
+    if (target === '/') {
+      localStorage.removeItem(this.storageKey);
+      this.ingredients.set([]);
+    }
+  }
+ /**
+  * @description Method onSubmit.
+  */
  onSubmit(event?: Event) {
    event?.preventDefault();
     this.addIngredient();
   }
 
+  /**
+   * @description Method setIngredientName.
+   */
   setIngredientName(event: Event) {
     const value = (event.target as HTMLInputElement).value;
+    const sanitizedValue = this.sanitizeIngredientName(value);
+
     this.ingredientsSignal.update((ingredient) => ({
       ...ingredient,
-      name: value
+      name: sanitizedValue
     }));
 
-    this.isIngredientSuggestionsOpen.set(value.trim().length >= 3);
+    const trimmedValue = sanitizedValue.trim();
+    const isValid = this.isValidIngredientName(sanitizedValue);
+    const shouldOpenSuggestions = trimmedValue.length >= 3 && isValid;
+
+    if (trimmedValue.length === 0) {
+      this.ingredientValidationMessage.set(this.emptyIngredientHintMessage);
+    } else {
+      this.ingredientValidationMessage.set(isValid ? '' : this.ingredientHintMessage);
+    }
+
+    this.isIngredientSuggestionsOpen.set(shouldOpenSuggestions);
+
+    if (shouldOpenSuggestions) {
+      void this.loadIngredientsFromFirebase();
+    }
   }
 
+  /**
+   * @description Method onIngredientFieldFocus.
+   */
   onIngredientFieldFocus() {
-    this.isIngredientSuggestionsOpen.set(this.ingredientsSignal().name.trim().length >= 3);
+    const trimmedValue = this.ingredientsSignal().name.trim();
+    const isValid = this.isValidIngredientName(this.ingredientsSignal().name);
+    const shouldOpenSuggestions = trimmedValue.length >= 3 && isValid;
+
+    if (trimmedValue.length === 0) {
+      this.ingredientValidationMessage.set(this.emptyIngredientHintMessage);
+    } else {
+      this.ingredientValidationMessage.set(isValid ? '' : this.ingredientHintMessage);
+    }
+
+    this.isIngredientSuggestionsOpen.set(shouldOpenSuggestions);
+
+    if (shouldOpenSuggestions) {
+      void this.loadIngredientsFromFirebase();
+    }
   }
 
+  /**
+   * @description Method onIngredientFieldBlur.
+   */
   onIngredientFieldBlur() {
     setTimeout(() => {
       this.isIngredientSuggestionsOpen.set(false);
     }, 120);
   }
 
+  /**
+   * @description Method selectIngredientSuggestion.
+   */
   selectIngredientSuggestion(name: string) {
     this.ingredientsSignal.update((ingredient) => ({
       ...ingredient,
@@ -173,6 +275,9 @@ addIcon = 'assets/icons/add-icon.png';
     this.isIngredientSuggestionsOpen.set(false);
   }
 
+  /**
+   * @description Method setIngredientQuantity.
+   */
   setIngredientQuantity(event: Event) {
     const value = Number((event.target as HTMLInputElement).value);
     this.ingredientsSignal.update((ingredient) => ({
@@ -181,6 +286,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method incrementIngredientQuantity.
+   */
   incrementIngredientQuantity() {
     this.ingredientsSignal.update((ingredient) => ({
       ...ingredient,
@@ -188,6 +296,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method decrementIngredientQuantity.
+   */
   decrementIngredientQuantity() {
     this.ingredientsSignal.update((ingredient) => ({
       ...ingredient,
@@ -195,6 +306,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method setIngredientUnit.
+   */
   setIngredientUnit(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.ingredientsSignal.update((ingredient) => ({
@@ -203,10 +317,16 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method toggleCreateUnitMenu.
+   */
   toggleCreateUnitMenu() {
     this.isCreateUnitMenuOpen.update((isOpen) => !isOpen);
   }
 
+  /**
+   * @description Method selectCreateUnit.
+   */
   selectCreateUnit(unit: string) {
     this.ingredientsSignal.update((ingredient) => ({
       ...ingredient,
@@ -215,16 +335,32 @@ addIcon = 'assets/icons/add-icon.png';
     this.isCreateUnitMenuOpen.set(false);
   }
 
+  /**
+   * @description Method formatUnit.
+   */
   formatUnit(unit: string) {
     return unit === 'piece' ? '' : unit === 'gram' ? 'g' : unit === 'ml' ? 'ml' : unit;
   }
 
+  /**
+   * @description Method addIngredient.
+   */
   addIngredient() {
     const ingredient = this.ingredientsSignal();
-    const normalizedName = ingredient.name.trim();
+    const normalizedName = this.sanitizeIngredientName(ingredient.name);
     const validQuantity = Number(ingredient.quantity);
 
-    if (!normalizedName || !Number.isFinite(validQuantity) || validQuantity <= 0 || !ingredient.unit) {
+    if (!normalizedName.trim()) {
+      this.ingredientValidationMessage.set(this.emptyIngredientHintMessage);
+      return;
+    }
+
+    if (!this.isValidIngredientName(normalizedName)) {
+      this.ingredientValidationMessage.set(this.ingredientHintMessage);
+      return;
+    }
+
+    if (!Number.isFinite(validQuantity) || validQuantity <= 0 || !ingredient.unit) {
       return;
     }
 
@@ -244,16 +380,21 @@ addIcon = 'assets/icons/add-icon.png';
     }
 
     this.persistIngredients();
+    void this.persistIngredientToFirebase(normalizedName);
 
     this.ingredientsSignal.set({
       name: '',
       quantity: 0,
       unit: 'gram'
     });
+    this.ingredientValidationMessage.set('');
     this.isIngredientSuggestionsOpen.set(false);
     this.isCreateUnitMenuOpen.set(false);
   }
 
+  /**
+   * @description Method editIngredient.
+   */
   editIngredient(index: number) {
     const ingredient = this.ingredients()[index];
 
@@ -269,6 +410,9 @@ addIcon = 'assets/icons/add-icon.png';
     });
   }
 
+  /**
+   * @description Method setEditingIngredientQuantity.
+   */
   setEditingIngredientQuantity(event: Event) {
     const value = Number((event.target as HTMLInputElement).value);
 
@@ -278,6 +422,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method incrementEditingIngredientQuantity.
+   */
   incrementEditingIngredientQuantity() {
     this.editingIngredient.update((ingredient) => ({
       ...ingredient,
@@ -285,6 +432,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method decrementEditingIngredientQuantity.
+   */
   decrementEditingIngredientQuantity() {
     this.editingIngredient.update((ingredient) => ({
       ...ingredient,
@@ -292,6 +442,9 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method setEditingIngredientUnit.
+   */
   setEditingIngredientUnit(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
 
@@ -301,10 +454,16 @@ addIcon = 'assets/icons/add-icon.png';
     }));
   }
 
+  /**
+   * @description Method toggleEditUnitMenu.
+   */
   toggleEditUnitMenu() {
     this.isEditUnitMenuOpen.update((isOpen) => !isOpen);
   }
 
+  /**
+   * @description Method selectEditUnit.
+   */
   selectEditUnit(unit: string) {
     this.editingIngredient.update((ingredient) => ({
       ...ingredient,
@@ -313,6 +472,9 @@ addIcon = 'assets/icons/add-icon.png';
     this.isEditUnitMenuOpen.set(false);
   }
 
+  /**
+   * @description Method saveIngredientEdit.
+   */
   saveIngredientEdit(index: number) {
     const ingredient = this.ingredients()[index];
 
@@ -338,6 +500,9 @@ addIcon = 'assets/icons/add-icon.png';
     this.cancelEdit();
   }
 
+  /**
+   * @description Method deleteIngredient.
+   */
   deleteIngredient(index: number) {
     const currentEditingIndex = this.editingIndex();
 
@@ -354,7 +519,12 @@ addIcon = 'assets/icons/add-icon.png';
     this.persistIngredients();
   }
 
+  /**
+   * @description Method cancelEdit.
+   */
   cancelEdit() {
+    this.loadIngredientsFromStorage();
+    void this.loadIngredientsFromFirebase();
     this.editingIndex.set(null);
     this.isEditUnitMenuOpen.set(false);
     this.editingIngredient.set({
@@ -363,6 +533,9 @@ addIcon = 'assets/icons/add-icon.png';
     });
   }
 
+  /**
+   * @description Method persistIngredients.
+   */
   private persistIngredients() {
     try {
       const currentContext = this.getStoredRecipeContext();
@@ -378,6 +551,9 @@ addIcon = 'assets/icons/add-icon.png';
     }
   }
 
+  /**
+   * @description Method clearRecipeGenerationCache.
+   */
   private clearRecipeGenerationCache() {
     try {
       localStorage.removeItem(this.recipePayloadKey);
@@ -387,6 +563,9 @@ addIcon = 'assets/icons/add-icon.png';
     }
   }
 
+  /**
+   * @description Method loadIngredientsFromStorage.
+   */
   private loadIngredientsFromStorage() {
     try {
       const storedIngredients = localStorage.getItem(this.storageKey);
@@ -415,6 +594,9 @@ addIcon = 'assets/icons/add-icon.png';
     }
   }
 
+  /**
+   * @description Method getStoredRecipeContext.
+   */
   private getStoredRecipeContext(): StoredRecipeContext {
     const storedValue = localStorage.getItem(this.storageKey);
 
@@ -438,6 +620,9 @@ addIcon = 'assets/icons/add-icon.png';
     return { ingredients: [] };
   }
 
+  /**
+   * @description Method isValidIngredient.
+   */
   private isValidIngredient(value: unknown): value is Ingredients {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -449,6 +634,9 @@ addIcon = 'assets/icons/add-icon.png';
       && typeof ingredient.unit === 'string';
   }
 
+  /**
+   * @description Method isStoredRecipeContext.
+   */
   private isStoredRecipeContext(value: unknown): value is StoredRecipeContext {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -459,9 +647,87 @@ addIcon = 'assets/icons/add-icon.png';
       && maybeContext.ingredients.every((item) => this.isValidIngredient(item));
   }
 
-generateRecipe(){
+/**
+ * @description Method loadIngredientsFromFirebase.
+ */
+private async loadIngredientsFromFirebase(): Promise<void> {
+  try {
+    const response = await firstValueFrom(
+      this.http.get<Record<string, { name?: string; createdAt?: string }> | null>(
+        `${this.databaseUrl}/ingredients.json`
+      )
+    );
 
+    const firebaseNames = Object.values(response ?? {})
+      .map((ingredient) => (typeof ingredient?.name === 'string' ? ingredient.name.trim() : ''))
+      .filter((ingredientName): ingredientName is string => ingredientName.length > 0);
 
+    const combinedNames = Array.from(new Set([...this.ingredientCatalog, ...firebaseNames]));
+    this.firebaseIngredientNames.set(combinedNames);
+  } catch (error) {
+    console.error('Unable to load ingredients from Firebase:', error);
+  }
 }
 
+/**
+ * @description Method persistIngredientToFirebase.
+ */
+private async persistIngredientToFirebase(name: string): Promise<void> {
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    return;
+  }
+
+  const existingNames = this.firebaseIngredientNames().map((ingredientName) => ingredientName.toLowerCase());
+  if (existingNames.includes(normalizedName.toLowerCase())) {
+    return;
+  }
+
+  try {
+    const payload = {
+      name: normalizedName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const slug = this.toIngredientSlug(normalizedName);
+    await firstValueFrom(
+      this.http.put(`${this.databaseUrl}/ingredients/${slug}.json`, payload)
+    );
+
+    this.firebaseIngredientNames.update((currentNames) =>
+      Array.from(new Set([...currentNames, normalizedName]))
+    );
+  } catch (error) {
+    console.error('Unable to persist ingredient to Firebase:', error);
+  }
+}
+
+  /**
+   * @description Method toIngredientSlug.
+   */
+  private toIngredientSlug(name: string): string {
+  return name
+   .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'ingredient';
+}
+
+
+/**
+ * @description Method isValidIngredientName.
+ */
+private isValidIngredientName(value: string): boolean {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return false;
+  }
+
+  if (trimmedValue.length > this.maxIngredientNameLength) {
+    return false;
+  }
+
+  return this.ingredientNamePattern.test(trimmedValue);
+}
 }

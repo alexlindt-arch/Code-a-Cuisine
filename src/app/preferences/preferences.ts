@@ -1,7 +1,10 @@
-import { Component, signal, inject } from '@angular/core';
+/**
+ * @file preferences.ts
+ * @description TypeScript module for preferences.
+ */
+import { Component, computed, signal, inject } from '@angular/core';
 import { ImagesComponent } from '../components/images-component/images-component';
 import { Router, RouterLink } from "@angular/router";
-import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { LoadingStateService } from '../loading-state.service';
@@ -11,23 +14,35 @@ type CuisineId = 'german' | 'italian' | 'indian' | 'japanese' | 'gourmet' | 'fus
 type DietId = 'vegetarian' | 'vegan' | 'keto' | 'none';
 
 
+/**
+ * @description Interface CookingTimeOption.
+ */
 interface CookingTimeOption {
   id: CookingTimeId;
   label: string;
   hint: string;
 }
 
+/**
+ * @description Interface Option.
+ */
 interface Option<T extends string> {
   id: T;
   label: string;
 }
 
+/**
+ * @description Interface StoredIngredient.
+ */
 interface StoredIngredient {
   name: string;
   quantity: number;
   unit: string;
 }
 
+/**
+ * @description Interface StoredRecipeContext.
+ */
 interface StoredRecipeContext {
   ingredients: StoredIngredient[];
   preferences?: {
@@ -39,6 +54,9 @@ interface StoredRecipeContext {
   };
 }
 
+/**
+ * @description Interface RecipeRequestPayload.
+ */
 interface RecipeRequestPayload {
   ingredients: StoredIngredient[];
   preferences: {
@@ -48,9 +66,13 @@ interface RecipeRequestPayload {
     cuisine: CuisineId;
     diets: DietId[];
   };
+  clientIp: string;
   requestedAt: string;
 }
 
+/**
+ * @description Interface QuotaStatus.
+ */
 interface QuotaStatus {
   date: string;
   ipAddress: string;
@@ -63,11 +85,17 @@ interface QuotaStatus {
   globalRemaining: number;
 }
 
+/**
+ * @description Interface RecipeResponsePayload.
+ */
 interface RecipeResponsePayload {
   result?: unknown;
   quota?: QuotaStatus;
 }
 
+/**
+ * @description Interface QuotaResponsePayload.
+ */
 interface QuotaResponsePayload {
   message?: string;
   quota?: QuotaStatus;
@@ -76,10 +104,13 @@ interface QuotaResponsePayload {
 
 @Component({
   selector: 'app-preferences',
-  imports: [ImagesComponent, RouterlinkComponente, RouterLink],
+  imports: [ImagesComponent, RouterLink],
   templateUrl: './preferences.html',
   styleUrls: ['./preferences.scss'],
 })
+/**
+ * @description Component or service class Preferences.
+ */
 export class Preferences {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -89,7 +120,7 @@ export class Preferences {
   private readonly recipesResponseKey = 'cac-recipe-results';
   private readonly recipeErrorKey = 'cac-recipe-error';
   private readonly stratoWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-recipe';
-  private readonly stratoQuotaUrl = '/n8n-strato/webhook/code-a-cuisine-quota';
+  private readonly quotaWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-quota';
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -99,10 +130,45 @@ export class Preferences {
   readonly submitState = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
   readonly quotaStatus = signal<QuotaStatus | null>(null);
   readonly quotaMessage = signal<string | null>(null);
+  readonly showQuotaDialog = signal(false);
+  readonly quotaExceeded = signal(false);
+  readonly isQuotaStatusLoading = signal(true);
+  private readonly cachedIp = signal<string | null>(null);
+  private readonly quotaExceededKey = 'cac-quota-exceeded';
+  readonly canSubmitRecipe = computed(() => {
+    const quota = this.quotaStatus();
+    const message = this.quotaMessage();
+
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return false;
+    }
+
+    if (this.submitState() === 'loading' || this.isQuotaStatusLoading()) {
+      return false;
+    }
+
+    if (this.quotaExceeded()) {
+      return false;
+    }
+
+    if (!quota) {
+      return false;
+    }
+
+    return quota.perIpRemaining > 0 && quota.globalRemaining > 0;
+  });
 
   prefBlockIconClock = 'assets/icons/clock_Icon.png';
   prefBlockIconCuisine = 'assets/icons/word_Icon.png';
   prefBlockIconDiet = 'assets/icons/fork_spoon.png';
+  heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  arrowClass = 'arrow-icon';
+  heroImage = 'assets/img/logo-light.png';
+  schusselIcon = 'assets/icons/schussel(2).png';
+  loffelIcon = 'assets/icons/loffel(1).png';
+  karotteIcon = 'assets/icons/karotte.png';
+  kohlIcon2 = 'assets/icons/kohl.png';
+  rettichIcon3 = 'assets/icons/rettich.png';
 
   readonly cookingTimeOptions: CookingTimeOption[] = [
     { id: 'quick', label: 'Quick', hint: 'up to 20min' },
@@ -126,52 +192,73 @@ export class Preferences {
     { id: 'none', label: 'No preferences' },
   ];
 
-  heroImageArrow = 'assets/icons/Arrow-left-dark.png';
-  arrowClass = 'arrow-icon';
-  heroImage = 'assets/img/logo-light.png';
-  schusselIcon = 'assets/icons/schussel(2).png';
-  loffelIcon = 'assets/icons/loffel(1).png';
-  karotteIcon = 'assets/icons/karotte.png';
-  kohlIcon2 = 'assets/icons/kohl.png';
-  rettichIcon3 = 'assets/icons/rettich.png';
-
-
+  /**
+   * @description Creates an instance of Preferences.
+   */
   constructor() {
-    // Temporary preview: show the loading state immediately without sending a request.
-   //his.submitState.set('loading');
-   //his.loadingStateService.setLoading(true);
-   //etTimeout(() => {
-     //his.submitState.set('idle');
-     //his.loadingStateService.setLoading(false);
-   //, 50000);
+    void this.initClientIp();
+  }
 
+  /**
+   * @description Method initClientIp.
+   */
+  private async initClientIp() {
+    const ip = await this.getMyIP();
+    this.cachedIp.set(ip);
+    // Restore exceeded state from localStorage (persists across reloads)
+    const today = new Date().toISOString().slice(0, 10);
+    const stored = localStorage.getItem(this.quotaExceededKey);
+    if (stored === today) {
+      this.quotaExceeded.set(true);
+    }
     void this.loadQuotaStatus();
   }
 
+  /**
+   * @description Method incrementCooks.
+   */
   incrementCooks() {
-    this.cooks.update((value) => value + 1);
+    this.cooks.update((value) => Math.min(value + 1, 3));
   }
 
+  /**
+   * @description Method decrementCooks.
+   */
   decrementCooks() {
     this.cooks.update((value) => Math.max(1, value - 1));
   }
 
+  /**
+   * @description Method incrementPortions.
+   */
   incrementPortions() {
-    this.portions.update((value) => value + 1);
+    this.portions.update((value) => Math.min(value + 1, 12));
   }
 
+  /**
+   * @description Method decrementPortions.
+   */
   decrementPortions() {
     this.portions.update((value) => Math.max(1, value - 1));
   }
 
+  /**
+   * @description Method selectCookingTime.
+   */
   selectCookingTime(id: CookingTimeId) {
     this.selectedCookingTime.set(id);
   }
 
+  /**
+   * @description Method selectCuisine.
+   */
   selectCuisine(id: CuisineId) {
     this.selectedCuisine.set(id);
   }
 
+  /**
+   * @description Method toggleDiet.
+   */
   toggleDiet(id: DietId) {
     if (id === 'none') {
       this.selectedDiets.set(['none']);
@@ -189,15 +276,48 @@ export class Preferences {
     });
   }
 
+  /**
+   * @description Method isDietSelected.
+   */
   isDietSelected(id: DietId) {
     return this.selectedDiets().includes(id);
   }
 
+  /**
+   * @description Method closeQuotaDialog.
+   */
+  closeQuotaDialog(): void {
+    this.showQuotaDialog.set(false);
+  }
+
+  /**
+   * @description Method getMyIP.
+   */
+  private async getMyIP(): Promise<string> {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      if (response.ok) {
+        const data = await response.json() as { ip?: string };
+        return data.ip || '127.0.0.1';
+      }
+    } catch (error) {
+      console.error('IP-Abruf fehlgeschlagen:', error);
+    }
+    return '127.0.0.1';
+  }
+
+  /**
+   * @description Method generateRecipe.
+   */
   async generateRecipe() {
+    // Always refresh quota from Firebase before sending so the check is never stale
+    await this.loadQuotaStatus();
+
     const currentQuota = this.quotaStatus();
-    if (currentQuota && (currentQuota.perIpRemaining <= 0 || currentQuota.globalRemaining <= 0)) {
+    if (this.quotaExceeded() || (currentQuota && (currentQuota.perIpRemaining <= 0 || currentQuota.globalRemaining <= 0))) {
       this.submitState.set('idle');
-      this.quotaMessage.set(this.buildQuotaExceededMessage(currentQuota));
+      this.quotaMessage.set(currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.');
+      this.showQuotaDialog.set(true);
       return;
     }
 
@@ -230,6 +350,7 @@ export class Preferences {
         cuisine: this.selectedCuisine(),
         diets: this.selectedDiets(),
       },
+      clientIp: this.cachedIp() ?? '127.0.0.1',
       requestedAt: new Date().toISOString(),
     };
 
@@ -261,6 +382,10 @@ export class Preferences {
       if (error instanceof HttpErrorResponse && error.status === 429) {
         this.submitState.set('idle');
         this.quotaMessage.set(errorMessage);
+        this.quotaExceeded.set(true);
+        localStorage.setItem(this.quotaExceededKey, new Date().toISOString().slice(0, 10));
+        void this.loadQuotaStatus();
+        this.showQuotaDialog.set(true);
         return;
       }
 
@@ -268,15 +393,38 @@ export class Preferences {
     }
   }
 
+  /**
+   * @description Method loadQuotaStatus.
+   */
   private async loadQuotaStatus() {
+    this.isQuotaStatusLoading.set(true);
+
     try {
-      const response = await this.getQuotaStatusRequest(this.stratoQuotaUrl);
-      this.updateQuotaFromPayload(response);
+      const ip = this.cachedIp() ?? await this.getMyIP();
+      const response = await firstValueFrom(
+        this.http.get<QuotaResponsePayload>(`${this.quotaWebhookUrl}?ip=${encodeURIComponent(ip)}`)
+      );
+      const quota = this.readQuotaStatus(response);
+
+      if (quota) {
+        this.syncQuotaState(quota);
+        this.quotaMessage.set(response.message ?? null);
+      } else {
+        this.quotaStatus.set(null);
+        this.quotaMessage.set('Quota check failed: backend returned no quota data.');
+      }
     } catch (error) {
       console.error('Unable to load quota status:', error);
+      this.quotaStatus.set(null);
+      this.quotaMessage.set('Quota service unavailable. Activate the n8n production webhook to enable recipe generation.');
+    } finally {
+      this.isQuotaStatusLoading.set(false);
     }
   }
 
+  /**
+   * @description Method clearRecipeResponseCache.
+   */
   private clearRecipeResponseCache() {
     try {
       localStorage.removeItem(this.recipesResponseKey);
@@ -285,6 +433,9 @@ export class Preferences {
     }
   }
 
+  /**
+   * @description Method clearRecipeErrorCache.
+   */
   private clearRecipeErrorCache() {
     try {
       localStorage.removeItem(this.recipeErrorKey);
@@ -293,18 +444,23 @@ export class Preferences {
     }
   }
 
+  /**
+   * @description Method sendRecipeRequest.
+   */
   private async sendRecipeRequest(payload: RecipeRequestPayload, webhookUrl: string): Promise<unknown> {
     return firstValueFrom(this.http.post(webhookUrl, payload));
   }
 
-  private async getQuotaStatusRequest(webhookUrl: string): Promise<QuotaResponsePayload> {
-    return firstValueFrom(this.http.get<QuotaResponsePayload>(webhookUrl));
-  }
-
+  /**
+   * @description Method getWebhookUrl.
+   */
   private getWebhookUrl(): string {
     return this.stratoWebhookUrl;
   }
 
+  /**
+   * @description Method toRequestErrorMessage.
+   */
   private toRequestErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const quotaAwareError = this.getQuotaErrorMessage(error.error);
@@ -326,6 +482,9 @@ export class Preferences {
     return 'n8n request failed. Check webhook URL and n8n runtime.';
   }
 
+  /**
+   * @description Method getQuotaErrorMessage.
+   */
   private getQuotaErrorMessage(payload: unknown): string | null {
     if (typeof payload !== 'object' || payload === null) {
       return null;
@@ -345,6 +504,9 @@ export class Preferences {
     return `${message} Remaining today: ${quota.perIpRemaining} of ${quota.perIpLimit} for this IP, ${quota.globalRemaining} of ${quota.globalLimit} globally.`;
   }
 
+  /**
+   * @description Method updateQuotaFromError.
+   */
   private updateQuotaFromError(error: unknown) {
     if (!(error instanceof HttpErrorResponse)) {
       return;
@@ -352,17 +514,40 @@ export class Preferences {
 
     const quota = this.readQuotaStatus(error.error);
     if (quota) {
-      this.quotaStatus.set(quota);
+      this.syncQuotaState(quota);
     }
   }
 
+  /**
+   * @description Method updateQuotaFromPayload.
+   */
   private updateQuotaFromPayload(payload: unknown) {
     const quota = this.readQuotaStatus(payload);
     if (quota) {
-      this.quotaStatus.set(quota);
+      this.syncQuotaState(quota);
     }
   }
 
+  /**
+   * @description Method syncQuotaState.
+   */
+  private syncQuotaState(quota: QuotaStatus) {
+    this.quotaStatus.set(quota);
+
+    const today = quota.date;
+    const isExceeded = quota.perIpRemaining <= 0 || quota.globalRemaining <= 0;
+    this.quotaExceeded.set(isExceeded);
+
+    if (isExceeded) {
+      localStorage.setItem(this.quotaExceededKey, today);
+    } else if (localStorage.getItem(this.quotaExceededKey) === today) {
+      localStorage.removeItem(this.quotaExceededKey);
+    }
+  }
+
+  /**
+   * @description Method readQuotaStatus.
+   */
   private readQuotaStatus(payload: unknown): QuotaStatus | null {
     if (typeof payload !== 'object' || payload === null) {
       return null;
@@ -398,6 +583,9 @@ export class Preferences {
     };
   }
 
+  /**
+   * @description Method buildQuotaExceededMessage.
+   */
   private buildQuotaExceededMessage(quota: QuotaStatus): string {
     if (quota.perIpRemaining <= 0) {
       return `Daily quota reached for this IP address. You have used ${quota.perIpUsed} of ${quota.perIpLimit} recipe generations today.`;
@@ -406,6 +594,9 @@ export class Preferences {
     return `System-wide daily quota reached. ${quota.globalUsed} of ${quota.globalLimit} generations have already been used today.`;
   }
 
+  /**
+   * @description Method getStoredRecipeContext.
+   */
   private getStoredRecipeContext(): StoredRecipeContext {
     const storedValue = localStorage.getItem(this.storageKey);
 
@@ -429,6 +620,9 @@ export class Preferences {
     return { ingredients: [] };
   }
 
+  /**
+   * @description Method persistJson.
+   */
   private persistJson(key: string, value: unknown) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -437,6 +631,9 @@ export class Preferences {
     }
   }
 
+  /**
+   * @description Method isValidIngredient.
+   */
   private isValidIngredient(value: unknown): value is StoredIngredient {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -448,6 +645,9 @@ export class Preferences {
       && typeof ingredient.unit === 'string';
   }
 
+  /**
+   * @description Method isStoredRecipeContext.
+   */
   private isStoredRecipeContext(value: unknown): value is StoredRecipeContext {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -458,4 +658,3 @@ export class Preferences {
       && maybeContext.ingredients.every((item) => this.isValidIngredient(item));
   }
 }
-

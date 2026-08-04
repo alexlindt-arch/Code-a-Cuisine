@@ -1,3 +1,7 @@
+/**
+ * @file generate-recipe.spec.ts
+ * @description Unit tests for generate recipe.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { GenerateRecipe } from './generate-recipe';
@@ -66,6 +70,26 @@ describe('GenerateRecipe', () => {
     component.onSubmit();
 
     expect(component.ingredients().length).toBe(1);
+  });
+
+  it('should show a dedicated empty-field hint for blank input', () => {
+    const event = { target: { value: '   ' } } as unknown as Event;
+
+    component.setIngredientName(event);
+
+    expect(component.ingredientValidationMessage()).toBe(component.emptyIngredientHintMessage);
+  });
+
+  it('should show the empty-field hint when submitting a blank ingredient', () => {
+    component.ingredientsSignal.set({
+      name: '   ',
+      quantity: 1,
+      unit: 'gram'
+    });
+
+    component.addIngredient();
+
+    expect(component.ingredientValidationMessage()).toBe(component.emptyIngredientHintMessage);
   });
 
   it('should load ingredients from localStorage on init', async () => {

@@ -1,3 +1,7 @@
+/**
+ * @file app.spec.ts
+ * @description Unit tests for app.spec.
+ */
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 

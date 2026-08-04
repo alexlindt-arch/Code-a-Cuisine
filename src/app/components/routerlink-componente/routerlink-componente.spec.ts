@@ -1,3 +1,7 @@
+/**
+ * @file routerlink-componente.spec.ts
+ * @description Unit tests for routerlink componente.spec.
+ */
 // import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 // import { RouterlinkComponente } from './routerlink-componente';

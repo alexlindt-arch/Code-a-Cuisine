@@ -1,3 +1,7 @@
+/**
+ * @file button.spec.ts
+ * @description Unit tests for button.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Button } from './button';

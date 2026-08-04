@@ -1,3 +1,7 @@
+/**
+ * @file cookbook-data.ts
+ * @description TypeScript module for cookbook data.
+ */
 export interface CookbookCategory {
   slug: string;
   title: string;

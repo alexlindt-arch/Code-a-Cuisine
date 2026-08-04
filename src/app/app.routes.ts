@@ -1,3 +1,7 @@
+/**
+ * @file app.routes.ts
+ * @description TypeScript module for app.routes.
+ */
 import { Routes } from '@angular/router';
 import { Hero } from './hero/hero';
 import { GenerateRecipe } from './generate-recipe/generate-recipe';

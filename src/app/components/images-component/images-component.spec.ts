@@ -1,3 +1,7 @@
+/**
+ * @file images-component.spec.ts
+ * @description Unit tests for images component.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ImagesComponent } from './images-component';

@@ -1,3 +1,7 @@
+/**
+ * @file header.spec.ts
+ * @description Unit tests for header.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Header } from './header';

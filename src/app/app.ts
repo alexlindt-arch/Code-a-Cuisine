@@ -1,3 +1,7 @@
+/**
+ * @file app.ts
+ * @description TypeScript module for app.
+ */
 import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet, ActivatedRoute } from '@angular/router';
 import { Header } from './components/header/header';
@@ -16,6 +20,9 @@ import { Header } from './components/header/header';
 export class App {
   protected readonly title = signal('Code-a-Cuisine');
    private activatedRoute = inject(ActivatedRoute);
+  /**
+   * @description Creates an instance of App.
+   */
   constructor() {
     this.activatedRoute.data.subscribe((data) => {
       if (data['title']) {

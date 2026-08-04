@@ -1,3 +1,7 @@
+/**
+ * @file images-component.ts
+ * @description TypeScript module for images component.
+ */
 import { Component } from '@angular/core';
 import { input } from '@angular/core';
 

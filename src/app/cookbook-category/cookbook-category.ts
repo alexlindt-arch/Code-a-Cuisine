@@ -1,3 +1,7 @@
+/**
+ * @file cookbook-category.ts
+ * @description TypeScript module for cookbook category.
+ */
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -11,6 +15,9 @@ import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-libra
   templateUrl: './cookbook-category.html',
   styleUrls: ['./cookbook-category.scss'],
 })
+/**
+ * @description Component or service class CookbookCategoryPage.
+ */
 export class CookbookCategoryPage {
   private readonly route = inject(ActivatedRoute);
   private readonly recipeLibraryService = inject(RecipeLibraryService);
@@ -58,6 +65,9 @@ export class CookbookCategoryPage {
   readonly hasPreviousPage = computed(() => this.currentPage() > 1);
   readonly hasNextPage = computed(() => this.currentPage() < this.totalPages());
 
+  /**
+   * @description Creates an instance of CookbookCategoryPage.
+   */
   constructor() {
     void this.loadRecipes();
 
@@ -69,6 +79,9 @@ export class CookbookCategoryPage {
     });
   }
 
+  /**
+   * @description Method loadRecipes.
+   */
   private async loadRecipes() {
     this.loadingState.set('loading');
 
@@ -82,10 +95,16 @@ export class CookbookCategoryPage {
     }
   }
 
+  /**
+   * @description Method selectPage.
+   */
   selectPage(pageNumber: number) {
     this.currentPage.set(pageNumber);
   }
 
+  /**
+   * @description Method goToPreviousPage.
+   */
   goToPreviousPage() {
     if (!this.hasPreviousPage()) {
       return;
@@ -94,6 +113,9 @@ export class CookbookCategoryPage {
     this.currentPage.update((page) => page - 1);
   }
 
+  /**
+   * @description Method goToNextPage.
+   */
   goToNextPage() {
     if (!this.hasNextPage()) {
       return;

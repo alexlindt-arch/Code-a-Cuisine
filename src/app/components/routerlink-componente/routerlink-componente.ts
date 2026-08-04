@@ -1,3 +1,7 @@
+/**
+ * @file routerlink-componente.ts
+ * @description TypeScript module for routerlink componente.
+ */
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ImagesComponent } from '../images-component/images-component';
@@ -8,6 +12,9 @@ import { ImagesComponent } from '../images-component/images-component';
   templateUrl: './routerlink-componente.html',
   styleUrls: ['./routerlink-componente.scss'],
 })
+/**
+ * @description Component or service class RouterlinkComponente.
+ */
 export class RouterlinkComponente {
   readonly linkText = input.required<string>();
   readonly targetPath = input.required<string>();

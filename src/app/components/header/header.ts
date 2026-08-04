@@ -1,3 +1,7 @@
+/**
+ * @file header.ts
+ * @description TypeScript module for header.
+ */
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +18,9 @@ import { LoadingStateService } from '../../loading-state.service';
 /** * The Header class represents the header component of the application.
  * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
  * */
+/**
+ * @description Component or service class Header.
+ */
 export class Header {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -32,6 +39,9 @@ export class Header {
  * The Header class represents the header component of the application.
  * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
  * */
+  /**
+   * @description Creates an instance of Header.
+   */
   constructor() {
     this.router.events
       .pipe(

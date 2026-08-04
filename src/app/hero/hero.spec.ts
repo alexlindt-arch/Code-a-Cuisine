@@ -1,3 +1,7 @@
+/**
+ * @file hero.spec.ts
+ * @description Unit tests for hero.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Hero } from './hero';

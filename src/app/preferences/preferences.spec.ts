@@ -1,3 +1,7 @@
+/**
+ * @file preferences.spec.ts
+ * @description Unit tests for preferences.spec.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Preferences } from './preferences';

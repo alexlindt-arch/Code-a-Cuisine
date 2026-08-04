@@ -1,13 +1,23 @@
+/**
+ * @file recipe-library.service.ts
+ * @description TypeScript module for recipe library.service.
+ */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
+/**
+ * @description Interface StoredRecipeIngredient.
+ */
 export interface StoredRecipeIngredient {
   name: string;
   quantity: number;
   unit: string;
 }
 
+/**
+ * @description Interface StoredRecipeRequestPayload.
+ */
 export interface StoredRecipeRequestPayload {
   ingredients: StoredRecipeIngredient[];
   preferences: {
@@ -20,6 +30,9 @@ export interface StoredRecipeRequestPayload {
   requestedAt: string;
 }
 
+/**
+ * @description Interface StoredRecipeResult.
+ */
 export interface StoredRecipeResult {
   title: string;
   description: string;
@@ -28,6 +41,9 @@ export interface StoredRecipeResult {
   steps: string[];
 }
 
+/**
+ * @description Interface FirebaseRecipeRecord.
+ */
 export interface FirebaseRecipeRecord {
   title: string;
   description: string;
@@ -48,6 +64,9 @@ export interface FirebaseRecipeRecord {
   sourceIngredients: StoredRecipeIngredient[];
 }
 
+/**
+ * @description Interface CookbookRecipeRecord.
+ */
 export interface CookbookRecipeRecord {
   id: string;
   title: string;
@@ -72,10 +91,16 @@ export interface CookbookRecipeRecord {
 type FirebaseRecipesResponse = Record<string, Partial<FirebaseRecipeRecord>>;
 
 @Injectable({ providedIn: 'root' })
+/**
+ * @description Component or service class RecipeLibraryService.
+ */
 export class RecipeLibraryService {
   private readonly http = inject(HttpClient);
   private readonly databaseUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';
 
+  /**
+   * @description Method saveGeneratedRecipes.
+   */
   async saveGeneratedRecipes(recipes: StoredRecipeResult[], requestPayload: StoredRecipeRequestPayload): Promise<string[]> {
     const records = recipes.map((recipe) => this.toFirebaseRecord(recipe, requestPayload));
     const ids: string[] = [];
@@ -90,6 +115,9 @@ export class RecipeLibraryService {
     return ids;
   }
 
+  /**
+   * @description Method incrementRecipeLike.
+   */
   async incrementRecipeLike(recipeId: string): Promise<number> {
     const likesUrl = `${this.databaseUrl}/recipes/${recipeId}/likes.json`;
     const currentLikes = await firstValueFrom(this.http.get<number | null>(likesUrl));
@@ -98,6 +126,9 @@ export class RecipeLibraryService {
     return nextLikes;
   }
 
+  /**
+   * @description Method getAllRecipes.
+   */
   async getAllRecipes(): Promise<CookbookRecipeRecord[]> {
     const response = await firstValueFrom(this.http.get<FirebaseRecipesResponse | null>(`${this.databaseUrl}/recipes.json`));
     if (!response) {
@@ -114,6 +145,9 @@ export class RecipeLibraryService {
       });
   }
 
+  /**
+   * @description Method getRecipeById.
+   */
   async getRecipeById(recipeId: string): Promise<CookbookRecipeRecord | null> {
     const response = await firstValueFrom(this.http.get<Partial<FirebaseRecipeRecord> | null>(`${this.databaseUrl}/recipes/${recipeId}.json`));
     if (!response) {
@@ -123,6 +157,9 @@ export class RecipeLibraryService {
     return this.toCookbookRecipeRecord(recipeId, response);
   }
 
+  /**
+   * @description Method toFirebaseRecord.
+   */
   private toFirebaseRecord(recipe: StoredRecipeResult, requestPayload: StoredRecipeRequestPayload): FirebaseRecipeRecord {
     const cuisine = requestPayload.preferences.cuisine;
     const diets = requestPayload.preferences.diets.filter((diet) => diet !== 'none');
@@ -148,6 +185,9 @@ export class RecipeLibraryService {
     };
   }
 
+  /**
+   * @description Method toCategorySlug.
+   */
   private toCategorySlug(cuisine: string): string {
     const normalizedCuisine = cuisine.trim();
     if (normalizedCuisine.includes('German')) {
@@ -177,6 +217,9 @@ export class RecipeLibraryService {
     return 'Fusion';
   }
 
+  /**
+   * @description Method toDifficulty.
+   */
   private toDifficulty(minutes: number, fallback: string): 'Quick' | 'Medium' | 'Complex' {
     if (minutes <= 20) {
       return 'Quick';
@@ -198,6 +241,9 @@ export class RecipeLibraryService {
     return 'Medium';
   }
 
+  /**
+   * @description Method toCookbookRecipeRecord.
+   */
   private toCookbookRecipeRecord(id: string, recipe: Partial<FirebaseRecipeRecord>): CookbookRecipeRecord | null {
     const estimatedMinutes = this.toNumber(recipe.estimatedMinutes);
     const cooks = this.toNumber(recipe.cooks);
@@ -274,6 +320,9 @@ export class RecipeLibraryService {
     };
   }
 
+  /**
+   * @description Method toCookingTimeFallback.
+   */
   private toCookingTimeFallback(estimatedMinutes: number | null): string {
     if (typeof estimatedMinutes !== 'number') {
       return 'Medium';
@@ -290,6 +339,9 @@ export class RecipeLibraryService {
     return 'Complex';
   }
 
+  /**
+   * @description Method toNumber.
+   */
   private toNumber(value: unknown): number | null {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return value;

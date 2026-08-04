@@ -1,3 +1,7 @@
+/**
+ * @file hero.ts
+ * @description TypeScript module for hero.
+ */
 import { Component } from '@angular/core';
 import { Button } from '../components/button/button';
 import { ImagesComponent } from '../components/images-component/images-component';
@@ -30,4 +34,3 @@ export class Hero {
 
 
 }
-

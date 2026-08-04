@@ -1,3 +1,7 @@
+/**
+ * @file button.ts
+ * @description TypeScript module for button.
+ */
 import { Component } from '@angular/core';
 
 @Component({
@@ -14,6 +18,9 @@ import { Component } from '@angular/core';
 export class Button {
   label: string = '';
   homeScreenButton: string = this.label = 'Get started';
+  /**
+   * @description Creates an instance of Button.
+   */
   constructor(){
    this.homeScreenButton;
   }

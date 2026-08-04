@@ -1,10 +1,16 @@
+/**
+ * @file recipe-detail.ts
+ * @description TypeScript module for recipe detail.
+ */
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ImagesComponent } from '../components/images-component/images-component';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
 
+/**
+ * @description Interface Recipe.
+ */
 interface Recipe {
   title: string;
   description: string;
@@ -13,6 +19,9 @@ interface Recipe {
   steps: string[];
 }
 
+/**
+ * @description Interface RecipeRequestPayload.
+ */
 interface RecipeRequestPayload {
   ingredients: Array<{ name: string; quantity: number; unit: string }>;
   preferences: {
@@ -26,10 +35,13 @@ interface RecipeRequestPayload {
 
 @Component({
   selector: 'app-recipe-detail',
-  imports: [ImagesComponent, RouterLink, RouterlinkComponente],
+  imports: [RouterLink, RouterlinkComponente],
   templateUrl: './recipe-detail.html',
   styleUrls: ['./recipe-detail.scss'],
 })
+/**
+ * @description Component or service class RecipeDetail.
+ */
 export class RecipeDetail {
   private readonly responseKey = 'cac-recipe-results';
   private readonly requestKey = 'cac-recipe-request';
@@ -113,6 +125,9 @@ export class RecipeDetail {
     };
   });
 
+  /**
+   * @description Creates an instance of RecipeDetail.
+   */
   constructor() {
     this.loadRequestPayload();
     this.loadRecipes();
@@ -130,6 +145,9 @@ export class RecipeDetail {
     });
   }
 
+  /**
+   * @description Method selectResultRecipeFromRoute.
+   */
   private selectResultRecipeFromRoute(indexParam: string | null) {
     this.backLink.set('/results');
     const index = Number(indexParam);
@@ -148,6 +166,9 @@ export class RecipeDetail {
     this.likeState.set('idle');
   }
 
+  /**
+   * @description Method selectCookbookRecipeFromRoute.
+   */
   private async selectCookbookRecipeFromRoute(recipeId: string) {
     this.backLink.set('/cookbook');
     this.selectedRecipeId.set(recipeId);
@@ -169,6 +190,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method toRecipe.
+   */
   private toRecipe(recipe: CookbookRecipeRecord): Recipe {
     return {
       title: recipe.title,
@@ -179,6 +203,9 @@ export class RecipeDetail {
     };
   }
 
+  /**
+   * @description Method toRequestPayload.
+   */
   private toRequestPayload(recipe: CookbookRecipeRecord): RecipeRequestPayload {
     return {
       ingredients: recipe.sourceIngredients,
@@ -192,6 +219,9 @@ export class RecipeDetail {
     };
   }
 
+  /**
+   * @description Method likeRecipe.
+   */
   async likeRecipe() {
     const recipeId = this.selectedRecipeId();
     if (!recipeId || this.isLikedByUser() || this.likeState() === 'saving') {
@@ -212,6 +242,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method loadRequestPayload.
+   */
   private loadRequestPayload() {
     const raw = localStorage.getItem(this.requestKey);
     if (!raw) {
@@ -228,6 +261,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method loadRecipes.
+   */
   private loadRecipes() {
     const raw = localStorage.getItem(this.responseKey);
     if (!raw) {
@@ -244,6 +280,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method loadSavedRecipeIds.
+   */
   private loadSavedRecipeIds() {
     const raw = localStorage.getItem(this.savedRecipeIdsKey);
     if (!raw) {
@@ -260,6 +299,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method loadLikedRecipeIds.
+   */
   private loadLikedRecipeIds() {
     const raw = localStorage.getItem(this.likedRecipeIdsKey);
     if (!raw) {
@@ -276,6 +318,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method persistLikedRecipeIds.
+   */
   private persistLikedRecipeIds() {
     try {
       localStorage.setItem(this.likedRecipeIdsKey, JSON.stringify(this.likedRecipeIds()));
@@ -284,6 +329,9 @@ export class RecipeDetail {
     }
   }
 
+  /**
+   * @description Method extractResult.
+   */
   private extractResult(payload: unknown): unknown {
     if (typeof payload !== 'object' || payload === null) {
       return payload;
@@ -315,6 +363,9 @@ export class RecipeDetail {
     return payload;
   }
 
+  /**
+   * @description Method parseRecipeArray.
+   */
   private parseRecipeArray(input: unknown): Recipe[] {
     if (Array.isArray(input)) {
       return input
@@ -357,6 +408,9 @@ export class RecipeDetail {
       }));
   }
 
+  /**
+   * @description Method tryParseFromText.
+   */
   private tryParseFromText(value: string): unknown {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -366,7 +420,7 @@ export class RecipeDetail {
     try {
       return JSON.parse(trimmed);
     } catch {
-      // Keep trying with markdown/code-block wrappers.
+      console.warn('Failed to parse JSON from text, attempting to extract JSON object...');
     }
 
     const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
@@ -392,6 +446,9 @@ export class RecipeDetail {
     return null;
   }
 
+  /**
+   * @description Method isRecipe.
+   */
   private isRecipe(value: unknown): value is Recipe {
     if (typeof value !== 'object' || value === null) {
       return false;

@@ -1,3 +1,7 @@
+/**
+ * @file cookbook.ts
+ * @description TypeScript module for cookbook.
+ */
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
@@ -10,6 +14,9 @@ import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-libra
   templateUrl: './cookbook.html',
   styleUrls: ['./cookbook.scss'],
 })
+/**
+ * @description Component or service class Cookbook.
+ */
 export class Cookbook {
   cookbookRouterLink: string = '/results';
   private readonly recipeLibraryService = inject(RecipeLibraryService);
@@ -27,10 +34,16 @@ export class Cookbook {
       .slice(0, 3)
   );
 
+  /**
+   * @description Creates an instance of Cookbook.
+   */
   constructor() {
     void this.loadRecipes();
   }
 
+  /**
+   * @description Method loadRecipes.
+   */
   private async loadRecipes() {
     this.loadingState.set('loading');
 

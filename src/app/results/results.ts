@@ -1,3 +1,7 @@
+/**
+ * @file results.ts
+ * @description TypeScript module for results.
+ */
 import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
@@ -5,6 +9,9 @@ import { inject } from '@angular/core';
 import { RecipeLibraryService, type StoredRecipeRequestPayload, type StoredRecipeResult } from '../recipe-library.service';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 
+/**
+ * @description Interface Recipe.
+ */
 interface Recipe extends StoredRecipeResult {}
 
 @Component({
@@ -13,6 +20,9 @@ interface Recipe extends StoredRecipeResult {}
   templateUrl: './results.html',
   styleUrls: ['./results.scss'],
 })
+/**
+ * @description Component or service class Results.
+ */
 export class Results implements OnDestroy {
   private readonly responseKey = 'cac-recipe-results';
   private readonly requestKey = 'cac-recipe-request';
@@ -34,12 +44,18 @@ export class Results implements OnDestroy {
 
   readonly hasResults = computed(() => this.recipes().length > 0);
 
+  /**
+   * @description Creates an instance of Results.
+   */
   constructor() {
     this.loadRequestPayload();
     this.loadGenerationError();
     this.loadRecipes();
   }
 
+  /**
+   * @description Method loadGenerationError.
+   */
   private loadGenerationError() {
     const raw = localStorage.getItem(this.errorKey);
     if (!raw) {
@@ -56,6 +72,9 @@ export class Results implements OnDestroy {
     }
   }
 
+  /**
+   * @description Method loadRequestPayload.
+   */
   private loadRequestPayload() {
     const raw = localStorage.getItem(this.requestKey);
     if (!raw) {
@@ -72,6 +91,9 @@ export class Results implements OnDestroy {
     }
   }
 
+  /**
+   * @description Method loadRecipes.
+   */
   private loadRecipes() {
     const raw = localStorage.getItem(this.responseKey);
     if (!raw) {
@@ -91,6 +113,9 @@ export class Results implements OnDestroy {
     }
   }
 
+  /**
+   * @description Method persistRecipesIfNeeded.
+   */
   private async persistRecipesIfNeeded(recipes: Recipe[]) {
     const requestPayload = this.requestPayload();
     if (!requestPayload || recipes.length === 0) {
@@ -117,6 +142,9 @@ export class Results implements OnDestroy {
     }
   }
 
+  /**
+   * @description Method showSavedStateTemporarily.
+   */
   private showSavedStateTemporarily(): void {
     this.clearSavedNoticeTimer();
     this.persistenceState.set('saved');
@@ -126,6 +154,9 @@ export class Results implements OnDestroy {
     }, 4000);
   }
 
+  /**
+   * @description Method clearSavedNoticeTimer.
+   */
   private clearSavedNoticeTimer(): void {
     if (this.savedNoticeTimeoutId !== null) {
       clearTimeout(this.savedNoticeTimeoutId);
@@ -133,6 +164,9 @@ export class Results implements OnDestroy {
     }
   }
 
+  /**
+   * @description Method extractResult.
+   */
   private extractResult(payload: unknown): unknown {
     if (typeof payload !== 'object' || payload === null) {
       return payload;
@@ -164,6 +198,9 @@ export class Results implements OnDestroy {
     return payload;
   }
 
+  /**
+   * @description Method parseRecipeArray.
+   */
   private parseRecipeArray(input: unknown): Recipe[] {
     if (Array.isArray(input)) {
       return input
@@ -205,6 +242,9 @@ export class Results implements OnDestroy {
       }));
   }
 
+  /**
+   * @description Method tryParseFromText.
+   */
   private tryParseFromText(value: string): unknown {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -240,6 +280,9 @@ export class Results implements OnDestroy {
     return null;
   }
 
+  /**
+   * @description Method isRecipe.
+   */
   private isRecipe(value: unknown): value is Recipe {
     if (typeof value !== 'object' || value === null) {
       return false;
@@ -255,14 +298,23 @@ export class Results implements OnDestroy {
       && recipe.steps.every((item) => typeof item === 'string');
   }
 
+  /**
+   * @description Method getHeroImage.
+   */
   getHeroImage(): string {
     return 'assets/img/ChatGPT-Image.png';
   }
 
+  /**
+   * @description Method getRecipeCardIcon.
+   */
   getRecipeCardIcon(): string {
     return 'assets/icons/deckel-ickon.png';
   }
 
+  /**
+   * @description Method getDurationLabel.
+   */
   getDurationLabel(minutes: number): string {
     if (minutes <= 20) {
       return 'Quick';
@@ -275,10 +327,16 @@ export class Results implements OnDestroy {
     return 'Complex';
   }
 
+  /**
+   * @description Method ngOnDestroy.
+   */
   ngOnDestroy(): void {
     this.clearSavedNoticeTimer();
   }
 
+  /**
+   * @description Method startNewRecipeSession.
+   */
   async startNewRecipeSession(event: Event): Promise<void> {
     event.preventDefault();
 
