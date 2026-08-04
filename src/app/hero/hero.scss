@@ -6,15 +6,29 @@
   @include mixin.flex-start();
   width: 60%;
   min-height: 100%;
-  height: calc(100vh - 164px);
-  padding-left: 25px;
-  @include mixin.respond-to('x-small') {
-     @include mixin.flex-start();
-     margin-top: 0px;
-     margin-left: 0;
-     font-size: var.$font-size-md;
-     padding: 0 0 0 16px;
+  height: calc(100vh - 169px);
+
+  @include mixin.respond-to('max-large') {
+    width: 100%;
+
   }
+
+  @include mixin.respond-to('max-medium') {
+    @include mixin.flex-start();
+    margin-top: 0px;
+    margin-left: 8px;
+    font-size: var.$font-size-md;
+    padding: 0;
+  }
+
+  @include mixin.respond-to('max-x-small') {
+    @include mixin.flex-start();
+    margin-top: 0px;
+    margin-left: 16px;
+    font-size: var.$font-size-md;
+    padding: 0;
+  }
+
 }
 
 .content-left>p {
@@ -22,9 +36,9 @@
   width: 100%;
   padding-top: 100px;
 
-   @include mixin.respond-to('x-small') {
-     font-size: var.$font-size-xxl;
-     padding-top: 0px;
+  @include mixin.respond-to('max-x-small') {
+    font-size: var.$font-size-xxl;
+    padding-top: 0px;
   }
 }
 
@@ -34,14 +48,17 @@
   width: 40%;
   min-height: 100%;
   height: calc(100vh);
-  margin-top: -164px;
+  margin-top: -169px;
   overflow: hidden;
-    @include mixin.respond-to('x-small') {
-      @include mixin.flex-center();
-      margin-left: 0;
-      margin-top: -124px;
-      font-size: var.$font-size-md;
-    }
+
+  @include mixin.respond-to('max-medium') {
+    margin-top: -116px;
+    margin-left: -30px ;
+  }
+
+  @include mixin.respond-to('max-x-small') {
+    margin-top: -116px;
+  }
 }
 
 .button-content {
@@ -50,8 +67,9 @@
   justify-content: flex-start;
   align-items: center;
   margin-top: 55px;
-   @include mixin.respond-to('x-small') {
-   margin-top: 24px;
+
+  @include mixin.respond-to('max-x-small') {
+    margin-top: 24px;
   }
 }
 
@@ -64,7 +82,30 @@
   margin-top: calc(40vh - 132px);
   padding-bottom: 0;
 
-  @include mixin.respond-to('x-small') {
+  @include mixin.respond-to('max-large') {
+    margin-top: calc(35vh - 132px);
+    width: 100%;
+
+    &>p {
+      width: 100%;
+      text-align: left;
+    }
+  }
+
+  @include mixin.respond-to('max-medium') {
+    margin-top: calc(35vh - 232px);
+    flex-direction: column;
+    align-items: flex-start;
+
+    &>p {
+      width: 70%;
+      text-align: left;
+      font-size: clamp(24px, 6vw, 32px);
+      margin-top: calc(45vh - 232px);
+    }
+  }
+
+  @include mixin.respond-to('max-x-small') {
     margin-top: calc(45vh - 232px);
     padding-bottom: 0;
     flex-direction: column;
@@ -78,6 +119,11 @@ app-images-component:nth-child(1) {
   margin-top: -7%;
   max-width: 460px;
   max-height: 460px;
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 350px;
+    max-height: 350px;
+  }
 }
 
 app-images-component:nth-child(2) {
@@ -86,6 +132,11 @@ app-images-component:nth-child(2) {
   margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 400px;
+    max-height: 400px;
+  }
 }
 
 app-images-component:nth-child(3) {
@@ -94,6 +145,11 @@ app-images-component:nth-child(3) {
   margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 400px;
+    max-height: 400px;
+  }
 }
 
 app-images-component:nth-child(4) {
@@ -105,6 +161,11 @@ app-images-component:nth-child(4) {
   margin-top: -20%;
   max-width: 460px;
   max-height: 460px;
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 400px;
+    max-height: 400px;
+  }
 }
 
 app-images-component:nth-child(5) {
@@ -116,9 +177,14 @@ app-images-component:nth-child(5) {
   margin-top: -25%;
   max-width: 460px;
   max-height: 460px;
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 400px;
+    max-height: 400px;
+  }
 }
 
-@include mixin.respond-to('medium') {
+@include mixin.respond-to('large') {
   app-images-component:nth-child(4) {
     display: block;
     opacity: 1;
@@ -130,10 +196,4 @@ app-images-component:nth-child(5) {
     opacity: 1;
     visibility: visible;
   }
-
-  .bottom-section {
-
-  }
 }
-
-

@@ -26,7 +26,8 @@ h1 {
   width: 100%;
   text-align: start;
   font-family: var.$font-family;
-  font-size: var.$font-size-headline;
+
+  font-size: clamp(68px , 8vw, 104px);
   font-weight: var.$font-weight-large;
   margin: 0;
 }
@@ -35,26 +36,40 @@ section {
   height: calc(100svh - 100px);
   background-color: var.$primary-bg;
   color: var.$primary-text-color;
-  padding: 64px 40px 40px;
 }
 
 .content-limited {
   @include mixin.flex-between();
   @include mixin.max-width(var.$max-width);
   width: 100%;
+  padding: 68px 68px 0;
+
+   @include mixin.respond-to('max-large') {
+     padding: 32px 0 0;
+
+   }
+
+  @include mixin.respond-to('max-medium') {
+    padding: 16px 0 0;
+  }
+  @include mixin.respond-to('max-x-small') {
+    padding: 16px 0 0;
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+
+  @include mixin.respond-to('max-medium') {
+    max-width: 450px;
+    height: auto;
+  }
+
+  @include mixin.respond-to('max-x-small') {
+    max-width: 400px;
+    height: auto;
+  }
 }
 
 
-@include mixin.respond-to('x-small') {
-  section {
-    margin-top: 0px;
-    margin-left: 0;
-    font-size: var.$font-size-md;
-    padding: 24px 0 0 0;
-  }
-
-  p {
-    width: 100%;
-    font-size: var.$font-size-sub-headline-sm;
-  }
-}

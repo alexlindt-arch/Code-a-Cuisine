@@ -64,7 +64,7 @@
             <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks"
               (click)="decrementCooks()"><span>-</span></button>
             <span class="pref-value">{{ cooks() }}</span>
-            <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'People' }}</span>
+            <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'Person' }}</span>
             <button class="pref-stepper-btn" type="button" aria-label="Increase cooks"
               (click)="incrementCooks()"><span>+</span></button>
           </div>
@@ -125,12 +125,21 @@
       </article>
 
       <div class="footer-actions">
-        <button class="btn --generate-btn" type="button" [disabled]="submitState() === 'loading'"
+        <button class="btn --generate-btn" type="button" [disabled]="true"
           (click)="generateRecipe()">
-          {{ submitState() === 'loading' ? 'Generating...' : 'Generate a recipe' }}
+          {{ submitState() === 'loading' ? 'Generating...' : isQuotaStatusLoading() ? 'Checking daily limit...' : !quotaStatus() ? 'Quota check unavailable' : !canSubmitRecipe() ? 'Daily limit reached' : 'Generate a recipe' }}
         </button>
       </div>
     </div>
   </div>
+  }
+
+  @if (showQuotaDialog()) {
+  <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true"></div>
+  <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
+    <h2 id="quota-dialog-title">Tageslimit erreicht</h2>
+    <p>{{ quotaMessage() }}</p>
+    <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Verstanden</button>
+  </dialog>
   }
 </section>

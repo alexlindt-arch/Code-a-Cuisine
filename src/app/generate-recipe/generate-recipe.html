@@ -10,9 +10,17 @@
               <label for="ingredients">Ingredients</label>
             </div>
             <div class="ingredient-field">
-              <input class="form-control-input" type="text" id="ingredients" name="ingredients" autocomplete="off" autocorrect="off" spellcheck="false"
-                [value]="ingredientsSignal().name" (input)="setIngredientName($event)" (focus)="onIngredientFieldFocus()"
-                (blur)="onIngredientFieldBlur()">
+              @if (ingredientValidationMessage()) {
+              <p class="ingredient-validation-message" role="alert" [class.empty-hint]="ingredientValidationMessage() === emptyIngredientHintMessage">
+                {{ ingredientValidationMessage() }}
+              </p>
+              }
+              <input class="form-control-input" type="text" id="ingredients" name="ingredients" autocomplete="off"
+                autocorrect="off" spellcheck="false" pattern="[A-Za-zÄÖÜäöüß0-9\s'()\-]+" maxlength="40"
+                title="Bitte nur Buchstaben, Zahlen, Leerzeichen, Bindestriche, Apostroph oder Klammern verwenden"
+                [value]="ingredientsSignal().name" (input)="setIngredientName($event)"
+                (focus)="onIngredientFieldFocus()" (blur)="onIngredientFieldBlur()">
+
               @if (isIngredientSuggestionsOpen() && ingredientSuggestions().length > 0) {
               <ul class="ingredient-suggestions" role="listbox" aria-label="Ingredient suggestions">
                 @for (suggestion of ingredientSuggestions(); track suggestion) {
@@ -30,10 +38,13 @@
             </div>
             <div class="selection-content">
               <div class="number-stepper">
-                <button class="stepper-btn" type="button" aria-label="Reduce quantity" (click)="decrementIngredientQuantity()">-</button>
+                <button class="stepper-btn" type="button" aria-label="Reduce quantity"
+                  (click)="decrementIngredientQuantity()">-</button>
                 <input class="form-control-input" id="quantity" name="quantity" type="number" min="1" step="1"
-                  [value]="ingredientsSignal().quantity || ''" (input)="setIngredientQuantity($event)" placeholder="100">
-                <button class="stepper-btn" type="button" aria-label="Increase quantity" (click)="incrementIngredientQuantity()">+</button>
+                  [value]="ingredientsSignal().quantity || ''" (input)="setIngredientQuantity($event)"
+                  placeholder="100">
+                <button class="stepper-btn" type="button" aria-label="Increase quantity"
+                  (click)="incrementIngredientQuantity()">+</button>
               </div>
               <div class="unit-selection custom-select" [class.open]="isCreateUnitMenuOpen()">
                 <button class="form-control-input unit-trigger" type="button" (click)="toggleCreateUnitMenu()">
@@ -70,11 +81,13 @@
 
               <div class="selection-content ingredient-edit-controls">
                 <div class="number-stepper number-stepper-edit">
-                  <button class="stepper-btn" type="button" aria-label="Reduce edit quantity" (click)="decrementEditingIngredientQuantity()">-</button>
+                  <button class="stepper-btn" type="button" aria-label="Reduce edit quantity"
+                    (click)="decrementEditingIngredientQuantity()">-</button>
                   <input class="form-control-input" id="edit-quantity-{{$index}}" name="edit-quantity-{{$index}}"
                     type="number" min="1" step="1" [value]="editingIngredient().quantity || ''"
                     (input)="setEditingIngredientQuantity($event)">
-                  <button class="stepper-btn" type="button" aria-label="Increase edit quantity" (click)="incrementEditingIngredientQuantity()">+</button>
+                  <button class="stepper-btn" type="button" aria-label="Increase edit quantity"
+                    (click)="incrementEditingIngredientQuantity()">+</button>
                 </div>
                 <div class="unit-selection-edit custom-select" [class.open]="isEditUnitMenuOpen()">
                   <button class="form-control-input unit-trigger" type="button" (click)="toggleEditUnitMenu()">
@@ -106,7 +119,8 @@
             } @else {
             <div class="ingredient-display-row">
               <div class="ingredient-display-content">
-                <span class="ingredient-quantity">{{ingredient.quantity}} <span>{{formatUnit(ingredient.unit)}}</span></span>
+                <span class="ingredient-quantity">{{ingredient.quantity}}
+                  <span>{{formatUnit(ingredient.unit)}}</span></span>
                 <span class="ingredient-name">{{ingredient.name}}</span>
               </div>
               <span class="button-content">

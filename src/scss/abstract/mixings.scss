@@ -42,24 +42,32 @@
     margin: 0 auto;
 }
 
+$breakpoints-max: (
+  'max-xx-small':  ( min-width:  420px ),
+  'max-x-small':  (  max-width:  767px ),
+  'max-small':  (  max-width:  991px ),
+  'max-medium': (  max-width:  1199px ),
+  'max-large':  (  max-width:  2026px ),
+) !default;
+
 $breakpoints: (
-  'x-small':  ( max-width:  420px ),
-  'small':  ( max-width:  767px ),
-  'medium': ( max-width:  992px ),
-  'large':  ( max-width: 1200px ),
-  'xxl':  ( max-width: 2024px ),
+  'x-small':  ( min-width:  420px ),
+  'small':  ( min-width:  767px),
+  'medium': ( min-width:  992px),
+  'large':  ( min-width: 1390px),
+  'xxl':  ( min-width: 2024px),
 ) !default;
 
 @mixin respond-to($breakpoint) {
-  // If the key exists in the map
-  @if map.has-key($breakpoints, $breakpoint) {
-    // Prints a media query based on the value
+  @if map.has-key($breakpoints-max, $breakpoint) {
+    @media #{meta.inspect(map.get($breakpoints-max, $breakpoint))} {
+      @content;
+    }
+  } @else if map.has-key($breakpoints, $breakpoint) {
     @media #{meta.inspect(map.get($breakpoints, $breakpoint))} {
       @content;
     }
-  }
-  // If the key doesn't exist in the map
-  @else {
-    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. " + "Available breakpoints are: #{map.keys($breakpoints)}.";
+  } @else {
+    @warn "No value found for `#{$breakpoint}`. Available: #{map.keys($breakpoints-max)}, #{map.keys($breakpoints)}.";
   }
 }

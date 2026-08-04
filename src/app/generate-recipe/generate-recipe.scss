@@ -25,7 +25,7 @@ h2 {
   font-family: var.$font-family;
   font-size: var.$font-size-sub-headline-sm;
   font-weight: var.$font-weight-large;
-  margin: 0 ;
+  margin: 0;
 }
 
 section {
@@ -40,6 +40,7 @@ section {
   @include mixin.max-width(var.$max-width);
   flex-direction: column;
   width: 100%;
+  padding: 16px 68px 40px;
 }
 
 .card-content {
@@ -56,7 +57,7 @@ section {
   @include mixin.max-width(700px);
   width: 100%;
   max-height: 150px;
-  padding: var.$pd-xxl;
+  padding: var.$pd-large;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
 }
@@ -147,6 +148,30 @@ section {
   position: relative;
   width: 100%;
 
+
+  .ingredient-validation-message {
+    position: absolute;
+    top: 100%;
+    font-size: 0.9rem;
+    color: #b42318;
+    font-family: var.$font-family;
+    background-color: rgba(var.$primary-bg, 0.3);
+    border-radius: var.$border-radius;
+    margin: 3px 0 0;
+    padding: 4px 8px;
+
+    &.empty-hint {
+      background-color: rgba(var.$primary-bg, 0.3);
+    }
+
+    .ingredient-field:has(.ingredient-validation-message) {
+      &:active,
+      &:focus {
+        display: none;
+      }
+    }
+  }
+
   .ingredient-suggestions {
     list-style: none;
     margin: 6px 0 0 0;
@@ -156,21 +181,20 @@ section {
     left: 0;
     width: 100%;
     border-radius: var.$border-radius;
-    background-color: transparent;
-    backdrop-filter: blur(8px);
+     background-color: rgba(var.$secondary-bg, 0.88);
     z-index: 25;
 
     li {
       width: 100%;
       min-width: 0;
       padding: 0;
+      margin: 3px 0;
       border-radius: var.$border-radius;
     }
 
     button {
       width: 100%;
       border: none;
-      background: transparent;
       color: var.$secondary-text-color;
       text-align: left;
       padding: 8px 10px;
@@ -180,7 +204,7 @@ section {
       border-radius: var.$border-radius;
 
       &:hover {
-        background-color: rgba(var.$primary-bg, 0.32);
+        background-color: rgba(var.$secondary-bg, 0.32);
       }
     }
   }
@@ -257,7 +281,7 @@ ul {
     transform: translate(0%, -50%) rotate(180deg);
     right: 10px;
     pointer-events: none;
-    }
+  }
 }
 
 .custom-select.open app-images-component {
@@ -315,6 +339,7 @@ ul {
   from {
     transform: rotate(180deg);
   }
+
   to {
     top: 20%;
     transform: rotate(-0deg);
@@ -326,6 +351,7 @@ ul {
   text-align: end;
   width: auto;
   margin: var.$mgr-medium 0;
+
   & .--generate-btn {
     margin-right: 0px;
   }
@@ -337,12 +363,14 @@ ul {
 
 .card .ingredient-edit-row {
   display: flex;
+
   & .selection-content {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     gap: var.$mgr-large;
   }
+
   & .form-control-input {
     width: 80px;
     background-color: var.$input-bg-color;

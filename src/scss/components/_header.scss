@@ -14,7 +14,7 @@ header{
     width: 100%;
     padding: 40px 68px 40px;
     align-items: center;
-    @include flex.respond-to('x-small') {
+    @include flex.respond-to('max-x-small') {
     padding: 12px 16px;
   }
   }

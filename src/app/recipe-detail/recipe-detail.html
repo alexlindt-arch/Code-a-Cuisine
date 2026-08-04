@@ -1,9 +1,12 @@
 <section class="recipe-detail-page">
+
   <div class="top-section">
-    <div class="content-limited">
-     <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'" [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
-    </div>
+  <div class="content-limited">
+
+    <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'" [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
   </div>
+  </div>
+  <div class="content-limited">
   <div class="detail-shell">
 
     @if (selectedRecipe(); as recipe) {
@@ -110,7 +113,7 @@
       @if (likeState() === 'saving') {
       <p class="like-status">Saving your like...</p>
       } @else if (likeState() === 'saved') {
-      <p class="like-status like-status-success">Thanks, your like was saved{{ likeCount() ? ' ( ' + likeCount() + ' )' : '' }}</p>
+      <p class="like-status like-status-success">Thanks, your like was saved</p>
       } @else if (likeState() === 'error') {
       <p class="like-status like-status-error">Could not save the like right now. Please try again.</p>
       }
@@ -129,5 +132,6 @@
       <a [routerLink]="'/results'" class="back-button">Back to results</a>
     </article>
     }
+  </div>
   </div>
 </section>

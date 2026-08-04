@@ -8,7 +8,8 @@
   font-size: 20px;
   font-weight: var.$font-weight-medium;
   width: 100%;
-  @include flex.respond-to('x-small') {
+
+  @include flex.respond-to('max-x-small') {
     text-align: center;
      font-size: var.$font-size-md;
   }
