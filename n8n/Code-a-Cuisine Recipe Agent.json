@@ -27,7 +27,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -96,
+        384,
         32
       ]
     },
@@ -44,14 +44,14 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
       "position": [
-        144,
+        624,
         32
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ {\n  request: {\n    ingredients: $json.ingredients,\n    preferences: $json.preferences\n  },\n  requesterIp: $json.requesterIp,\n  generatedAt: new Date().toISOString(),\n  result: $json.output ?? $json.text ?? $json\n} }}",
+        "responseBody": "={{ {\n  request: {\n    ingredients: $json.ingredients,\n    preferences: $json.preferences\n  },\n  requesterIp: $json.ipAddress,\n  generatedAt: new Date().toISOString(),\n  quota: $json.quota,\n  result: $json.output ?? $json.text ?? $json\n} }}",
         "options": {
           "responseCode": 200
         }
@@ -61,7 +61,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        416,
+        864,
         32
       ]
     },
@@ -72,11 +72,108 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        128,
+        608,
         320
       ],
       "id": "cd8cfedc-ffa9-493d-b319-1c52b97ca0e4",
       "name": "Ollama Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\n\nlet ip = String(body.clientIp || '').trim();\n\nif (!ip || ip === '127.0.0.1') {\n  try {\n    const ipResponse = await fetch('https://api.ipify.org?format=json');\n    if (ipResponse.ok) {\n      const ipData = await ipResponse.json();\n      ip = ipData.ip || '127.0.0.1';\n    }\n  } catch (error) {\n    ip = '127.0.0.1';\n  }\n}\n\nconst ipSlug = ip.replace(/[^a-zA-Z0-9]/g, '-').replace(/^-+|-+$/g, '') || 'localhost';\nconst today = new Date().toISOString().slice(0, 10);\nconst dbUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';\nconst perIpPath = `${dbUrl}/quota/${today}/ips/${ipSlug}.json`;\nconst globalPath = `${dbUrl}/quota/${today}/global.json`;\nconst perIpLimit = 3;\nconst globalLimit = 12;\n\nconst readCounter = async (path) => {\n  try {\n    const response = await fetch(path);\n    if (!response.ok) {\n      return 0;\n    }\n\n    const value = await response.json();\n    if (typeof value === 'number' && Number.isFinite(value)) {\n      return Math.max(0, value);\n    }\n\n    if (value && typeof value === 'object') {\n      const possibleCount = value.count ?? value.used ?? value.perIpUsed ?? value.globalUsed;\n      if (typeof possibleCount === 'number' && Number.isFinite(possibleCount)) {\n        return Math.max(0, possibleCount);\n      }\n    }\n  } catch (error) {\n    console.log(`Quota read failed for ${path}: ${error.message}`);\n  }\n\n  return 0;\n};\n\nconst perIpUsed = await readCounter(perIpPath);\nconst globalUsed = await readCounter(globalPath);\nconst quota = {\n  date: today,\n  ipAddress: ip,\n  ipVersion: 'unknown',\n  perIpLimit,\n  perIpUsed,\n  perIpRemaining: Math.max(0, perIpLimit - perIpUsed),\n  globalLimit,\n  globalUsed,\n  globalRemaining: Math.max(0, globalLimit - globalUsed),\n};\n\nconst quotaOk = quota.perIpRemaining > 0 && quota.globalRemaining > 0;\nlet quotaExceededMessage = null;\n\nif (!quotaOk) {\n  quotaExceededMessage = quota.perIpRemaining <= 0\n    ? `Daily generation limit reached. You can generate up to ${perIpLimit} recipes per day from this IP address.`\n    : `System-wide daily generation limit reached. Up to ${globalLimit} recipes can be generated across the app per day.`;\n} else {\n  const nextPerIpUsed = perIpUsed + 1;\n  const nextGlobalUsed = globalUsed + 1;\n\n  try {\n    await Promise.all([\n      fetch(perIpPath, {\n        method: 'PUT',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(nextPerIpUsed),\n      }),\n      fetch(globalPath, {\n        method: 'PUT',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(nextGlobalUsed),\n      }),\n    ]);\n\n    quota.perIpUsed = nextPerIpUsed;\n    quota.perIpRemaining = Math.max(0, perIpLimit - nextPerIpUsed);\n    quota.globalUsed = nextGlobalUsed;\n    quota.globalRemaining = Math.max(0, globalLimit - nextGlobalUsed);\n  } catch (error) {\n    console.log(`Quota update failed: ${error.message}`);\n  }\n}\n\nreturn [{\n  json: {\n    ...$json,\n    ipAddress: ip,\n    ipSlug,\n    quotaDate: today,\n    quotaOk,\n    quota,\n    quotaExceededMessage,\n  }\n}];"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Check IP Quota",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.quotaOk }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Route on Quota",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        144,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  message: $json.quotaExceededMessage,\n  quota: $json.quota\n} }}",
+        "options": {
+          "responseCode": 429
+        }
+      },
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Return Quota Exceeded",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        144,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "code-a-cuisine-quota",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d4e5f6a7-b8c9-0123-def4-567890123456",
+      "name": "Quota Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        288
+      ],
+      "webhookId": "fdb5800b-c488-4f37-a543-620a164a1cd3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const requestData = $json.query ?? $json.params ?? $json;\n\nlet ip = String(requestData.ip || requestData.clientIp || '').trim();\n\nif (!ip || ip === '127.0.0.1') {\n  try {\n    const ipResponse = await fetch('https://api.ipify.org?format=json');\n    if (ipResponse.ok) {\n      const ipData = await ipResponse.json();\n      ip = ipData.ip || '127.0.0.1';\n    }\n  } catch (error) {\n    ip = '127.0.0.1';\n  }\n}\n\nconst ipSlug = ip.replace(/[^a-zA-Z0-9]/g, '-').replace(/^-+|-+$/g, '') || 'localhost';\nconst today = new Date().toISOString().slice(0, 10);\nconst dbUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';\nconst perIpPath = `${dbUrl}/quota/${today}/ips/${ipSlug}.json`;\nconst globalPath = `${dbUrl}/quota/${today}/global.json`;\nconst perIpLimit = 3;\nconst globalLimit = 12;\n\nconst readCounter = async (path) => {\n  try {\n    const response = await fetch(path);\n    if (!response.ok) {\n      return 0;\n    }\n\n    const value = await response.json();\n    if (typeof value === 'number' && Number.isFinite(value)) {\n      return Math.max(0, value);\n    }\n\n    if (value && typeof value === 'object') {\n      const possibleCount = value.count ?? value.used ?? value.perIpUsed ?? value.globalUsed;\n      if (typeof possibleCount === 'number' && Number.isFinite(possibleCount)) {\n        return Math.max(0, possibleCount);\n      }\n    }\n  } catch (error) {\n    console.log(`Quota read failed for ${path}: ${error.message}`);\n  }\n\n  return 0;\n};\n\nconst perIpUsed = await readCounter(perIpPath);\nconst globalUsed = await readCounter(globalPath);\nconst quota = {\n  date: today,\n  ipAddress: ip,\n  ipVersion: 'unknown',\n  perIpLimit,\n  perIpUsed,\n  perIpRemaining: Math.max(0, perIpLimit - perIpUsed),\n  globalLimit,\n  globalUsed,\n  globalRemaining: Math.max(0, globalLimit - globalUsed),\n};\n\nlet message = null;\nif (quota.perIpRemaining <= 0) {\n  message = `Daily generation limit reached. You can generate up to ${perIpLimit} recipes per day from this IP address.`;\n} else if (quota.globalRemaining <= 0) {\n  message = `System-wide daily generation limit reached. Up to ${globalLimit} recipes can be generated across the app per day.`;\n}\n\nreturn [{\n  json: {\n    ipAddress: ip,\n    ipSlug,\n    quotaDate: today,\n    quota,\n    message,\n  },\n}];"
+      },
+      "id": "e5f6a7b8-c901-2345-ef67-890123456789",
+      "name": "Read Quota Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  message: $json.message,\n  quota: $json.quota\n} }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "f6a7b8c9-0123-4567-f890-1234567890ab",
+      "name": "Return Quota Status",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        144,
+        288
+      ]
     }
   ],
   "pinData": {},
@@ -85,7 +182,36 @@
       "main": [
         [
           {
+            "node": "Check IP Quota",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check IP Quota": {
+      "main": [
+        [
+          {
+            "node": "Route on Quota",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route on Quota": {
+      "main": [
+        [
+          {
             "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Quota Exceeded",
             "type": "main",
             "index": 0
           }
@@ -120,6 +246,28 @@
           {
             "node": "Recipe AI Agent",
             "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quota Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Quota Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Quota Status": {
+      "main": [
+        [
+          {
+            "node": "Return Quota Status",
+            "type": "main",
             "index": 0
           }
         ]
