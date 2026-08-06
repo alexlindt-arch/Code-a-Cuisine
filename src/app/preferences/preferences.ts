@@ -2,7 +2,7 @@
  * @file preferences.ts
  * @description TypeScript module for preferences.
  */
-import { Component, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject, OnDestroy } from '@angular/core';
 import { ImagesComponent } from '../components/images-component/images-component';
 import { Router, RouterLink } from "@angular/router";
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -101,6 +101,12 @@ interface QuotaResponsePayload {
   quota?: QuotaStatus;
 }
 
+interface LocalPerIpQuota {
+  date: string;
+  ipAddress: string;
+  used: number;
+}
+
 
 @Component({
   selector: 'app-preferences',
@@ -111,7 +117,7 @@ interface QuotaResponsePayload {
 /**
  * @description Component or service class Preferences.
  */
-export class Preferences {
+export class Preferences implements OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly loadingStateService = inject(LoadingStateService);
@@ -121,6 +127,8 @@ export class Preferences {
   private readonly recipeErrorKey = 'cac-recipe-error';
   private readonly stratoWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-recipe';
   private readonly quotaWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-quota';
+  private readonly localPerIpQuotaKey = 'cac-local-per-ip-quota';
+  private readonly localPerIpLimit = 3;
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -135,13 +143,11 @@ export class Preferences {
   readonly isQuotaStatusLoading = signal(true);
   private readonly cachedIp = signal<string | null>(null);
   private readonly quotaExceededKey = 'cac-quota-exceeded';
+  private readonly resetHintClock = signal(Date.now());
+  private resetHintTimerId: ReturnType<typeof setInterval> | null = null;
   readonly canSubmitRecipe = computed(() => {
     const quota = this.quotaStatus();
-    const message = this.quotaMessage();
-
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return false;
-    }
+    const localPerIpUsed = this.getLocalPerIpUsageForToday();
 
     if (this.submitState() === 'loading' || this.isQuotaStatusLoading()) {
       return false;
@@ -152,16 +158,65 @@ export class Preferences {
     }
 
     if (!quota) {
+      return localPerIpUsed < this.localPerIpLimit;
+    }
+
+    if (!this.isQuotaForToday(quota)) {
+      return true;
+    }
+
+    return quota.perIpRemaining > 0 && quota.globalRemaining > 0 && localPerIpUsed < this.localPerIpLimit;
+  });
+  readonly showQuotaCard = computed(() => {
+    const quota = this.quotaStatus();
+
+    if (!quota || !this.isQuotaForToday(quota)) {
       return false;
     }
 
-    return quota.perIpRemaining > 0 && quota.globalRemaining > 0;
+    const hasUsageToday = quota.perIpUsed > 0 || quota.globalUsed > 0;
+    const hasQuotaMessage = typeof this.quotaMessage() === 'string' && this.quotaMessage()!.trim().length > 0;
+
+    return hasUsageToday || hasQuotaMessage;
+  });
+  readonly quotaDialogMessage = computed(() => {
+    const message = this.quotaMessage();
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+
+    const quota = this.quotaStatus();
+    if (quota && this.isQuotaForToday(quota)) {
+      return this.buildQuotaExceededMessage(quota);
+    }
+
+    const localPerIpUsed = this.getLocalPerIpUsageForToday();
+    if (localPerIpUsed >= this.localPerIpLimit) {
+      return `Daily generation limit reached on this device. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations today.`;
+    }
+
+    return 'Tageslimit erreicht. Bitte versuche es spaeter erneut.';
+  });
+  readonly quotaResetHint = computed(() => {
+    // Depend on the clock signal so the hint updates every minute.
+    const now = this.resetHintClock();
+    if (!this.showQuotaDialog()) {
+      return null;
+    }
+
+    const remainingMs = this.getMsUntilNextUtcDay(now);
+    const totalMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `Reset in ${hours}h ${minutes}m.`;
   });
 
   prefBlockIconClock = 'assets/icons/clock_Icon.png';
   prefBlockIconCuisine = 'assets/icons/word_Icon.png';
   prefBlockIconDiet = 'assets/icons/fork_spoon.png';
   heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  heroImageArrowLight = 'assets/icons/Arrow-right.png';
   arrowClass = 'arrow-icon';
   heroImage = 'assets/img/logo-light.png';
   schusselIcon = 'assets/icons/schussel(2).png';
@@ -196,7 +251,15 @@ export class Preferences {
    * @description Creates an instance of Preferences.
    */
   constructor() {
+    this.startResetHintTimer();
     void this.initClientIp();
+  }
+
+  ngOnDestroy(): void {
+    if (this.resetHintTimerId !== null) {
+      clearInterval(this.resetHintTimerId);
+      this.resetHintTimerId = null;
+    }
   }
 
   /**
@@ -206,7 +269,7 @@ export class Preferences {
     const ip = await this.getMyIP();
     this.cachedIp.set(ip);
     // Restore exceeded state from localStorage (persists across reloads)
-    const today = new Date().toISOString().slice(0, 10);
+    const today = this.getTodayQuotaKey();
     const stored = localStorage.getItem(this.quotaExceededKey);
     if (stored === today) {
       this.quotaExceeded.set(true);
@@ -291,6 +354,17 @@ export class Preferences {
   }
 
   /**
+   * @description Method isQuotaForToday.
+   */
+  isQuotaForToday(quota: QuotaStatus | null): boolean {
+    if (!quota) {
+      return false;
+    }
+
+    return quota.date === this.getTodayQuotaKey();
+  }
+
+  /**
    * @description Method getMyIP.
    */
   private async getMyIP(): Promise<string> {
@@ -314,9 +388,15 @@ export class Preferences {
     await this.loadQuotaStatus();
 
     const currentQuota = this.quotaStatus();
-    if (this.quotaExceeded() || (currentQuota && (currentQuota.perIpRemaining <= 0 || currentQuota.globalRemaining <= 0))) {
+    const localPerIpUsed = this.getLocalPerIpUsageForToday();
+    const localQuotaExceeded = localPerIpUsed >= this.localPerIpLimit;
+    if (this.quotaExceeded() || localQuotaExceeded || (currentQuota && (currentQuota.perIpRemaining <= 0 || currentQuota.globalRemaining <= 0))) {
       this.submitState.set('idle');
-      this.quotaMessage.set(currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.');
+      if (localQuotaExceeded) {
+        this.quotaMessage.set(`Daily generation limit reached on this device. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations today.`);
+      } else {
+        this.quotaMessage.set(currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.');
+      }
       this.showQuotaDialog.set(true);
       return;
     }
@@ -364,27 +444,35 @@ export class Preferences {
 
     try {
       const response = await this.sendRecipeRequest(payload, webhookUrl);
+      this.incrementLocalPerIpUsageForToday();
       this.updateQuotaFromPayload(response);
+      await this.loadQuotaStatus();
       this.persistJson(this.recipesResponseKey, response);
       this.submitState.set('success');
       this.loadingStateService.setLoading(false);
       await this.router.navigate(['/results']);
     } catch (error) {
-      console.error('Recipe generation request failed:', error);
+      const isQuota429 = error instanceof HttpErrorResponse && error.status === 429;
+      if (isQuota429) {
+        console.info('Quota response received (429).');
+      } else {
+        console.error('Recipe generation request failed:', error);
+      }
       this.clearRecipeResponseCache();
       this.updateQuotaFromError(error);
       this.submitState.set('error');
       this.loadingStateService.setLoading(false);
       const errorMessage = this.toRequestErrorMessage(error);
       this.persistJson(this.recipeErrorKey, errorMessage);
-      console.error(errorMessage);
+      if (!isQuota429) {
+        console.error(errorMessage);
+      }
 
-      if (error instanceof HttpErrorResponse && error.status === 429) {
+      if (isQuota429) {
         this.submitState.set('idle');
         this.quotaMessage.set(errorMessage);
         this.quotaExceeded.set(true);
-        localStorage.setItem(this.quotaExceededKey, new Date().toISOString().slice(0, 10));
-        void this.loadQuotaStatus();
+        localStorage.setItem(this.quotaExceededKey, this.getTodayQuotaKey());
         this.showQuotaDialog.set(true);
         return;
       }
@@ -401,17 +489,26 @@ export class Preferences {
 
     try {
       const ip = this.cachedIp() ?? await this.getMyIP();
+      const now = Date.now();
       const response = await firstValueFrom(
-        this.http.get<QuotaResponsePayload>(`${this.quotaWebhookUrl}?ip=${encodeURIComponent(ip)}`)
+        this.http.get<QuotaResponsePayload>(`${this.quotaWebhookUrl}?ip=${encodeURIComponent(ip)}&t=${now}`)
       );
       const quota = this.readQuotaStatus(response);
 
       if (quota) {
-        this.syncQuotaState(quota);
-        this.quotaMessage.set(response.message ?? null);
+        const mergedQuota = this.mergeWithLocalPerIpQuota(quota);
+        this.syncQuotaState(mergedQuota);
+        const isExceeded = this.isQuotaForToday(mergedQuota) && (mergedQuota.perIpRemaining <= 0 || mergedQuota.globalRemaining <= 0);
+        const localExceeded = this.getLocalPerIpUsageForToday() >= this.localPerIpLimit;
+        this.quotaMessage.set(isExceeded
+          ? (response.message ?? this.buildQuotaExceededMessage(mergedQuota))
+          : localExceeded
+            ? `Daily generation limit reached on this device. You can generate up to ${this.localPerIpLimit} recipes per day.`
+            : null);
       } else {
         this.quotaStatus.set(null);
-        this.quotaMessage.set('Quota check failed: backend returned no quota data.');
+        const localExceeded = this.getLocalPerIpUsageForToday() >= this.localPerIpLimit;
+        this.quotaMessage.set(localExceeded ? `Daily generation limit reached on this device. You can generate up to ${this.localPerIpLimit} recipes per day.` : 'Quota check failed: backend returned no quota data.');
       }
     } catch (error) {
       console.error('Unable to load quota status:', error);
@@ -501,6 +598,11 @@ export class Preferences {
       return message;
     }
 
+    const isQuotaExceeded = quota.perIpRemaining <= 0 || quota.globalRemaining <= 0;
+    if (!isQuotaExceeded) {
+      return message;
+    }
+
     return `${message} Remaining today: ${quota.perIpRemaining} of ${quota.perIpLimit} for this IP, ${quota.globalRemaining} of ${quota.globalLimit} globally.`;
   }
 
@@ -534,15 +636,106 @@ export class Preferences {
   private syncQuotaState(quota: QuotaStatus) {
     this.quotaStatus.set(quota);
 
-    const today = quota.date;
-    const isExceeded = quota.perIpRemaining <= 0 || quota.globalRemaining <= 0;
+    const today = this.getTodayQuotaKey();
+    const isExceeded = quota.date === today && (quota.perIpRemaining <= 0 || quota.globalRemaining <= 0);
     this.quotaExceeded.set(isExceeded);
 
     if (isExceeded) {
       localStorage.setItem(this.quotaExceededKey, today);
-    } else if (localStorage.getItem(this.quotaExceededKey) === today) {
+    } else {
       localStorage.removeItem(this.quotaExceededKey);
     }
+  }
+
+  private mergeWithLocalPerIpQuota(quota: QuotaStatus): QuotaStatus {
+    const localPerIpUsed = this.getLocalPerIpUsageForToday();
+    if (!this.isQuotaForToday(quota) || localPerIpUsed <= quota.perIpUsed) {
+      return quota;
+    }
+
+    const perIpUsed = localPerIpUsed;
+    const perIpRemaining = Math.max(0, quota.perIpLimit - perIpUsed);
+
+    return {
+      ...quota,
+      perIpUsed,
+      perIpRemaining,
+    };
+  }
+
+  private getLocalPerIpUsageForToday(): number {
+    const ip = this.cachedIp() ?? '127.0.0.1';
+    const today = this.getTodayQuotaKey();
+
+    try {
+      const rawValue = localStorage.getItem(this.localPerIpQuotaKey);
+      if (!rawValue) {
+        return 0;
+      }
+
+      const parsed = JSON.parse(rawValue) as Partial<LocalPerIpQuota>;
+      if (parsed.date !== today || parsed.ipAddress !== ip) {
+        return 0;
+      }
+
+      return typeof parsed.used === 'number' && Number.isFinite(parsed.used)
+        ? Math.max(0, Math.floor(parsed.used))
+        : 0;
+    } catch (error) {
+      console.error('Unable to read local per-IP quota fallback:', error);
+      return 0;
+    }
+  }
+
+  private incrementLocalPerIpUsageForToday(): void {
+    const ip = this.cachedIp() ?? '127.0.0.1';
+    const today = this.getTodayQuotaKey();
+    const current = this.getLocalPerIpUsageForToday();
+    const next = Math.min(this.localPerIpLimit, current + 1);
+
+    const payload: LocalPerIpQuota = {
+      date: today,
+      ipAddress: ip,
+      used: next,
+    };
+
+    try {
+      localStorage.setItem(this.localPerIpQuotaKey, JSON.stringify(payload));
+    } catch (error) {
+      console.error('Unable to persist local per-IP quota fallback:', error);
+    }
+  }
+
+  /**
+   * @description Method getTodayQuotaKey.
+   */
+  private getTodayQuotaKey(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private getMsUntilNextUtcDay(referenceMs: number): number {
+    const now = new Date(referenceMs);
+    const nextUtcMidnight = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    return Math.max(0, nextUtcMidnight - referenceMs);
+  }
+
+  private startResetHintTimer(): void {
+    if (this.resetHintTimerId !== null) {
+      return;
+    }
+
+    this.resetHintTimerId = setInterval(() => {
+      this.resetHintClock.set(Date.now());
+    }, 60000);
   }
 
   /**

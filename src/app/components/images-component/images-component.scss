@@ -1,13 +1,25 @@
-@use '../../../scss/abstract/mixings' as mix;
+@use '../../../scss/abstract/mixings' as mixin;
+
 
 img {
+
   width: 100%;
   height: auto;
-}
 
-@include mix.respond-to('x-small') {
-  img {
-    width: 296px;
+  @include mixin.desktop {
+    max-width: 460px;
     height: auto;
   }
+
+  @include mixin.tablet {
+    max-width: 460px;
+    height: auto;
+  }
+
+  @include mixin.smartphone {
+    max-width: 330px;
+    height: auto;
+    }
+
+
 }

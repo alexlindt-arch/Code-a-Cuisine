@@ -60,7 +60,7 @@ export class GenerateRecipe implements OnDestroy {
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   readonly unitOptions = ['gram', 'ml', 'piece'];
-  private readonly ingredientNamePattern = /[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
+  private readonly ingredientNamePattern = /^[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
   private readonly maxIngredientNameLength = 40;
 
   /**

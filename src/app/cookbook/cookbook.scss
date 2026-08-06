@@ -87,7 +87,7 @@
   max-width: calc(730px + 150px);
   min-width: calc(320px - 150px);
 
-  @include mix.respond-to('xxl') {
+  @include mix.desktop {
     max-width: 830px;
   }
 }

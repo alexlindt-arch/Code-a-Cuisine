@@ -1,16 +1,22 @@
 <section class="home">
   <div class="content-limited">
-    <div class="content-left">
-      <p>AI-Powered recipe generator</p>
-      <h1>Code à Cuisine</h1>
-      <div class="button-content">
-        <app-button [routerLink]="recipeRouterLink"></app-button>
+
+    <div class="home-content">
+      <div class="content-left">
+        <div class="top-content">
+          <p>AI-Powered recipe generator</p>
+          <h1>Code à Cuisine</h1>
+          <div class="button-content">
+            <app-button [routerLink]="recipeRouterLink"></app-button>
+          </div>
+        </div>
+
+        <div class="bottom-section">
+          <p>Hungry for inspiration?</p>
+          <app-routerlink-componente [targetClass]="'--light'" [linkText]="'Go to cookbook'"
+            [targetPath]="cookbookRouterLink"></app-routerlink-componente>
+        </div>
       </div>
-      <div class="bottom-section">
-        <p>Hungry for inspiration?</p>
-        <app-routerlink-componente [targetClass]="'--light'" [linkText]="'Go to cookbook'" [targetPath]="cookbookRouterLink"></app-routerlink-componente>
-      </div>
-     </div>
       <div class="content-right">
         <app-images-component [class]="heroImageClass" [src]="heroImageThree"
           label="Hero Image 3"></app-images-component>
@@ -22,4 +28,5 @@
           label="Hero Image 5"></app-images-component>
       </div>
     </div>
+  </div>
 </section>

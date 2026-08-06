@@ -26,8 +26,7 @@ h1 {
   width: 100%;
   text-align: start;
   font-family: var.$font-family;
-
-  font-size: clamp(68px , 8vw, 104px);
+  font-size: clamp(58px, 8vw, 104px);
   font-weight: var.$font-weight-large;
   margin: 0;
 }
@@ -43,33 +42,15 @@ section {
   @include mixin.max-width(var.$max-width);
   width: 100%;
   padding: 68px 68px 0;
-
-   @include mixin.respond-to('max-large') {
-     padding: 32px 0 0;
-
-   }
-
-  @include mixin.respond-to('max-medium') {
-    padding: 16px 0 0;
-  }
-  @include mixin.respond-to('max-x-small') {
-    padding: 16px 0 0;
-  }
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-
-  @include mixin.respond-to('max-medium') {
-    max-width: 450px;
-    height: auto;
+  @include mixin.desktop {
+    padding: 68px 40px 0;
   }
 
-  @include mixin.respond-to('max-x-small') {
-    max-width: 400px;
-    height: auto;
+  @include mixin.tablet {
+    padding: 68px 40px 0;
+  }
+
+  @include mixin.smartphone {
+    padding: 0px 8px 0;
   }
 }
-
-

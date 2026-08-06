@@ -9,8 +9,12 @@
   font-weight: var.$font-weight-medium;
   width: 100%;
 
-  @include flex.respond-to('max-x-small') {
+  @include flex.smartphone {
     text-align: center;
      font-size: var.$font-size-md;
+  }
+
+  @include flex.smartphone {
+    padding: 16px 0 26px;
   }
 }

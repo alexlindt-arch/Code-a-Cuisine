@@ -324,6 +324,17 @@ h1 {
   font-size: var.$font-size-md;
 }
 
+.quota-reset-hint {
+  width: 100%;
+  margin: 6px 0 0;
+  color: rgba(var.$secondary-text-color, 0.86);
+  font-size: var.$font-size-sm;
+}
+
+.quota-reset-hint--dialog {
+  margin-top: 10px;
+}
+
 .pref-selection-content {
   display: flex;
   flex-direction: column;
@@ -579,10 +590,21 @@ h1 {
     font-size: var.$font-size-md;
     margin: 0;
     opacity: 0.9;
+    color: var.$secondary-bg;
+    width: 100%;
+
   }
+
+
+.dialog-button-content{
+  display: flex;
+  justify-content: center;
+}
 
   .quota-dialog-btn {
     align-self: flex-end;
     margin-top: 8px;
+    flex-direction: row-reverse;
+    width: auto;
   }
 }

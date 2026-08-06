@@ -29,6 +29,7 @@
       <h1>Choose your preferences</h1>
 
       @if (quotaStatus(); as quota) {
+      @if (showQuotaCard()) {
       <article class="quota-card" aria-live="polite">
         <div>
           <h2>Daily quota</h2>
@@ -40,9 +41,12 @@
         </div>
       </article>
       }
+      }
 
-      @if (quotaMessage(); as message) {
+      @if (!showQuotaDialog() && quotaMessage(); as message) {
+      @if (isQuotaForToday(quotaStatus())) {
       <p class="quota-message" aria-live="assertive">{{ message }}</p>
+      }
       }
 
       <article class="preferences-intro">
@@ -125,9 +129,10 @@
       </article>
 
       <div class="footer-actions">
-        <button class="btn --generate-btn" type="button" [disabled]="true"
-          (click)="generateRecipe()">
-          {{ submitState() === 'loading' ? 'Generating...' : isQuotaStatusLoading() ? 'Checking daily limit...' : !quotaStatus() ? 'Quota check unavailable' : !canSubmitRecipe() ? 'Daily limit reached' : 'Generate a recipe' }}
+        <button class="btn --generate-btn" type="button" [disabled]="!canSubmitRecipe()" (click)="generateRecipe()">
+          {{ submitState() === 'loading' ? 'Generating...' : isQuotaStatusLoading() ? 'Checking daily limit...' :
+          !quotaStatus() ? 'Quota check unavailable' : !canSubmitRecipe() ? 'Daily limit reached' : 'Generate a recipe'
+          }}
         </button>
       </div>
     </div>
@@ -137,9 +142,18 @@
   @if (showQuotaDialog()) {
   <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true"></div>
   <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
-    <h2 id="quota-dialog-title">Tageslimit erreicht</h2>
-    <p>{{ quotaMessage() }}</p>
-    <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Verstanden</button>
+    <h2 id="quota-dialog-title">Ups! Not quite enough...</h2>
+    <p>{{ quotaDialogMessage() }}</p>
+    @if (quotaResetHint(); as hint) {
+    <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>
+
+    }<div class="dialog-button-content">
+
+      <a (click)="closeQuotaDialog()" [routerLink]="'/generate-recipe'"
+        class="btn --generate-btn quota-dialog-btn router-link"><app-images-component [class]="arrowClass"
+          [src]="heroImageArrowLight" label="Arrow Icon"></app-images-component>Go back to ingredients</a>
+    </div>
+    <!-- <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Go back to ingredients</button> -->
   </dialog>
   }
 </section>
