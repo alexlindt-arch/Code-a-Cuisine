@@ -33,6 +33,11 @@ interface RecipeRequestPayload {
   };
 }
 
+interface RecipeStepView {
+  title: string;
+  description: string;
+}
+
 @Component({
   selector: 'app-recipe-detail',
   imports: [RouterLink, RouterlinkComponente],
@@ -60,6 +65,7 @@ export class RecipeDetail {
   readonly likeState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
   readonly backLink = signal('/results');
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
+  readonly sectionBannerMob = 'assets/img/Ingredients-Mob.png';
   readonly arrowClass = 'arrow-icon';
 
   readonly cookIconCount = computed(() => {
@@ -100,16 +106,25 @@ export class RecipeDetail {
   });
 
   readonly stepColumns = computed(() => {
-    const recipe = this.selectedRecipe();
-    if (!recipe) {
-      return { left: [] as string[], right: [] as string[] };
+    const steps = this.stepViews();
+    if (!steps.length) {
+      return { left: [] as RecipeStepView[], right: [] as RecipeStepView[] };
     }
 
-    const midpoint = Math.ceil(recipe.steps.length / 2);
+    const midpoint = Math.ceil(steps.length / 2);
     return {
-      left: recipe.steps.slice(0, midpoint),
-      right: recipe.steps.slice(midpoint),
+      left: steps.slice(0, midpoint),
+      right: steps.slice(midpoint),
     };
+  });
+
+  readonly stepViews = computed(() => {
+    const recipe = this.selectedRecipe();
+    if (!recipe) {
+      return [] as RecipeStepView[];
+    }
+
+    return recipe.steps.map((rawStep, index) => this.toStepView(rawStep, index));
   });
 
   readonly estimatedNutrition = computed(() => {
@@ -217,6 +232,112 @@ export class RecipeDetail {
         diets: recipe.diets.length > 0 ? recipe.diets : ['none'],
       },
     };
+  }
+
+  /**
+   * @description Method toStepView.
+   */
+  private toStepView(raw: string, index: number): RecipeStepView {
+    const trimmed = raw.trim();
+
+    const colonMatch = trimmed.match(/^([^:]{3,80}):\s+([\s\S]+)$/);
+    if (colonMatch) {
+      const title = colonMatch[1].trim();
+      const description = colonMatch[2].trim();
+      return {
+        title: this.isGenericStepTitle(title)
+          ? this.buildStepTitleFromDescription(description, index)
+          : title,
+        description,
+      };
+    }
+
+    const lines = trimmed
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    if (lines.length > 1 && lines[0].length <= 80) {
+      const title = lines[0];
+      const description = lines.slice(1).join(' ');
+      return {
+        title: this.isGenericStepTitle(title)
+          ? this.buildStepTitleFromDescription(description, index)
+          : title,
+        description,
+      };
+    }
+
+    const cleanedSingleLine = this.stripGenericStepPrefix(trimmed);
+    if (cleanedSingleLine && cleanedSingleLine !== trimmed) {
+      return {
+        title: this.buildStepTitleFromDescription(cleanedSingleLine, index),
+        description: cleanedSingleLine,
+      };
+    }
+
+    if (this.isGenericStepTitle(trimmed)) {
+      return {
+        title: this.buildStepTitleFromDescription(trimmed, index),
+        description: trimmed,
+      };
+    }
+
+    return {
+      title: `Step ${index + 1}`,
+      description: trimmed,
+    };
+  }
+
+  /**
+   * @description Method isGenericStepTitle.
+   */
+  private isGenericStepTitle(value: string): boolean {
+    const compact = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+
+    return /^step\d*$/.test(compact)
+      || /^schritt\d*$/.test(compact);
+  }
+
+  /**
+   * @description Method stripGenericStepPrefix.
+   */
+  private stripGenericStepPrefix(value: string): string {
+    return value
+      .replace(/^step\s*\d*\s*[:.)\-–—]*\s*/i, '')
+      .replace(/^schritt\s*\d*\s*[:.)\-–—]*\s*/i, '')
+      .replace(/^\d+\s*[:.)\-–—]+\s*/, '')
+      .trim();
+  }
+
+  /**
+   * @description Method buildStepTitleFromDescription.
+   */
+  private buildStepTitleFromDescription(description: string, index: number): string {
+    const cleaned = this.stripGenericStepPrefix(description);
+
+    if (!cleaned) {
+      return `Step ${index + 1}`;
+    }
+
+    const firstSentence = cleaned.split(/[.!?]/)[0]?.trim() ?? '';
+    const titleWords = firstSentence
+      .replace(/[^A-Za-z0-9' -]/g, ' ')
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
+      .slice(0, 5);
+
+    if (titleWords.length < 2) {
+      return `Step ${index + 1}`;
+    }
+
+    const title = titleWords
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+    return title;
   }
 
   /**

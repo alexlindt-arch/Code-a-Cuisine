@@ -8,6 +8,7 @@ import { Router, RouterLink } from "@angular/router";
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { LoadingStateService } from '../loading-state.service';
+import { environment } from '../../environments/environment';
 
 type CookingTimeId = 'quick' | 'medium' | 'complex';
 type CuisineId = 'german' | 'italian' | 'indian' | 'japanese' | 'gourmet' | 'fusion';
@@ -101,12 +102,24 @@ interface QuotaResponsePayload {
   quota?: QuotaStatus;
 }
 
-interface LocalPerIpQuota {
-  date: string;
+interface LocalIpQuotaWindowRecord {
   ipAddress: string;
-  used: number;
+  ipVersion: 'ipv4' | 'ipv6' | 'unknown';
+  timestamps: number[];
 }
 
+interface LocalQuotaWindowStore {
+  records: LocalIpQuotaWindowRecord[];
+}
+
+interface QuotaCardSummary {
+  show: boolean;
+  kind: 'none' | 'local' | 'remote';
+  localUsage: number;
+  perIpRemaining: number | null;
+  globalRemaining: number | null;
+  message: string | null;
+}
 
 @Component({
   selector: 'app-preferences',
@@ -125,10 +138,10 @@ export class Preferences implements OnDestroy {
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   private readonly recipeErrorKey = 'cac-recipe-error';
-  private readonly stratoWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-recipe';
-  private readonly quotaWebhookUrl = '/n8n-strato/webhook/code-a-cuisine-quota';
+  private readonly recipeWebhookPath = environment.recipeWebhookUrl;
   private readonly localPerIpQuotaKey = 'cac-local-per-ip-quota';
   private readonly localPerIpLimit = 3;
+  private readonly localQuotaWindowMs = 24 * 60 * 60 * 1000;
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -140,37 +153,24 @@ export class Preferences implements OnDestroy {
   readonly quotaMessage = signal<string | null>(null);
   readonly showQuotaDialog = signal(false);
   readonly quotaExceeded = signal(false);
+  readonly quotaDialogKind = signal<'notice' | 'limit' | 'connection'>('notice');
   readonly isQuotaStatusLoading = signal(true);
   private readonly cachedIp = signal<string | null>(null);
-  private readonly quotaExceededKey = 'cac-quota-exceeded';
   private readonly resetHintClock = signal(Date.now());
   private resetHintTimerId: ReturnType<typeof setInterval> | null = null;
   readonly canSubmitRecipe = computed(() => {
-    const quota = this.quotaStatus();
-    const localPerIpUsed = this.getLocalPerIpUsageForToday();
+    const _resetClock = this.resetHintClock();
 
     if (this.submitState() === 'loading' || this.isQuotaStatusLoading()) {
       return false;
     }
 
-    if (this.quotaExceeded()) {
-      return false;
-    }
-
-    if (!quota) {
-      return localPerIpUsed < this.localPerIpLimit;
-    }
-
-    if (!this.isQuotaForToday(quota)) {
-      return true;
-    }
-
-    return quota.perIpRemaining > 0 && quota.globalRemaining > 0 && localPerIpUsed < this.localPerIpLimit;
+    return !this.hasReachedQuota(this.quotaStatus(), this.getLocalPerIpUsageLast24Hours());
   });
   readonly showQuotaCard = computed(() => {
     const quota = this.quotaStatus();
 
-    if (!quota || !this.isQuotaForToday(quota)) {
+    if (!quota) {
       return false;
     }
 
@@ -179,6 +179,32 @@ export class Preferences implements OnDestroy {
 
     return hasUsageToday || hasQuotaMessage;
   });
+  readonly generateButtonLabel = computed(() => {
+    if (this.submitState() === 'loading') {
+      return 'Generating...';
+    }
+
+    if (this.isQuotaStatusLoading()) {
+      return 'Checking daily limit...';
+    }
+
+    if (!this.quotaStatus()) {
+      return 'Quota check unavailable';
+    }
+
+    if (!this.canSubmitRecipe()) {
+      const remainingMs = this.getTimeUntilQuotaReset();
+      if (remainingMs > 0) {
+        const hours = Math.floor(remainingMs / 3600000);
+        const minutes = Math.ceil((remainingMs % 3600000) / 60000);
+        return `Ups! Not quite enough... ${hours}h ${minutes}m`;
+      }
+
+      return 'Ups! Not quite enough...';
+    }
+
+    return 'Generate a recipe';
+  });
   readonly quotaDialogMessage = computed(() => {
     const message = this.quotaMessage();
     if (typeof message === 'string' && message.trim().length > 0) {
@@ -186,16 +212,27 @@ export class Preferences implements OnDestroy {
     }
 
     const quota = this.quotaStatus();
-    if (quota && this.isQuotaForToday(quota)) {
+    if (quota) {
       return this.buildQuotaExceededMessage(quota);
     }
 
-    const localPerIpUsed = this.getLocalPerIpUsageForToday();
+    const localPerIpUsed = this.getLocalPerIpUsageLast24Hours();
     if (localPerIpUsed >= this.localPerIpLimit) {
-      return `Daily generation limit reached on this device. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations today.`;
+      return `24h generation limit reached on this device/IP. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations in the last 24 hours.`;
     }
 
     return 'Tageslimit erreicht. Bitte versuche es spaeter erneut.';
+  });
+  readonly quotaDialogTitle = computed(() => {
+    if (this.quotaDialogKind() === 'connection') {
+      return 'Connection issue';
+    }
+
+    if (this.quotaDialogKind() === 'limit') {
+      return '24h limit reached';
+    }
+
+    return 'Notice';
   });
   readonly quotaResetHint = computed(() => {
     // Depend on the clock signal so the hint updates every minute.
@@ -204,7 +241,11 @@ export class Preferences implements OnDestroy {
       return null;
     }
 
-    const remainingMs = this.getMsUntilNextUtcDay(now);
+    if (!this.isCurrentStateRateLimited(now)) {
+      return null;
+    }
+
+    const remainingMs = this.getTimeUntilQuotaReset(now);
     const totalMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
@@ -268,12 +309,7 @@ export class Preferences implements OnDestroy {
   private async initClientIp() {
     const ip = await this.getMyIP();
     this.cachedIp.set(ip);
-    // Restore exceeded state from localStorage (persists across reloads)
-    const today = this.getTodayQuotaKey();
-    const stored = localStorage.getItem(this.quotaExceededKey);
-    if (stored === today) {
-      this.quotaExceeded.set(true);
-    }
+    this.clearExpiredQuotaLock();
     void this.loadQuotaStatus();
   }
 
@@ -365,6 +401,73 @@ export class Preferences implements OnDestroy {
   }
 
   /**
+   * @description Method hasReachedQuota.
+   */
+  hasReachedQuota(quota: QuotaStatus | null = this.quotaStatus(), localPerIpUsed: number = this.getLocalPerIpUsageLast24Hours()): boolean {
+    if (localPerIpUsed >= this.localPerIpLimit) {
+      return true;
+    }
+
+    if (!quota) {
+      return false;
+    }
+
+    return quota.perIpRemaining <= 0;
+  }
+
+  /**
+   * @description Method quotaCardSummary.
+   */
+  quotaCardSummary(): QuotaCardSummary {
+    const quota = this.quotaStatus();
+    const localUsage = this.getLocalPerIpUsageLast24Hours();
+    const localExceeded = localUsage >= this.localPerIpLimit;
+    const message = this.quotaMessage();
+
+    if (quota) {
+      return {
+        show: true,
+        kind: localExceeded ? 'local' : 'remote',
+        localUsage,
+        perIpRemaining: quota.perIpRemaining,
+        globalRemaining: quota.globalRemaining,
+        message,
+      };
+    }
+
+    if (localExceeded) {
+      return {
+        show: true,
+        kind: 'local',
+        localUsage,
+        perIpRemaining: null,
+        globalRemaining: null,
+        message,
+      };
+    }
+
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return {
+        show: true,
+        kind: 'remote',
+        localUsage,
+        perIpRemaining: null,
+        globalRemaining: null,
+        message,
+      };
+    }
+
+    return {
+      show: false,
+      kind: 'none',
+      localUsage,
+      perIpRemaining: null,
+      globalRemaining: null,
+      message,
+    };
+  }
+
+  /**
    * @description Method getMyIP.
    */
   private async getMyIP(): Promise<string> {
@@ -384,19 +487,15 @@ export class Preferences implements OnDestroy {
    * @description Method generateRecipe.
    */
   async generateRecipe() {
-    // Always refresh quota from Firebase before sending so the check is never stale
-    await this.loadQuotaStatus();
-
+    const localPerIpUsed = this.getLocalPerIpUsageLast24Hours();
     const currentQuota = this.quotaStatus();
-    const localPerIpUsed = this.getLocalPerIpUsageForToday();
-    const localQuotaExceeded = localPerIpUsed >= this.localPerIpLimit;
-    if (this.quotaExceeded() || localQuotaExceeded || (currentQuota && (currentQuota.perIpRemaining <= 0 || currentQuota.globalRemaining <= 0))) {
+
+    if (this.hasReachedQuota(currentQuota, localPerIpUsed)) {
       this.submitState.set('idle');
-      if (localQuotaExceeded) {
-        this.quotaMessage.set(`Daily generation limit reached on this device. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations today.`);
-      } else {
-        this.quotaMessage.set(currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.');
-      }
+      this.quotaDialogKind.set('limit');
+      this.quotaMessage.set(localPerIpUsed >= this.localPerIpLimit
+        ? `24h generation limit reached on this device/IP. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations in the last 24 hours.`
+        : (currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.'));
       this.showQuotaDialog.set(true);
       return;
     }
@@ -407,8 +506,8 @@ export class Preferences implements OnDestroy {
     this.clearRecipeErrorCache();
     this.quotaMessage.set(null);
 
-    const webhookUrl = this.getWebhookUrl();
-    if (webhookUrl.includes('/workflow/')) {
+    const webhookUrls = this.getWebhookCandidateUrls();
+    if (!webhookUrls.every((url) => this.isValidWebhookUrl(url))) {
       this.submitState.set('error');
       console.error('Invalid URL: use n8n Webhook URL (/webhook/...), not workflow editor URL (/workflow/...).');
       return;
@@ -443,40 +542,30 @@ export class Preferences implements OnDestroy {
     this.persistJson(this.recipePayloadKey, payload);
 
     try {
-      const response = await this.sendRecipeRequest(payload, webhookUrl);
-      this.incrementLocalPerIpUsageForToday();
-      this.updateQuotaFromPayload(response);
-      await this.loadQuotaStatus();
+      const response = await this.sendRecipeRequest(payload, webhookUrls);
+      this.incrementLocalPerIpUsageForLast24Hours();
+      const refreshedUsage = this.getLocalPerIpUsageLast24Hours();
+      this.syncQuotaState(this.buildLocalQuotaState(refreshedUsage));
       this.persistJson(this.recipesResponseKey, response);
       this.submitState.set('success');
       this.loadingStateService.setLoading(false);
       await this.router.navigate(['/results']);
     } catch (error) {
-      const isQuota429 = error instanceof HttpErrorResponse && error.status === 429;
-      if (isQuota429) {
-        console.info('Quota response received (429).');
-      } else {
-        console.error('Recipe generation request failed:', error);
-      }
       this.clearRecipeResponseCache();
-      this.updateQuotaFromError(error);
       this.submitState.set('error');
       this.loadingStateService.setLoading(false);
       const errorMessage = this.toRequestErrorMessage(error);
       this.persistJson(this.recipeErrorKey, errorMessage);
-      if (!isQuota429) {
-        console.error(errorMessage);
-      }
 
-      if (isQuota429) {
+      if (this.isQuotaDialogError(error, errorMessage, localPerIpUsed)) {
         this.submitState.set('idle');
-        this.quotaMessage.set(errorMessage);
-        this.quotaExceeded.set(true);
-        localStorage.setItem(this.quotaExceededKey, this.getTodayQuotaKey());
+        const isLimitCase = this.isLimitDialogError(error, errorMessage, localPerIpUsed);
+        this.quotaExceeded.set(isLimitCase);
+        this.quotaDialogKind.set(this.getQuotaDialogKind(error, errorMessage, isLimitCase));
+        this.quotaMessage.set(this.toDialogErrorMessage(error, errorMessage));
         this.showQuotaDialog.set(true);
         return;
       }
-
       await this.router.navigate(['/results']);
     }
   }
@@ -489,27 +578,15 @@ export class Preferences implements OnDestroy {
 
     try {
       const ip = this.cachedIp() ?? await this.getMyIP();
-      const now = Date.now();
-      const response = await firstValueFrom(
-        this.http.get<QuotaResponsePayload>(`${this.quotaWebhookUrl}?ip=${encodeURIComponent(ip)}&t=${now}`)
-      );
-      const quota = this.readQuotaStatus(response);
+      this.cachedIp.set(ip);
+      const localUsage = this.getLocalPerIpUsageLast24Hours();
+      const quota = this.buildLocalQuotaState(localUsage);
+      this.syncQuotaState(quota);
 
-      if (quota) {
-        const mergedQuota = this.mergeWithLocalPerIpQuota(quota);
-        this.syncQuotaState(mergedQuota);
-        const isExceeded = this.isQuotaForToday(mergedQuota) && (mergedQuota.perIpRemaining <= 0 || mergedQuota.globalRemaining <= 0);
-        const localExceeded = this.getLocalPerIpUsageForToday() >= this.localPerIpLimit;
-        this.quotaMessage.set(isExceeded
-          ? (response.message ?? this.buildQuotaExceededMessage(mergedQuota))
-          : localExceeded
-            ? `Daily generation limit reached on this device. You can generate up to ${this.localPerIpLimit} recipes per day.`
-            : null);
-      } else {
-        this.quotaStatus.set(null);
-        const localExceeded = this.getLocalPerIpUsageForToday() >= this.localPerIpLimit;
-        this.quotaMessage.set(localExceeded ? `Daily generation limit reached on this device. You can generate up to ${this.localPerIpLimit} recipes per day.` : 'Quota check failed: backend returned no quota data.');
-      }
+      const localExceeded = localUsage >= this.localPerIpLimit;
+      this.quotaMessage.set(localExceeded
+        ? `24h generation limit reached on this device/IP. You can generate up to ${this.localPerIpLimit} recipes per 24 hours.`
+        : null);
     } catch (error) {
       console.error('Unable to load quota status:', error);
       this.quotaStatus.set(null);
@@ -544,15 +621,49 @@ export class Preferences implements OnDestroy {
   /**
    * @description Method sendRecipeRequest.
    */
-  private async sendRecipeRequest(payload: RecipeRequestPayload, webhookUrl: string): Promise<unknown> {
-    return firstValueFrom(this.http.post(webhookUrl, payload));
+  private async sendRecipeRequest(payload: RecipeRequestPayload, webhookUrls: string[]): Promise<unknown> {
+    let lastError: unknown = null;
+
+    for (const webhookUrl of webhookUrls) {
+      try {
+        return await firstValueFrom(this.http.post(webhookUrl, payload));
+      } catch (error) {
+        lastError = error;
+        console.warn(`Webhook request failed for ${webhookUrl}:`, error);
+      }
+    }
+
+    throw lastError ?? new Error('All webhook endpoints failed.');
   }
 
   /**
    * @description Method getWebhookUrl.
    */
-  private getWebhookUrl(): string {
-    return this.stratoWebhookUrl;
+  private getWebhookCandidateUrls(): string[] {
+    const path = this.recipeWebhookPath;
+    const candidates = [
+      `${path}code-a-cuisine-recipe`,
+      `${path}code-a-cuisine-recipe`,
+    ];
+    console.log(candidates);
+    return Array.from(new Set(candidates));
+  }
+
+  /**
+   * @description Method isValidWebhookUrl.
+   */
+  private isValidWebhookUrl(url: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      const pathname = parsedUrl.pathname.toLowerCase();
+      const isHttp = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+      const isWebhookPath = pathname === '/webhook' || pathname.startsWith('/webhook/');
+      const isWorkflowPath = pathname === '/workflow' || pathname.startsWith('/workflow/');
+
+      return isHttp && isWebhookPath && !isWorkflowPath;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -566,17 +677,175 @@ export class Preferences implements OnDestroy {
       }
 
       if (error.status === 0) {
-        return 'Network/CORS error. Start the app with ng serve (proxy enabled) and verify the webhook path.';
+        return 'Network/TLS/CORS error. Verify that the webhook URL is reachable, uses a valid HTTPS certificate, and allows CORS.';
       }
 
       if (error.status === 404) {
-        return 'Webhook not found (404). In n8n, activate the workflow for the production /webhook endpoint.';
+        return 'Webhook not found (404). Verify the configured recipe webhook URL in preferences.ts and that the n8n workflow is active.';
       }
 
       return `n8n request failed (${error.status} ${error.statusText || 'Error'}).`;
     }
 
+    const rawMessage = this.extractErrorText(error).trim();
+    if (rawMessage.length > 0) {
+      return rawMessage;
+    }
+
     return 'n8n request failed. Check webhook URL and n8n runtime.';
+  }
+
+  private isQuotaDialogError(error: unknown, message: string, localPerIpUsed: number): boolean {
+    if (localPerIpUsed >= this.localPerIpLimit) {
+      return true;
+    }
+
+    if (error instanceof HttpErrorResponse && (error.status === 429 || error.status === 503)) {
+      return true;
+    }
+
+    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
+    return normalized.includes('quota')
+      || normalized.includes('limit reached')
+      || normalized.includes('daily limit')
+      || normalized.includes('too many requests')
+      || normalized.includes('try again in a few seconds')
+      || normalized.includes('failed to fetch')
+      || normalized.includes('fetch failed')
+      || normalized.includes('http failure response')
+      || normalized.includes('unknown error')
+      || normalized.includes('temporarily unavailable');
+  }
+
+  private isConnectionError(error: unknown, message: string): boolean {
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return true;
+    }
+
+    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
+    return normalized.includes('failed to fetch')
+      || normalized.includes('fetch failed')
+      || normalized.includes('http failure response')
+      || normalized.includes('unknown error')
+      || normalized.includes('network')
+      || normalized.includes('cors')
+      || normalized.includes('ssl')
+      || normalized.includes('tls')
+      || normalized.includes('certificate')
+      || normalized.includes('protocol error');
+  }
+
+  private isLimitDialogError(error: unknown, message: string, localPerIpUsed: number): boolean {
+    if (this.isConnectionError(error, message)) {
+      return false;
+    }
+
+    if (localPerIpUsed >= this.localPerIpLimit) {
+      return true;
+    }
+
+    if (error instanceof HttpErrorResponse && error.status === 429) {
+      return true;
+    }
+
+    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
+    return normalized.includes('quota')
+      || normalized.includes('limit reached')
+      || normalized.includes('daily limit')
+      || normalized.includes('too many requests');
+  }
+
+  private isCurrentStateRateLimited(referenceMs: number = Date.now()): boolean {
+    const localUsage = this.getLocalPerIpUsageLast24Hours(referenceMs);
+    return localUsage >= this.localPerIpLimit;
+  }
+
+  private extractErrorText(error: unknown): string {
+    const segments: string[] = [];
+
+    if (typeof error === 'string') {
+      segments.push(error);
+    }
+
+    if (error instanceof Error && typeof error.message === 'string') {
+      segments.push(error.message);
+    }
+
+    if (!(error instanceof HttpErrorResponse)) {
+      if (typeof error === 'object' && error !== null) {
+        const obj = error as { message?: unknown; error?: unknown; detail?: unknown };
+        if (typeof obj.message === 'string') {
+          segments.push(obj.message);
+        }
+        if (typeof obj.error === 'string') {
+          segments.push(obj.error);
+        }
+        if (typeof obj.detail === 'string') {
+          segments.push(obj.detail);
+        }
+      }
+
+      return segments.join(' ').trim();
+    }
+
+    if (typeof error.message === 'string') {
+      segments.push(error.message);
+    }
+
+    if (typeof error.statusText === 'string') {
+      segments.push(error.statusText);
+    }
+
+    const payload = error.error;
+    if (typeof payload === 'string') {
+      segments.push(payload);
+    } else if (typeof payload === 'object' && payload !== null) {
+      const obj = payload as { message?: unknown; error?: unknown; detail?: unknown };
+      if (typeof obj.message === 'string') {
+        segments.push(obj.message);
+      }
+      if (typeof obj.error === 'string') {
+        segments.push(obj.error);
+      }
+      if (typeof obj.detail === 'string') {
+        segments.push(obj.detail);
+      }
+    }
+
+    return segments.join(' ').trim();
+  }
+
+  private toDialogErrorMessage(error: unknown, fallback: string): string {
+    if (this.isConnectionError(error, fallback)) {
+      return 'Failed to reach the recipe service. Check the webhook URL, HTTPS certificate, and CORS settings.';
+    }
+
+    const rawMessage = this.extractErrorText(error).trim();
+    if (rawMessage.length === 0) {
+      return fallback;
+    }
+
+    const normalized = rawMessage.toLowerCase();
+    if (normalized.includes('failed to fetch')
+      || normalized.includes('fetch failed')
+      || normalized.includes('http failure response')
+      || normalized.includes('unknown error')) {
+      return 'Failed to fetch';
+    }
+
+    return rawMessage;
+  }
+
+  private getQuotaDialogKind(error: unknown, message: string, isLimitCase: boolean): 'notice' | 'limit' | 'connection' {
+    if (isLimitCase) {
+      return 'limit';
+    }
+
+    if (this.isConnectionError(error, message)) {
+      return 'connection';
+    }
+
+    return 'notice';
   }
 
   /**
@@ -606,28 +875,22 @@ export class Preferences implements OnDestroy {
     return `${message} Remaining today: ${quota.perIpRemaining} of ${quota.perIpLimit} for this IP, ${quota.globalRemaining} of ${quota.globalLimit} globally.`;
   }
 
-  /**
-   * @description Method updateQuotaFromError.
-   */
-  private updateQuotaFromError(error: unknown) {
-    if (!(error instanceof HttpErrorResponse)) {
-      return;
-    }
+  private buildLocalQuotaState(localPerIpUsed: number): QuotaStatus {
+    const ip = this.cachedIp() ?? '127.0.0.1';
+    const ipVersion = this.detectIpVersion(ip);
+    const usage = Math.max(0, localPerIpUsed);
 
-    const quota = this.readQuotaStatus(error.error);
-    if (quota) {
-      this.syncQuotaState(quota);
-    }
-  }
-
-  /**
-   * @description Method updateQuotaFromPayload.
-   */
-  private updateQuotaFromPayload(payload: unknown) {
-    const quota = this.readQuotaStatus(payload);
-    if (quota) {
-      this.syncQuotaState(quota);
-    }
+    return {
+      date: this.getTodayQuotaKey(),
+      ipAddress: ip,
+      ipVersion,
+      perIpLimit: this.localPerIpLimit,
+      perIpUsed: usage,
+      perIpRemaining: Math.max(0, this.localPerIpLimit - usage),
+      globalLimit: this.localPerIpLimit,
+      globalUsed: usage,
+      globalRemaining: Math.max(0, this.localPerIpLimit - usage),
+    };
   }
 
   /**
@@ -635,75 +898,46 @@ export class Preferences implements OnDestroy {
    */
   private syncQuotaState(quota: QuotaStatus) {
     this.quotaStatus.set(quota);
-
-    const today = this.getTodayQuotaKey();
-    const isExceeded = quota.date === today && (quota.perIpRemaining <= 0 || quota.globalRemaining <= 0);
-    this.quotaExceeded.set(isExceeded);
-
-    if (isExceeded) {
-      localStorage.setItem(this.quotaExceededKey, today);
-    } else {
-      localStorage.removeItem(this.quotaExceededKey);
-    }
+    this.quotaExceeded.set(quota.perIpRemaining <= 0);
   }
 
-  private mergeWithLocalPerIpQuota(quota: QuotaStatus): QuotaStatus {
-    const localPerIpUsed = this.getLocalPerIpUsageForToday();
-    if (!this.isQuotaForToday(quota) || localPerIpUsed <= quota.perIpUsed) {
-      return quota;
+  private detectIpVersion(ip: string): 'ipv4' | 'ipv6' | 'unknown' {
+    const ipv4Pattern = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+    if (ipv4Pattern.test(ip)) {
+      return 'ipv4';
     }
 
-    const perIpUsed = localPerIpUsed;
-    const perIpRemaining = Math.max(0, quota.perIpLimit - perIpUsed);
+    if (ip.includes(':')) {
+      return 'ipv6';
+    }
 
-    return {
-      ...quota,
-      perIpUsed,
-      perIpRemaining,
-    };
+    return 'unknown';
   }
 
-  private getLocalPerIpUsageForToday(): number {
+  private getLocalPerIpUsageLast24Hours(referenceMs: number = Date.now()): number {
+    const record = this.getCurrentIpQuotaRecord(referenceMs);
+    return record.timestamps.length;
+  }
+
+  private incrementLocalPerIpUsageForLast24Hours(referenceMs: number = Date.now()): void {
+    const store = this.readLocalQuotaWindowStore();
     const ip = this.cachedIp() ?? '127.0.0.1';
-    const today = this.getTodayQuotaKey();
+    const ipVersion = this.detectIpVersion(ip);
+    const key = this.getQuotaRecordKey(ip, ipVersion);
 
-    try {
-      const rawValue = localStorage.getItem(this.localPerIpQuotaKey);
-      if (!rawValue) {
-        return 0;
-      }
+    const map = new Map(store.records.map((record) => [this.getQuotaRecordKey(record.ipAddress, record.ipVersion), record]));
+    const existingRecord = map.get(key);
+    const currentTimestamps = existingRecord ? existingRecord.timestamps : [];
+    const nextTimestamps = this.filterRecentQuotaTimestamps([...currentTimestamps, referenceMs], referenceMs)
+      .slice(-this.localPerIpLimit);
 
-      const parsed = JSON.parse(rawValue) as Partial<LocalPerIpQuota>;
-      if (parsed.date !== today || parsed.ipAddress !== ip) {
-        return 0;
-      }
-
-      return typeof parsed.used === 'number' && Number.isFinite(parsed.used)
-        ? Math.max(0, Math.floor(parsed.used))
-        : 0;
-    } catch (error) {
-      console.error('Unable to read local per-IP quota fallback:', error);
-      return 0;
-    }
-  }
-
-  private incrementLocalPerIpUsageForToday(): void {
-    const ip = this.cachedIp() ?? '127.0.0.1';
-    const today = this.getTodayQuotaKey();
-    const current = this.getLocalPerIpUsageForToday();
-    const next = Math.min(this.localPerIpLimit, current + 1);
-
-    const payload: LocalPerIpQuota = {
-      date: today,
+    map.set(key, {
       ipAddress: ip,
-      used: next,
-    };
+      ipVersion,
+      timestamps: nextTimestamps,
+    });
 
-    try {
-      localStorage.setItem(this.localPerIpQuotaKey, JSON.stringify(payload));
-    } catch (error) {
-      console.error('Unable to persist local per-IP quota fallback:', error);
-    }
+    this.writeLocalQuotaWindowStore({ records: Array.from(map.values()) });
   }
 
   /**
@@ -713,19 +947,103 @@ export class Preferences implements OnDestroy {
     return new Date().toISOString().slice(0, 10);
   }
 
-  private getMsUntilNextUtcDay(referenceMs: number): number {
-    const now = new Date(referenceMs);
-    const nextUtcMidnight = Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0,
-      0,
-      0,
-      0,
-    );
+  private getTimeUntilQuotaReset(referenceMs: number = Date.now()): number {
+    const record = this.getCurrentIpQuotaRecord(referenceMs);
+    if (record.timestamps.length < this.localPerIpLimit) {
+      return 0;
+    }
 
-    return Math.max(0, nextUtcMidnight - referenceMs);
+    const oldestTimestamp = Math.min(...record.timestamps);
+    const resetAt = oldestTimestamp + this.localQuotaWindowMs;
+    return Math.max(0, resetAt - referenceMs);
+  }
+
+  private clearExpiredQuotaLock(referenceMs: number = Date.now()): void {
+    const usage = this.getLocalPerIpUsageLast24Hours(referenceMs);
+    if (usage < this.localPerIpLimit) {
+      this.quotaExceeded.set(false);
+      if (this.quotaMessage() && this.getTimeUntilQuotaReset(referenceMs) <= 0) {
+        this.quotaMessage.set(null);
+      }
+    }
+  }
+
+  private getCurrentIpQuotaRecord(referenceMs: number): LocalIpQuotaWindowRecord {
+    const store = this.readLocalQuotaWindowStore();
+    const ip = this.cachedIp() ?? '127.0.0.1';
+    const ipVersion = this.detectIpVersion(ip);
+    const key = this.getQuotaRecordKey(ip, ipVersion);
+
+    const existingRecord = store.records.find((record) => this.getQuotaRecordKey(record.ipAddress, record.ipVersion) === key);
+    const timestamps = this.filterRecentQuotaTimestamps(existingRecord?.timestamps ?? [], referenceMs);
+
+    if (!existingRecord || timestamps.length !== existingRecord.timestamps.length) {
+      const map = new Map(store.records.map((record) => [this.getQuotaRecordKey(record.ipAddress, record.ipVersion), record]));
+      map.set(key, {
+        ipAddress: ip,
+        ipVersion,
+        timestamps,
+      });
+      this.writeLocalQuotaWindowStore({ records: Array.from(map.values()) });
+    }
+
+    return {
+      ipAddress: ip,
+      ipVersion,
+      timestamps,
+    };
+  }
+
+  private getQuotaRecordKey(ipAddress: string, ipVersion: 'ipv4' | 'ipv6' | 'unknown'): string {
+    return `${ipVersion}:${ipAddress}`;
+  }
+
+  private filterRecentQuotaTimestamps(timestamps: number[], referenceMs: number): number[] {
+    const windowStart = referenceMs - this.localQuotaWindowMs;
+    return timestamps
+      .filter((value) => Number.isFinite(value) && value > windowStart && value <= referenceMs)
+      .map((value) => Math.floor(value))
+      .sort((a, b) => a - b);
+  }
+
+  private readLocalQuotaWindowStore(): LocalQuotaWindowStore {
+    try {
+      const rawValue = localStorage.getItem(this.localPerIpQuotaKey);
+      if (!rawValue) {
+        return { records: [] };
+      }
+
+      const parsed = JSON.parse(rawValue) as Partial<LocalQuotaWindowStore>;
+      if (!parsed || !Array.isArray(parsed.records)) {
+        return { records: [] };
+      }
+
+      const records = parsed.records
+        .filter((record): record is LocalIpQuotaWindowRecord => !!record
+          && typeof record.ipAddress === 'string'
+          && (record.ipVersion === 'ipv4' || record.ipVersion === 'ipv6' || record.ipVersion === 'unknown')
+          && Array.isArray(record.timestamps))
+        .map((record) => ({
+          ipAddress: record.ipAddress,
+          ipVersion: record.ipVersion,
+          timestamps: record.timestamps
+            .filter((value) => typeof value === 'number' && Number.isFinite(value))
+            .map((value) => Math.floor(value)),
+        }));
+
+      return { records };
+    } catch (error) {
+      console.error('Unable to read local per-IP rolling quota:', error);
+      return { records: [] };
+    }
+  }
+
+  private writeLocalQuotaWindowStore(store: LocalQuotaWindowStore): void {
+    try {
+      localStorage.setItem(this.localPerIpQuotaKey, JSON.stringify(store));
+    } catch (error) {
+      console.error('Unable to persist local per-IP rolling quota:', error);
+    }
   }
 
   private startResetHintTimer(): void {
@@ -734,6 +1052,7 @@ export class Preferences implements OnDestroy {
     }
 
     this.resetHintTimerId = setInterval(() => {
+      this.clearExpiredQuotaLock(Date.now());
       this.resetHintClock.set(Date.now());
     }, 60000);
   }
@@ -780,11 +1099,13 @@ export class Preferences implements OnDestroy {
    * @description Method buildQuotaExceededMessage.
    */
   private buildQuotaExceededMessage(quota: QuotaStatus): string {
+    const ipVersionLabel = quota.ipVersion === 'ipv4' ? 'IPv4' : quota.ipVersion === 'ipv6' ? 'IPv6' : 'IP';
+
     if (quota.perIpRemaining <= 0) {
-      return `Daily quota reached for this IP address. You have used ${quota.perIpUsed} of ${quota.perIpLimit} recipe generations today.`;
+      return `24h quota reached for this ${ipVersionLabel} address. You have used ${quota.perIpUsed} of ${quota.perIpLimit} recipe generations in the last 24 hours.`;
     }
 
-    return `System-wide daily quota reached. ${quota.globalUsed} of ${quota.globalLimit} generations have already been used today.`;
+    return `24h quota reached. ${quota.globalUsed} of ${quota.globalLimit} generations have already been used in the last 24 hours.`;
   }
 
   /**

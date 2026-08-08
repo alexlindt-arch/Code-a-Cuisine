@@ -5,6 +5,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../environments/environment';
 
 /**
  * @description Interface StoredRecipeIngredient.
@@ -96,7 +97,7 @@ type FirebaseRecipesResponse = Record<string, Partial<FirebaseRecipeRecord>>;
  */
 export class RecipeLibraryService {
   private readonly http = inject(HttpClient);
-  private readonly databaseUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';
+  private readonly databaseUrl = environment.firebaseDatabaseUrl;
 
   /**
    * @description Method saveGeneratedRecipes.

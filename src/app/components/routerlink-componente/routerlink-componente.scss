@@ -13,7 +13,7 @@ a.router-link {
   }
    @include mix.smartphone {
     padding: 0;
-    font-size: var.$font-size-lg;
+    font-size: 0;
   }
 }
 
@@ -23,6 +23,9 @@ a.router-link app-images-component {
   min-width: 20px;
   margin-left: 5px;
   transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+  @include mix.smartphone {
+    width: 35px;
+  }
 }
 //--------------------------------------------------------
 a.router-link.--light {

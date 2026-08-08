@@ -14,14 +14,17 @@
       <article class="recipe-hero-card">
         <div class="hero-main">
           <p class="meta-line"><img src="assets/icons/clock_Icon.png" alt="Clock"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
-          <h1>{{ recipe.title }}</h1>
+          <h3>{{ recipe.title }}</h3>
           @if (requestPayload(); as request) {
           <p class="cook-count">Cooking person: {{ request.preferences.cooks }}
             @for (chef of cookIconIndexes(); track chef) {
             <span class="chef-badge"><img [src]="'assets/icons/Cook-icon-' + chef + '.png'" [alt]="'Chef ' + chef"> </span>
-            }
-          </p>
           }
+          </p>
+          @for (chef of cookIconIndexes(); track chef) {
+          <img class="--mobil" [src]="'assets/icons/Cook-icon-' + chef + '.png'" [alt]="'Chef ' + chef">
+          }
+        }
         </div>
 
         <div class="hero-side">
@@ -49,6 +52,7 @@
 
       <article class="panel ingredients-panel" aria-label="Ingredients">
         <img src="assets/img/Ingredients-section.png" alt="Ingredients" class="section-banner">
+        <img [src]="sectionBannerMob" alt="Ingredients-mob" class="section-banner-mob">
         <div class="ingredient-columns">
           <div>
             <h3>Your ingredients</h3>
@@ -76,20 +80,20 @@
           <ol>
             @for (step of stepColumns().left; track step; let i = $index) {
             <li>
-              <p class="step-headline"><span>{{ i + 1 }}.</span> Step
+              <p class="step-headline"><span>{{ i + 1 }}.</span><span class="step-title">{{ step.title }}</span>
                <img class="step-chef-badge" src="assets/icons/Cook-icon-1.png" alt="Chef 1">
               </p>
-              <p>{{ step }}</p>
+              <p>{{ step.description }}</p>
             </li>
             }
           </ol>
           <ol>
             @for (step of stepColumns().right; track step; let i = $index) {
             <li>
-              <p class="step-headline"><span>{{ i + stepColumns().left.length + 1 }}.</span> Step
+              <p class="step-headline"><span>{{ i + stepColumns().left.length + 1 }}.</span><span class="step-title">{{ step.title }}</span>
                 <img class="step-chef-badge" [src]="hasSecondChef() ? 'assets/icons/Cook-icon-2.png' : 'assets/icons/Cook-icon-1.png'" [alt]="hasSecondChef() ? 'Chef 2' : 'Chef 1'">
               </p>
-              <p>{{ step }}</p>
+              <p>{{ step.description }}</p>
             </li>
             }
           </ol>

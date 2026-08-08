@@ -28,25 +28,23 @@
     <div class="preferences-content">
       <h1>Choose your preferences</h1>
 
-      @if (quotaStatus(); as quota) {
+      <!-- @if (quotaStatus(); as quota) {
       @if (showQuotaCard()) {
       <article class="quota-card" aria-live="polite">
         <div>
-          <h2>Daily quota</h2>
-          <p>{{ quota.perIpRemaining }} of {{ quota.perIpLimit }} recipe requests left for this IP today.</p>
+          <h2>24h quota (this IP)</h2>
+          <p>{{ quota.perIpRemaining }} of {{ quota.perIpLimit }} recipe requests left for the next 24 hours.</p>
         </div>
         <div>
-          <h2>System quota</h2>
-          <p>{{ quota.globalRemaining }} of {{ quota.globalLimit }} requests left across the app today.</p>
+          <h2>Detected address type</h2>
+          <p>{{ quota.ipVersion === 'ipv4' ? 'IPv4' : quota.ipVersion === 'ipv6' ? 'IPv6' : 'Unknown IP type' }} · {{ quota.perIpUsed }} request(s) used in the last 24 hours.</p>
         </div>
       </article>
       }
-      }
+      } -->
 
       @if (!showQuotaDialog() && quotaMessage(); as message) {
-      @if (isQuotaForToday(quotaStatus())) {
       <p class="quota-message" aria-live="assertive">{{ message }}</p>
-      }
       }
 
       <article class="preferences-intro">
@@ -130,9 +128,7 @@
 
       <div class="footer-actions">
         <button class="btn --generate-btn" type="button" [disabled]="!canSubmitRecipe()" (click)="generateRecipe()">
-          {{ submitState() === 'loading' ? 'Generating...' : isQuotaStatusLoading() ? 'Checking daily limit...' :
-          !quotaStatus() ? 'Quota check unavailable' : !canSubmitRecipe() ? 'Daily limit reached' : 'Generate a recipe'
-          }}
+          {{ generateButtonLabel() }}
         </button>
       </div>
     </div>
@@ -142,7 +138,7 @@
   @if (showQuotaDialog()) {
   <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true"></div>
   <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
-    <h2 id="quota-dialog-title">Ups! Not quite enough...</h2>
+    <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
     <p>{{ quotaDialogMessage() }}</p>
     @if (quotaResetHint(); as hint) {
     <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>

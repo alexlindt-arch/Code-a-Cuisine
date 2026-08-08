@@ -23,7 +23,6 @@ export class Cookbook {
 
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
   readonly arrowClass = 'arrow-icon';
-
   readonly categories = cookbookCategories;
   readonly recipes = signal<CookbookRecipeRecord[]>([]);
   readonly loadingState = signal<'idle' | 'loading' | 'error'>('idle');

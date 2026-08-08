@@ -5,7 +5,7 @@
 p {
   text-align: center;
   font-family: var.$font-family;
-  font-size: var.$font-size-sub-headline-sm;
+  font-size: clamp(18px, 5vw, 24px);
   margin: 15px 0;
   width: 100%;
 }
@@ -14,9 +14,13 @@ h1 {
   width: 100%;
   text-align: center;
   font-family: var.$font-family;
-  font-size: var.$font-size-headline;
+  font-size: clamp(32px, 7vw, 54px);
   font-weight: var.$font-weight-large;
   margin: 50px 0;
+
+  @include mixin.smartphone {
+    margin: 20px 0;
+  }
 }
 
 h2 {
@@ -41,6 +45,11 @@ section {
   flex-direction: column;
   width: 100%;
   padding: 16px 68px 40px;
+
+  @include mixin.smartphone {
+    padding: 0px;
+
+  }
 }
 
 .card-content {
@@ -50,16 +59,29 @@ section {
   width: 100%;
   gap: var.$mgr-medium;
   margin: var.$mgr-medium 0;
+
+  @include mixin.tablet {
+    @include mixin.flex-column-center()
+  }
+
+  @include mixin.smartphone {
+    @include mixin.flex-column-center()
+  }
 }
 
 .card {
   @include mixin.flex-start();
   @include mixin.max-width(700px);
   width: 100%;
-  max-height: 150px;
+  height: 100%;
   padding: var.$pd-large;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
+
+  @include mixin.smartphone {
+    @include mixin.flex-column-center();
+    max-height: 100%;
+  }
 }
 
 .card.--ingredients {
@@ -72,20 +94,38 @@ section {
   padding: var.$pd-xxl;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
+  @include mixin.smartphone {
+    @include mixin.flex-column-center();
+    max-height: 100%;
+  }
+
 }
 
 .card form {
   @include mixin.flex-center();
   @include mixin.max-width(var.$max-width);
   flex-direction: row;
-  align-items: flex-end;
+  align-items: flex-start;
   width: 100%;
   gap: var.$mgr-xll;
   border-radius: var.$border-radius;
 
+  @include mixin.smartphone {
+    @include mixin.flex-center();
+    flex-direction: column;
+    gap: 10px;
+
+  }
+
   & .form-actions {
     margin-bottom: var.$mgr-medium;
+
+    @include mixin.smartphone {
+      margin: 0;
+    }
   }
+
+
 }
 
 .label-content {
@@ -103,6 +143,10 @@ section {
   width: 50%;
   text-align: center;
   margin-bottom: var.$mgr-medium;
+
+  @include mixin.smartphone {
+    width: 100%;
+  }
 }
 
 .form-group-selection {
@@ -110,16 +154,30 @@ section {
   width: 50%;
   text-align: center;
   margin-bottom: var.$mgr-medium;
+
+  @include mixin.smartphone {
+    width: 100%;
+    align-items: flex-start
+
+  }
 }
 
 .selection-content {
   @include mixin.flex-column-center();
   flex-direction: row;
   width: 100%;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: var.$mgr-medium;
-  text-align: center;
+  text-align: c;
   font-family: var.$font-family;
   font-size: var.$font-size-md;
+
+  @include mixin.smartphone {
+    gap: 5px;
+    justify-content: flex-start;
+  }
+
 }
 
 .selection-content label {
@@ -165,6 +223,7 @@ section {
     }
 
     .ingredient-field:has(.ingredient-validation-message) {
+
       &:active,
       &:focus {
         display: none;
@@ -176,12 +235,12 @@ section {
     list-style: none;
     margin: 6px 0 0 0;
     padding: 6px;
-    position: absolute;
+    position: relative;
     top: 100%;
     left: 0;
     width: 100%;
     border-radius: var.$border-radius;
-     background-color: rgba(var.$secondary-bg, 0.88);
+    background-color: transparent;
     z-index: 25;
 
     li {
@@ -195,6 +254,7 @@ section {
     button {
       width: 100%;
       border: none;
+      background-color: transparent;
       color: var.$secondary-text-color;
       text-align: left;
       padding: 8px 10px;
@@ -220,6 +280,10 @@ ul {
   margin: 0;
   padding: 0;
 
+   @include mixin.smartphone {
+        justify-content: flex-start;
+      }
+
   & li {
     width: 100%;
     min-width: 150px;
@@ -240,20 +304,30 @@ ul {
       align-items: center;
       font-weight: var.$font-weight-medium;
       gap: var.$mgr-medium;
+
+      @include mixin.smartphone {
+        gap: 70px;
+      }
     }
 
-    & .ingredient-quantity {
-      @include mixin.flex-around();
-      align-items: center;
-      font-weight: var.$font-weight-medium;
-      gap: var.$mgr-medium;
-    }
+
+
+  & .ingredient-quantity {
+    @include mixin.flex-around();
+    align-items: center;
+    font-weight: var.$font-weight-medium;
+    gap: var.$mgr-medium;
+    min-width: 70px;
   }
+}
 }
 
 .button-content {
   display: flex;
   gap: var.$mgr-medium;
+  @include mixin.smartphone{
+    gap: 0px;
+  }
 }
 
 .unit-selection {
@@ -262,7 +336,7 @@ ul {
   min-width: 85px;
 
   & app-images-component {
-    position: absolute;
+    position:   absolute;
     top: 60%;
     transform: translate(0%, -50%) rotate(180deg);
     right: 10px;
@@ -277,7 +351,7 @@ ul {
 
   & app-images-component {
     position: absolute;
-    top: 60%;
+    margin-top: 60%;
     transform: translate(0%, -50%) rotate(180deg);
     right: 10px;
     pointer-events: none;
@@ -285,11 +359,13 @@ ul {
 }
 
 .custom-select.open app-images-component {
-  top: 38%;
+  top: 5%;
   animation: rotate 255ms ease-in-out forwards;
 }
 
 .custom-select {
+  display: flex;
+  flex-direction: column;
   position: relative;
 
   .unit-trigger {
@@ -301,15 +377,14 @@ ul {
     list-style: none;
     margin: 0;
     padding: 6px 0;
-    position: absolute;
     top: calc(100% + 1px);
     left: 0;
     width: 100%;
+    max-width: 85px;
     border: none;
     outline: none;
     border-radius: var.$border-radius;
-    background-color: var.$input-bg-color;
-    box-shadow: 0 8px 24px rgba(var.$primary-bg, 0.22);
+    background-color: transparent;
     z-index: 20;
 
     li {
@@ -341,7 +416,6 @@ ul {
   }
 
   to {
-    top: 20%;
     transform: rotate(-0deg);
   }
 }
@@ -351,6 +425,9 @@ ul {
   text-align: end;
   width: auto;
   margin: var.$mgr-medium 0;
+   @include mixin.smartphone {
+        text-align: center;
+      }
 
   & .--generate-btn {
     margin-right: 0px;
@@ -369,6 +446,9 @@ ul {
     justify-content: flex-start;
     align-items: center;
     gap: var.$mgr-large;
+    @include mixin.smartphone {
+      gap: 5px;
+      }
   }
 
   & .form-control-input {
@@ -385,7 +465,18 @@ ul {
   width: 100%;
   gap: var.$mgr-large;
   min-width: 50%;
-  font-size: var.$font-size-lg;
+  font-size: clamp(var.$font-size-lg, 5vw, 18px);
+
+  &.ingredient-quantity {
+    text-align: start;
+    gap: var.$mgr-large;
+    min-width: 50px;
+
+    @include mixin.smartphone {
+      gap: 3px;
+      min-width: 20px;
+    }
+  }
 
   & .ingredient-name {
     display: flex;
@@ -396,10 +487,8 @@ ul {
     width: 100%;
     min-width: 50%;
   }
-}
 
-.ingredient-quantity {
-  text-align: start;
-  gap: var.$mgr-large;
-  min-width: 50px;
+  @include mixin.smartphone {
+    gap: 5px;
+  }
 }

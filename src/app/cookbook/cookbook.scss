@@ -15,7 +15,7 @@
 .content-limited {
   flex-direction: column;
   width: 100%;
-  padding: 0 68px 40px;
+  padding: 0 16px;
 }
 
 .top-section {
@@ -38,8 +38,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-}
 
+  @include mix.smartphone{
+     grid-template-rows: 2fr;
+
+}
+}
 .hero-copy {
   h1 {
     margin: 0;
@@ -280,31 +284,3 @@
   }
 }
 
-@media (max-width: 980px) {
-
-  .hero-card,
-  .favorite-cards,
-  .category-grid {
-    grid-template-columns: 1fr;
-    overflow-x: unset;
-  }
-
-  .hero-copy p {
-    max-width: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .cookbook-page {
-    padding-inline: 14px;
-  }
-
-  .hero-card {
-    padding: 18px;
-  }
-
-  .category-card h2,
-  .favorites-heading h2 {
-    font-size: 24px;
-  }
-}

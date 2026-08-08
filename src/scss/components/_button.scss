@@ -100,11 +100,16 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
   background-color: var.$input-bg-color;
   overflow: hidden;
   min-width: 110px;
+  max-width: 110px;
   transition: grid-template-columns 140ms ease-in-out;
 
   &:focus-within {
     outline: none;
     grid-template-columns: 30px 1fr 30px;
+    @include mixin.smartphone {
+      grid-template-columns: 20px 90px 20px;
+      }
+
   }
 
   .form-control-input {
@@ -115,6 +120,12 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
     outline: none;
     border: unset;
   }
+
+  @include mixin.smartphone{
+    min-width: 90px;
+
+  }
+
 }
 
 .stepper-btn {

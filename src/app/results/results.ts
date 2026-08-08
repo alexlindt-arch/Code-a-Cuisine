@@ -5,7 +5,6 @@
 import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
-
 import { RecipeLibraryService, type StoredRecipeRequestPayload, type StoredRecipeResult } from '../recipe-library.service';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 

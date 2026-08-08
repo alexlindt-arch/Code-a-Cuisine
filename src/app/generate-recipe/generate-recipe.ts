@@ -9,6 +9,7 @@ import { map } from 'rxjs/operators';
 import {  ImagesComponent } from "../components/images-component/images-component";
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /**
  * @description Interface Ingredients.
@@ -51,7 +52,7 @@ interface StoredRecipeContext {
 export class GenerateRecipe implements OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly databaseUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';
+  private readonly databaseUrl = environment.firebaseDatabaseUrl;
   private readonly ingredientHintMessage = 'Keine Sonderzeichen erlaubt. Maximal 40 Zeichen.';
   readonly emptyIngredientHintMessage = 'Bitte gib eine Zutat ein.';
   firebaseIngredientNames = signal<string[]>([]);
@@ -60,7 +61,7 @@ export class GenerateRecipe implements OnDestroy {
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   readonly unitOptions = ['gram', 'ml', 'piece'];
-  private readonly ingredientNamePattern = /^[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
+  private readonly ingredientNamePattern = /[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
   private readonly maxIngredientNameLength = 40;
 
   /**
