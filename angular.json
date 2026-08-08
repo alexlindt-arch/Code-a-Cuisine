@@ -38,6 +38,12 @@
             "production": {
               "baseHref": "/angular-projects/Code-a-Cuisine/",
               "deployUrl": "/angular-projects/Code-a-Cuisine/",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -62,9 +68,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {
-            "proxyConfig": "proxy.conf.json"
-          },
+          "options": {},
           "configurations": {
             "production": {
               "buildTarget": "Code-a-Cuisine:build:production"
