@@ -1,76 +1,85 @@
 <section class="cookbook-category-page">
   <div class="content-limited">
     <div class="top-section">
-       <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'" [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
+      <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'"
+        [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
     </div>
 
-  <div class="category-shell">
-    <div class="generate-recipe-content">
-      <a [routerLink]="'/generate-recipe'" class="generate-button">Generate a recipe</a>
-    </div>
-    @if (selectedCategory(); as category) {
-    <article class="category-panel">
-      <div class="category-banner">
-        <img [src]="category.banner" [alt]="category.title">
+    <div class="category-shell">
+      <div class="generate-recipe-content">
+        <a [routerLink]="'/generate-recipe'" class="generate-button">Generate a recipe</a>
       </div>
+      @if (selectedCategory(); as category) {
+      <article class="category-panel">
+        <div class="category-banner">
+          <img [src]="category.banner" [alt]="category.title">
+          <img [src]="'assets/img/Ingredients-Mob.png'" [alt]="category.title">
+        </div>
 
-      @if (loadingState() === 'loading') {
-      <p class="category-status">Loading category recipes from database...</p>
-      } @else if (loadingState() === 'error') {
-      <p class="category-status category-status-error">Could not load category recipes from database.</p>
-      } @else {
-      @if (isUsingFallbackRecipes()) {
-      <p class="category-status">No recipes found for this category yet. Showing the latest recipes from all categories instead.</p>
-      }
-      <ol class="recipe-list">
-        @for (recipe of visibleRecipes(); track recipe.id; let i = $index) {
-        <li>
-          <a class="recipe-entry-link" [routerLink]="['/cookbook/recipe', recipe.id]" [attr.aria-label]="'Open recipe: ' + recipe.title">
-            <div class="recipe-entry-main">
-              <p class="recipe-meta"><img src="assets/icons/clock_Icon.png" alt="Cooking time"> Cooking time: {{ recipe.estimatedMinutes }}min</p>
-              <span class="recipe-entry-title">
-              <span class="recipe-index">{{ ((currentPage() - 1) * 15) + i + 1 }}.</span>
-              <h2>{{ recipe.title }}</h2>
-              </span>
-            </div>
+        @if (loadingState() === 'loading') {
+        <p class="category-status">Loading category recipes from database...</p>
+        } @else if (loadingState() === 'error') {
+        <p class="category-status category-status-error">Could not load category recipes from database.</p>
+        } @else {
+        @if (isUsingFallbackRecipes()) {
+        <p class="category-status">No recipes found for this category yet. Showing the latest recipes from all
+          categories instead.</p>
+        }
+        <ol class="recipe-list">
+          @for (recipe of visibleRecipes(); track recipe.id; let i = $index) {
+          <li>
+            <a class="recipe-entry-link" [routerLink]="['/cookbook/recipe', recipe.id]"
+              [attr.aria-label]="'Open recipe: ' + recipe.title">
+              <div class="recipe-entry-main">
+                <p class="recipe-meta"><img src="assets/icons/clock_Icon.png" alt="Cooking time"> Cooking time: {{
+                  recipe.estimatedMinutes }}min</p>
+                <div class="recipe-entry-wrapper">
+                  <span class="recipe-entry-title">
+                    <span class="recipe-index">{{ ((currentPage() - 1) * 15) + i + 1 }}.</span>
+                    <h2>{{ recipe.title }}</h2>
 
-            <div class="recipe-entry-tags">
-              @if (recipe.dietLabel) {
-              <span class="tag">{{ recipe.dietLabel }}</span>
+                    <div class="recipe-entry-tags">
+                      @if (recipe.dietLabel) {
+                        <span class="tag">{{ recipe.dietLabel }}</span>
+                      }
+                      <span class="tag">{{ recipe.difficulty }}</span>
+                      <span class="tag like-tag"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</span>
+                    </div>
+                  </span>
+                  </div>
+              </div>
+            </a>
+
+          </li>
+          }
+        </ol>
+        }
+
+        @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Cookbook pages">
+          <button type="button" class="page-nav" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"
+            aria-label="Previous page">
+            < </button>
+
+              @for (pageNumber of pageNumbers(); track pageNumber) {
+              <button type="button" [class.active]="currentPage() === pageNumber" (click)="selectPage(pageNumber)">{{
+                pageNumber }}</button>
               }
-              <span class="tag">{{ recipe.difficulty }}</span>
-              <span class="tag like-tag"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</span>
-            </div>
-          </a>
 
-        </li>
+              <button type="button" class="page-nav" (click)="goToNextPage()" [disabled]="!hasNextPage()"
+                aria-label="Next page">
+                >
+              </button>
+        </nav>
         }
-      </ol>
+      </article>
+      } @else {
+      <article class="empty-panel">
+        <h1>Category not found</h1>
+        <p>Select a cookbook category first.</p>
+        <a [routerLink]="'/cookbook'">Back to cookbook</a>
+      </article>
       }
-
-      @if (totalPages() > 1) {
-      <nav class="pagination" aria-label="Cookbook pages">
-        <button type="button" class="page-nav" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()" aria-label="Previous page">
-          <
-        </button>
-
-        @for (pageNumber of pageNumbers(); track pageNumber) {
-        <button type="button" [class.active]="currentPage() === pageNumber" (click)="selectPage(pageNumber)">{{ pageNumber }}</button>
-        }
-
-        <button type="button" class="page-nav" (click)="goToNextPage()" [disabled]="!hasNextPage()" aria-label="Next page">
-          >
-        </button>
-      </nav>
-      }
-    </article>
-    } @else {
-    <article class="empty-panel">
-      <h1>Category not found</h1>
-      <p>Select a cookbook category first.</p>
-      <a [routerLink]="'/cookbook'">Back to cookbook</a>
-    </article>
-    }
-  </div>
+    </div>
   </div>
 </section>

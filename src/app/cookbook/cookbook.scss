@@ -6,16 +6,15 @@
 }
 
 .cookbook-shell {
-  max-width: 1440px;
-  margin: 0 auto;
   color: var.$secondary-text-color;
   font-family: 'quicksand-book-regular', sans-serif;
+
 }
 
 .content-limited {
   flex-direction: column;
-  width: 100%;
-  padding: 0 16px;
+  padding: 0 24px;
+
 }
 
 .top-section {
@@ -27,6 +26,11 @@
 .top-section .router-link {
   color: var.$secondary-text-color !important;
   text-decoration: none;
+  @include mix.smartphone {
+    &--dark {
+      font-size: 0px;
+    }
+  }
 }
 
 
@@ -36,15 +40,17 @@
   background: linear-gradient(180deg, #f4f7f2 0%, #eff4ed 100%);
   padding: 22px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.75fr 1fr;
   gap: 10px;
 
-  @include mix.smartphone{
-     grid-template-rows: 2fr;
+  @include mix.smartphone {
+    grid-template-columns: 1fr;
+  }
+}
 
-}
-}
 .hero-copy {
+  width: 100%;
+
   h1 {
     margin: 0;
     font-family: 'quicksand-bold-regular', sans-serif;
@@ -54,14 +60,14 @@
   p {
     margin: 12px 0 0;
     width: 100%;
-    font-size: var.$font-size-xxl;
+    font-size: clamp(18px, 3vw, var.$font-size-xxl);
     font-weight: var.$font-weight-medium;
   }
 }
 
 .hero-favorites {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: repeat(auto-fill, 1fr);
   gap: 12px;
 }
 
@@ -88,12 +94,8 @@
   gap: 10px;
   overflow-x: scroll;
   padding-bottom: 10px;
-  max-width: calc(730px + 150px);
-  min-width: calc(320px - 150px);
-
-  @include mix.desktop {
-    max-width: 830px;
-  }
+  max-width: calc(330px + 850px);
+  min-width: calc(320px - 95px);
 }
 
 .favorites-status {
@@ -123,7 +125,9 @@
 }
 
 .favorite-cards::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
+  height: 10px;
+  border-radius: 8px;
   background-color: #F5F5F5;
 
 }
@@ -146,23 +150,25 @@
   background: #dfe8db;
   padding: 12px;
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto;
   gap: 24px;
-  min-width: 370px;
+  min-width: calc(370px - min(45px, 8vw));
 
+  @include mix.smartphone {
+    min-width: calc(320px - 90px);
+  }
   .recipe-image-wrapper {
     grid-template-columns: 1fr 0.5fr;
     display: grid;
     width: 100%;
     height: 0;
     position: relative;
-
   }
 
   h3 {
     font-family: 'quicksand-bold-regular', sans-serif;
-    font-size: 24px;
+    font-size: clamp(18px, 3vw, 24px);
     font-weight: var.$font-weight-medium;
     color: var.$secondary-text-color;
   }
@@ -203,6 +209,10 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 26px 28px;
+
+  @include mix.smartphone {
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  }
 }
 
 .category-card {
@@ -230,12 +240,20 @@
     border-radius: 2px;
     transition: transform 1s ease;
     transform-origin: center;
+
+    @include mix.smartphone {
+      max-width: 275px;
+    }
   }
 
   .headlin-icon {
     width: 30px;
     height: 30px;
     transition: transform 2s ease;
+  }
+
+  @include mix.smartphone {
+    max-width: 315px;
   }
 }
 
@@ -244,6 +262,11 @@
   border-radius: 2px;
   width: 100%;
   aspect-ratio: 1 / 1;
+
+  @include mix.smartphone {
+    display: flex;
+    justify-content: center;
+  }
 }
 
 .category-card:hover .category-image {
@@ -260,6 +283,10 @@
   display: flex;
   justify-content: end;
   padding-bottom: 50px;
+
+  @include mix.smartphone {
+    padding: 25px 8px 25px;
+  }
 }
 
 .generate-link {
@@ -283,4 +310,3 @@
     height: 18px;
   }
 }
-

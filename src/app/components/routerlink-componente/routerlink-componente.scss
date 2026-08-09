@@ -11,10 +11,6 @@ a.router-link {
   &:hover {
     background-color: rgba(236, 240, 236, 0.7);
   }
-   @include mix.smartphone {
-    padding: 0;
-    font-size: 0;
-  }
 }
 
 a.router-link app-images-component {
@@ -24,7 +20,7 @@ a.router-link app-images-component {
   margin-left: 5px;
   transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
   @include mix.smartphone {
-    width: 35px;
+    width: clamp(20px, 5vw, 35px);
   }
 }
 //--------------------------------------------------------
@@ -46,6 +42,9 @@ a.router-link.--dark {
   flex-direction: row-reverse;
   gap: 8px;
   width: 100%;
+  @include mix.smartphone {
+    font-size: 0px;
+  }
 }
 
 a.router-link.--dark:hover app-images-component {
@@ -59,6 +58,9 @@ a.router-link.--dark-bottom {
   color: var.$secondary-text-color;
   gap: 8px;
   width: 100%;
+  @include mix.smartphone {
+  font-size: 18px;
+  }
 }
 
 a.router-link.--dark-bottom:hover app-images-component {
