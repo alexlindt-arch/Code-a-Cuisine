@@ -65,7 +65,8 @@ export class RecipeDetail {
   readonly likeState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
   readonly backLink = signal('/results');
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
-  readonly sectionBannerMob = 'assets/img/Ingredients-Mob.png';
+  readonly sectionBannerMobIngredients = 'assets/img/Ingredients-Mob.png';
+  readonly sectionBannerMobDirections = 'assets/img/Directions-Mob.png';
   readonly arrowClass = 'arrow-icon';
 
   readonly cookIconCount = computed(() => {
@@ -585,4 +586,27 @@ export class RecipeDetail {
       && recipe.steps.every((item) => typeof item === 'string');
   }
 
+  /**
+   * @description Method showIngredients toggle class.
+   */
+ showIngredients() {
+    const ingredientsPanel = document.querySelector('.ingredient-columns') as HTMLElement | null;
+    ingredientsPanel?.classList.toggle('show-ingredients');
+    ingredientsPanel?.scrollIntoView({ behavior: 'smooth' });
+    ingredientsPanel?.style.setProperty('transition', 'all 0.5s ease-in-out');
+    const ingredientsButton = document.querySelector('.ingredients-intro-btn') as HTMLElement | null;
+    ingredientsButton?.classList.toggle('active');
+  }
+
+  /**
+   * @description Method showDirections toggle class.
+   */
+  showDirections() {
+    const stepsPanel = document.querySelector('.steps-columns') as HTMLElement | null;
+    stepsPanel?.classList.toggle('show-directions');
+    stepsPanel?.scrollIntoView({ behavior: 'smooth' });
+    stepsPanel?.style.setProperty('transition', 'all 0.5s ease-in-out');
+    const stepsButton = document.querySelector('.directions-intro-btn') as HTMLElement | null;
+    stepsButton?.classList.toggle('active');
+  }
 }

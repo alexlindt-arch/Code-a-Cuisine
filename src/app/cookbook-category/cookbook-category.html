@@ -13,7 +13,7 @@
       <article class="category-panel">
         <div class="category-banner">
           <img [src]="category.banner" [alt]="category.title">
-          <img [src]="'assets/img/Ingredients-Mob.png'" [alt]="category.title">
+          <img [src]="category.bannerMob" [alt]="category.title">
         </div>
 
         @if (loadingState() === 'loading') {
@@ -36,7 +36,7 @@
                 <div class="recipe-entry-wrapper">
                   <span class="recipe-entry-title">
                     <span class="recipe-index">{{ ((currentPage() - 1) * 15) + i + 1 }}.</span>
-                    <h2>{{ recipe.title }}</h2>
+                    <h4>{{ recipe.title }}</h4>
 
                     <div class="recipe-entry-tags">
                       @if (recipe.dietLabel) {

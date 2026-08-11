@@ -24,7 +24,6 @@ export class CookbookCategoryPage {
   private readonly pageSize = 15;
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
   readonly arrowClass = 'arrow-icon';
-
   readonly selectedCategory = signal<CookbookCategory | null>(null);
   readonly recipes = signal<CookbookRecipeRecord[]>([]);
   readonly loadingState = signal<'idle' | 'loading' | 'error'>('idle');
