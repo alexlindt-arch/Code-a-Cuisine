@@ -23,6 +23,11 @@ a.router-link app-images-component {
     width: clamp(20px, 5vw, 35px);
   }
 }
+
+a.router-link.--hero {
+  width: 250px;
+}
+
 //--------------------------------------------------------
 a.router-link.--light {
   color: var.$primary-text-color;

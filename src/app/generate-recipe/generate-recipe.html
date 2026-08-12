@@ -11,12 +11,13 @@
             </div>
             <div class="ingredient-field">
               @if (ingredientValidationMessage()) {
-              <p class="ingredient-validation-message" role="alert" [class.empty-hint]="ingredientValidationMessage() === emptyIngredientHintMessage">
+              <p class="ingredient-validation-message" role="alert"
+                [class.empty-hint]="ingredientValidationMessage() === emptyIngredientHintMessage">
                 {{ ingredientValidationMessage() }}
               </p>
               }
               <input class="form-control-input" type="text" id="ingredients" name="ingredients" autocomplete="off"
-                autocorrect="off" spellcheck="false" pattern="[A-Za-zÄÖÜäöüß0-9\s'()\-]+" maxlength="40"
+                autocorrect="off" spellcheck="false" maxlength="40"
                 title="Bitte nur Buchstaben, Zahlen, Leerzeichen, Bindestriche, Apostroph oder Klammern verwenden"
                 [value]="ingredientsSignal().name" (input)="setIngredientName($event)"
                 (focus)="onIngredientFieldFocus()" (blur)="onIngredientFieldBlur()">
@@ -68,7 +69,11 @@
                 </button>
               </div>
             </div>
+            @if (formValidationMessage()) {
+            <p class="form-validation-message" role="alert">{{ formValidationMessage() }}</p>
+            }
           </div>
+
         </form>
       </div>
       <div class="card --ingredients ">
@@ -136,9 +141,7 @@
       </div>
     </div>
     <div class="recipe-button-content">
-      @if (hasIngredients()) {
-      <button class="btn --generate-btn" type="button" [routerLink]="'/preferences'">Next Step</button>
-      }
+      <button class="btn --generate-btn" type="button" (click)="goToPreferences()">Next Step</button>
     </div>
   </div>
 </section>

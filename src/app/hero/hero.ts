@@ -31,6 +31,4 @@ export class Hero {
   heroImageArrow = 'assets/icons/Arrow-right.png';
   recipeRouterLink: string = '/generate-recipe';
   cookbookRouterLink: string = '/cookbook';
-
-
 }

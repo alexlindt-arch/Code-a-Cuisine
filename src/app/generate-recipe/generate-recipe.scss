@@ -94,6 +94,7 @@ section {
   padding: var.$pd-xxl;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
+
   @include mixin.smartphone {
     @include mixin.flex-column-center();
     max-height: 100%;
@@ -155,10 +156,21 @@ section {
   text-align: center;
   margin-bottom: var.$mgr-medium;
 
+  .form-validation-message {
+    margin: 10px 0 0;
+    color: #b42318;
+    font-family: var.$font-family;
+    font-size: var.$font-size-sm;
+    text-align: start;
+
+    @include mixin.smartphone {
+      text-align: center;
+    }
+  }
+
   @include mixin.smartphone {
     width: 100%;
-    align-items: flex-start
-
+    align-items: flex-start;
   }
 }
 
@@ -169,9 +181,10 @@ section {
   justify-content: flex-start;
   align-items: flex-start;
   gap: var.$mgr-medium;
-  text-align: c;
+  text-align: center;
   font-family: var.$font-family;
   font-size: var.$font-size-md;
+
 
   @include mixin.smartphone {
     gap: 5px;
@@ -280,9 +293,9 @@ ul {
   margin: 0;
   padding: 0;
 
-   @include mixin.smartphone {
-        justify-content: flex-start;
-      }
+  @include mixin.smartphone {
+    justify-content: flex-start;
+  }
 
   & li {
     width: 100%;
@@ -312,20 +325,21 @@ ul {
 
 
 
-  & .ingredient-quantity {
-    @include mixin.flex-around();
-    align-items: center;
-    font-weight: var.$font-weight-medium;
-    gap: var.$mgr-medium;
-    min-width: 70px;
+    & .ingredient-quantity {
+      @include mixin.flex-around();
+      align-items: center;
+      font-weight: var.$font-weight-medium;
+      gap: var.$mgr-medium;
+      min-width: 70px;
+    }
   }
-}
 }
 
 .button-content {
   display: flex;
   gap: var.$mgr-medium;
-  @include mixin.smartphone{
+
+  @include mixin.smartphone {
     gap: 0px;
   }
 }
@@ -336,7 +350,7 @@ ul {
   min-width: 85px;
 
   & app-images-component {
-    position:   absolute;
+    position: absolute;
     top: 60%;
     transform: translate(0%, -50%) rotate(180deg);
     right: 10px;
@@ -425,13 +439,15 @@ ul {
   text-align: end;
   width: auto;
   margin: var.$mgr-medium 0;
-   @include mixin.smartphone {
-        text-align: center;
-      }
+
+  @include mixin.smartphone {
+    text-align: center;
+  }
 
   & .--generate-btn {
     margin-right: 0px;
   }
+
 }
 
 .hidden {
@@ -446,9 +462,10 @@ ul {
     justify-content: flex-start;
     align-items: center;
     gap: var.$mgr-large;
+
     @include mixin.smartphone {
       gap: 5px;
-      }
+    }
   }
 
   & .form-control-input {

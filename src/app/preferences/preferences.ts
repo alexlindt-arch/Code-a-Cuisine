@@ -15,6 +15,8 @@ type CuisineId = 'german' | 'italian' | 'indian' | 'japanese' | 'gourmet' | 'fus
 type DietId = 'vegetarian' | 'vegan' | 'keto' | 'none';
 
 
+
+
 /**
  * @description Interface CookingTimeOption.
  */
@@ -142,6 +144,12 @@ export class Preferences implements OnDestroy {
   private readonly localPerIpQuotaKey = 'cac-local-per-ip-quota';
   private readonly localPerIpLimit = 3;
   private readonly localQuotaWindowMs = 24 * 60 * 60 * 1000;
+  private readonly minGenerateLoadingMs = 1200;
+  private readonly previewLoadingMs = 500000;
+  private readonly dailyLimitDialogTitle = 'Tageslimit erreicht';
+  private readonly connectionDialogTitle = 'Verbindung fehlgeschlagen';
+  private readonly connectionDialogMessage = 'Die Rezept-API ist aktuell nicht erreichbar. Bitte versuche es in wenigen Minuten erneut.';
+  private readonly noticeDialogTitle = 'Hinweis';
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -158,6 +166,17 @@ export class Preferences implements OnDestroy {
   private readonly cachedIp = signal<string | null>(null);
   private readonly resetHintClock = signal(Date.now());
   private resetHintTimerId: ReturnType<typeof setInterval> | null = null;
+  private previewLoadingTimerId: ReturnType<typeof setTimeout> | null = null;
+
+ /**
+   * @description Creates an instance of Preferences.
+   */
+  constructor() {
+    this.startResetHintTimer();
+    void this.initClientIp();
+    this.previewLoadingScreen();
+  }
+
   readonly canSubmitRecipe = computed(() => {
     const _resetClock = this.resetHintClock();
 
@@ -206,6 +225,14 @@ export class Preferences implements OnDestroy {
     return 'Generate a recipe';
   });
   readonly quotaDialogMessage = computed(() => {
+    if (this.quotaDialogKind() === 'limit') {
+      return this.buildDailyLimitDialogMessage();
+    }
+
+    if (this.quotaDialogKind() === 'connection') {
+      return this.connectionDialogMessage;
+    }
+
     const message = this.quotaMessage();
     if (typeof message === 'string' && message.trim().length > 0) {
       return message;
@@ -221,18 +248,18 @@ export class Preferences implements OnDestroy {
       return `24h generation limit reached on this device/IP. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations in the last 24 hours.`;
     }
 
-    return 'Tageslimit erreicht. Bitte versuche es spaeter erneut.';
+    return this.buildDailyLimitDialogMessage();
   });
   readonly quotaDialogTitle = computed(() => {
     if (this.quotaDialogKind() === 'connection') {
-      return 'Connection issue';
+      return this.connectionDialogTitle;
     }
 
     if (this.quotaDialogKind() === 'limit') {
-      return '24h limit reached';
+      return this.dailyLimitDialogTitle;
     }
 
-    return 'Notice';
+    return this.noticeDialogTitle;
   });
   readonly quotaResetHint = computed(() => {
     // Depend on the clock signal so the hint updates every minute.
@@ -288,19 +315,40 @@ export class Preferences implements OnDestroy {
     { id: 'none', label: 'No preferences' },
   ];
 
-  /**
-   * @description Creates an instance of Preferences.
-   */
-  constructor() {
-    this.startResetHintTimer();
-    void this.initClientIp();
-  }
+
 
   ngOnDestroy(): void {
     if (this.resetHintTimerId !== null) {
       clearInterval(this.resetHintTimerId);
       this.resetHintTimerId = null;
     }
+
+    if (this.previewLoadingTimerId !== null) {
+      clearTimeout(this.previewLoadingTimerId);
+      this.previewLoadingTimerId = null;
+    }
+  }
+
+  /**
+   * @description Method previewLoadingScreen.
+   */
+  previewLoadingScreen() {
+    if (this.submitState() === 'loading') {
+      return;
+    }
+
+    this.submitState.set('loading');
+    this.loadingStateService.setLoading(true);
+
+    if (this.previewLoadingTimerId !== null) {
+      clearTimeout(this.previewLoadingTimerId);
+    }
+
+    this.previewLoadingTimerId = setTimeout(() => {
+      this.loadingStateService.setLoading(false);
+      this.submitState.set('idle');
+      this.previewLoadingTimerId = null;
+    }, this.previewLoadingMs);
   }
 
   /**
@@ -493,9 +541,7 @@ export class Preferences implements OnDestroy {
     if (this.hasReachedQuota(currentQuota, localPerIpUsed)) {
       this.submitState.set('idle');
       this.quotaDialogKind.set('limit');
-      this.quotaMessage.set(localPerIpUsed >= this.localPerIpLimit
-        ? `24h generation limit reached on this device/IP. You have used ${localPerIpUsed} of ${this.localPerIpLimit} generations in the last 24 hours.`
-        : (currentQuota ? this.buildQuotaExceededMessage(currentQuota) : 'Daily generation limit reached.'));
+      this.quotaMessage.set(this.buildDailyLimitDialogMessage(localPerIpUsed, currentQuota));
       this.showQuotaDialog.set(true);
       return;
     }
@@ -505,16 +551,29 @@ export class Preferences implements OnDestroy {
     this.clearRecipeResponseCache();
     this.clearRecipeErrorCache();
     this.quotaMessage.set(null);
+    const loadingStart = Date.now();
+
+    const ensureMinLoadingTime = async () => {
+      const elapsed = Date.now() - loadingStart;
+      const remaining = this.minGenerateLoadingMs - elapsed;
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
+    };
 
     const webhookUrls = this.getWebhookCandidateUrls();
     if (!webhookUrls.every((url) => this.isValidWebhookUrl(url))) {
+      await ensureMinLoadingTime();
       this.submitState.set('error');
+      this.loadingStateService.setLoading(false);
       console.error('Invalid URL: use n8n Webhook URL (/webhook/...), not workflow editor URL (/workflow/...).');
       return;
     }
 
     const context = this.getStoredRecipeContext();
     if (context.ingredients.length === 0) {
+      await ensureMinLoadingTime();
+      this.loadingStateService.setLoading(false);
       this.submitState.set('idle');
       await this.router.navigate(['/generate-recipe']);
       return;
@@ -547,10 +606,12 @@ export class Preferences implements OnDestroy {
       const refreshedUsage = this.getLocalPerIpUsageLast24Hours();
       this.syncQuotaState(this.buildLocalQuotaState(refreshedUsage));
       this.persistJson(this.recipesResponseKey, response);
+      await ensureMinLoadingTime();
       this.submitState.set('success');
       this.loadingStateService.setLoading(false);
       await this.router.navigate(['/results']);
     } catch (error) {
+      await ensureMinLoadingTime();
       this.clearRecipeResponseCache();
       this.submitState.set('error');
       this.loadingStateService.setLoading(false);
@@ -559,10 +620,21 @@ export class Preferences implements OnDestroy {
 
       if (this.isQuotaDialogError(error, errorMessage, localPerIpUsed)) {
         this.submitState.set('idle');
-        const isLimitCase = this.isLimitDialogError(error, errorMessage, localPerIpUsed);
+        const errorQuota = error instanceof HttpErrorResponse ? this.readQuotaStatus(error.error) : null;
+        if (errorQuota) {
+          this.syncQuotaState(errorQuota);
+        }
+
+        const effectiveLocalUsage = this.getLocalPerIpUsageLast24Hours();
+        const effectiveQuota = errorQuota ?? this.quotaStatus();
+        const isLimitCase = this.hasReachedQuota(effectiveQuota, effectiveLocalUsage)
+          || this.isLimitDialogError(error, errorMessage, effectiveLocalUsage);
+        const dialogKind = this.getQuotaDialogKind(error, errorMessage, isLimitCase);
         this.quotaExceeded.set(isLimitCase);
-        this.quotaDialogKind.set(this.getQuotaDialogKind(error, errorMessage, isLimitCase));
-        this.quotaMessage.set(this.toDialogErrorMessage(error, errorMessage));
+        this.quotaDialogKind.set(dialogKind);
+        this.quotaMessage.set(dialogKind === 'limit'
+          ? this.buildDailyLimitDialogMessage(effectiveLocalUsage, effectiveQuota)
+          : this.toDialogErrorMessage(error, errorMessage));
         this.showQuotaDialog.set(true);
         return;
       }
@@ -585,7 +657,7 @@ export class Preferences implements OnDestroy {
 
       const localExceeded = localUsage >= this.localPerIpLimit;
       this.quotaMessage.set(localExceeded
-        ? `24h generation limit reached on this device/IP. You can generate up to ${this.localPerIpLimit} recipes per 24 hours.`
+        ? this.buildDailyLimitDialogMessage(localUsage, quota)
         : null);
     } catch (error) {
       console.error('Unable to load quota status:', error);
@@ -736,10 +808,6 @@ export class Preferences implements OnDestroy {
   }
 
   private isLimitDialogError(error: unknown, message: string, localPerIpUsed: number): boolean {
-    if (this.isConnectionError(error, message)) {
-      return false;
-    }
-
     if (localPerIpUsed >= this.localPerIpLimit) {
       return true;
     }
@@ -752,7 +820,9 @@ export class Preferences implements OnDestroy {
     return normalized.includes('quota')
       || normalized.includes('limit reached')
       || normalized.includes('daily limit')
-      || normalized.includes('too many requests');
+      || normalized.includes('too many requests')
+      || normalized.includes('24h')
+      || normalized.includes('generation limit');
   }
 
   private isCurrentStateRateLimited(referenceMs: number = Date.now()): boolean {
@@ -816,8 +886,12 @@ export class Preferences implements OnDestroy {
   }
 
   private toDialogErrorMessage(error: unknown, fallback: string): string {
+    if (this.isLimitDialogError(error, fallback, this.getLocalPerIpUsageLast24Hours())) {
+      return this.buildDailyLimitDialogMessage();
+    }
+
     if (this.isConnectionError(error, fallback)) {
-      return 'Failed to reach the recipe service. Check the webhook URL, HTTPS certificate, and CORS settings.';
+      return this.connectionDialogMessage;
     }
 
     const rawMessage = this.extractErrorText(error).trim();
@@ -830,10 +904,16 @@ export class Preferences implements OnDestroy {
       || normalized.includes('fetch failed')
       || normalized.includes('http failure response')
       || normalized.includes('unknown error')) {
-      return 'Failed to fetch';
+      return this.connectionDialogMessage;
     }
 
     return rawMessage;
+  }
+
+  private buildDailyLimitDialogMessage(localPerIpUsed: number = this.getLocalPerIpUsageLast24Hours(), quota: QuotaStatus | null = this.quotaStatus()): string {
+    const used = Math.max(localPerIpUsed, quota?.perIpUsed ?? 0);
+    const limit = quota?.perIpLimit ?? this.localPerIpLimit;
+    return `Tageslimit erreicht: ${used} von ${limit} Anfragen wurden bereits genutzt. Bitte versuche es spaeter erneut.`;
   }
 
   private getQuotaDialogKind(error: unknown, message: string, isLimitCase: boolean): 'notice' | 'limit' | 'connection' {

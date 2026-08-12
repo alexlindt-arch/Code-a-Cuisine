@@ -92,9 +92,11 @@ h1 {
   width: 100%;
   color: rgba(var.$primary-text-color, 0.88);
   font-size: var.$font-size-xxl;
+  font-family: var.$font-family;
+  font-weight: var.$font-weight-medium;
 
   @include mix.smartphone {
-    font-size: var.$font-size-md;
+    font-size: var.$font-size-lg;
   }
 }
 
@@ -125,8 +127,12 @@ h1 {
   border-radius: 30px;
   padding: 6px 12px;
   font-size: var.$font-size-xl;
+  font-family: var.$font-family;
   font-weight: var.$font-weight-medium;
   text-transform: capitalize;
+  @include mix.smartphone {
+    font-size: var.$font-size-lg;
+  }
 }
 
 .result-grid {
@@ -147,7 +153,7 @@ h1 {
   padding: 24px 32px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   min-height: 228px;
   transition: transform 120ms ease;
 
@@ -191,6 +197,7 @@ h1 {
 
   @include mix.smartphone {
     font-size: var.$font-size-md;
+    width: 100%;
   }
 }
 
@@ -243,6 +250,7 @@ h1 {
   @include mix.smartphone {
     justify-content: center;
     margin-top: 0px;
+    margin-bottom: 15px;
   }
 
 }

@@ -4,7 +4,7 @@
  */
 import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import {  ImagesComponent } from "../components/images-component/images-component";
 import { HttpClient } from '@angular/common/http';
@@ -41,7 +41,7 @@ interface StoredRecipeContext {
 
 @Component({
   selector: 'app-generate-recipe',
-  imports: [ImagesComponent, RouterLink],
+  imports: [ImagesComponent],
   templateUrl: './generate-recipe.html',
   styleUrls: ['./generate-recipe.scss'],
 })
@@ -54,14 +54,18 @@ export class GenerateRecipe implements OnDestroy {
   private readonly router = inject(Router);
   private readonly databaseUrl = environment.firebaseDatabaseUrl;
   private readonly ingredientHintMessage = 'Keine Sonderzeichen erlaubt. Maximal 40 Zeichen.';
+  private readonly requiredFieldsMessage = 'Bitte alle Felder ausfuellen.';
+  private readonly minIngredientsMessage = 'Bitte mindestens 3 Zutaten hinzufuegen.';
+  private readonly minIngredientsRequired = 3;
   readonly emptyIngredientHintMessage = 'Bitte gib eine Zutat ein.';
   firebaseIngredientNames = signal<string[]>([]);
   ingredientValidationMessage = signal('');
+  formValidationMessage = signal('');
   private readonly storageKey = 'cac-ingredients';
   private readonly recipePayloadKey = 'cac-recipe-request';
   private readonly recipesResponseKey = 'cac-recipe-results';
   readonly unitOptions = ['gram', 'ml', 'piece'];
-  private readonly ingredientNamePattern = /[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
+  private readonly ingredientNamePattern = /^[A-Za-zÄÖÜäöüß0-9\s'()-]+$/;
   private readonly maxIngredientNameLength = 40;
 
   /**
@@ -184,19 +188,41 @@ export class GenerateRecipe implements OnDestroy {
    * @description Creates an instance of GenerateRecipe.
    */
   constructor() {
-    this.loadIngredientsFromStorage();
+    this.resetGenerateRecipeState();
     void this.loadIngredientsFromFirebase();
+  }
+
+  /**
+   * @description Method resetGenerateRecipeState.
+   */
+  private resetGenerateRecipeState() {
+    this.ingredients.set([]);
+    this.ingredientsSignal.set({
+      name: '',
+      quantity: 0,
+      unit: 'gram'
+    });
+    this.editingIndex.set(null);
+    this.isIngredientSuggestionsOpen.set(false);
+    this.isCreateUnitMenuOpen.set(false);
+    this.isEditUnitMenuOpen.set(false);
+    this.formValidationMessage.set('');
+    this.ingredientValidationMessage.set('');
+
+    try {
+      localStorage.removeItem(this.storageKey);
+      localStorage.removeItem(this.recipePayloadKey);
+      localStorage.removeItem(this.recipesResponseKey);
+    } catch (error) {
+      console.error('Unable to reset generate recipe state:', error);
+    }
   }
 
   /**
    * @description Method ngOnDestroy.
    */
   ngOnDestroy(): void {
-    const target = this.router.getCurrentNavigation()?.extractedUrl.toString() ?? '';
-    if (target === '/') {
-      localStorage.removeItem(this.storageKey);
-      this.ingredients.set([]);
-    }
+    // Intentionally left blank.
   }
  /**
   * @description Method onSubmit.
@@ -362,6 +388,7 @@ export class GenerateRecipe implements OnDestroy {
     }
 
     if (!Number.isFinite(validQuantity) || validQuantity <= 0 || !ingredient.unit) {
+      this.formValidationMessage.set(this.requiredFieldsMessage);
       return;
     }
 
@@ -389,8 +416,24 @@ export class GenerateRecipe implements OnDestroy {
       unit: 'gram'
     });
     this.ingredientValidationMessage.set('');
+    this.formValidationMessage.set('');
     this.isIngredientSuggestionsOpen.set(false);
     this.isCreateUnitMenuOpen.set(false);
+  }
+
+  /**
+   * @description Method goToPreferences.
+   */
+  goToPreferences() {
+    const ingredientsCount = this.ingredients().length;
+
+    if (ingredientsCount < this.minIngredientsRequired) {
+      this.formValidationMessage.set(this.minIngredientsMessage);
+      return;
+    }
+
+    this.formValidationMessage.set('');
+    void this.router.navigate(['/preferences']);
   }
 
   /**
