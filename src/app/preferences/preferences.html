@@ -127,12 +127,8 @@
           {{ generateButtonLabel() }}
         </button>
       </div>
-    </div>
-  </div>
-  }
-
-  @if (showQuotaDialog()) {
-  <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true"></div>
+    @if (showQuotaDialog()) {
+  <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true">
   <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
     <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
     <p>{{ quotaDialogMessage() }}</p>
@@ -147,5 +143,13 @@
     </div>
     <!-- <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Go back to ingredients</button> -->
   </dialog>
+  </div>
+  }
+    </div>
+
+
+
+
+  </div>
   }
 </section>

@@ -12,7 +12,7 @@
   padding: 0 40px;
 
   @include mix.smartphone {
-    padding: 40px 0;
+    padding: 0px 0;
   }
 }
 
@@ -21,6 +21,17 @@
   @include mix.flex-between();
   align-items: center;
   width: 100%;
+  padding: 0 0 40px 0;
+}
+
+.content-limited {
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 40px;
+
+  @include mix.smartphone {
+    padding: 0;
+  }
 }
 
 .router-link {
@@ -340,11 +351,13 @@
     grid-template-columns: 1fr;
     gap: 0;
 
+
     &.show-directions {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0;
       transition: all 0.2s ease-in-out;
+      padding: 0;
     }
   }
 
@@ -352,12 +365,14 @@
     display: none;
     grid-template-columns: 1fr;
     gap: 0;
+    padding: 0;
 
     &.show-directions {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0;
       transition: all 0.2s ease-in-out;
+      padding: 0;
     }
   }
 
@@ -457,6 +472,18 @@
   font-family: 'quicksand-book-regular', sans-serif;
 }
 
+.cook-icons{
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  @include mix.smartphone {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+}
 .feedback-row {
   margin-top: 14px;
   padding-top: 10px;

@@ -119,7 +119,7 @@ section {
   }
 
   & .form-actions {
-    margin-bottom: var.$mgr-medium;
+    margin-top: 5px;
 
     @include mixin.smartphone {
       margin: 0;
@@ -177,7 +177,6 @@ section {
 .selection-content {
   @include mixin.flex-column-center();
   flex-direction: row;
-  width: 100%;
   justify-content: flex-start;
   align-items: flex-start;
   gap: var.$mgr-medium;
@@ -185,10 +184,22 @@ section {
   font-family: var.$font-family;
   font-size: var.$font-size-md;
 
+  @include mixin.desktop {
+    gap: 5px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  @include mixin.tablet {
+    gap: 5px;
+    justify-content: flex-start;
+    align-items: center;
+  }
 
   @include mixin.smartphone {
     gap: 5px;
     justify-content: flex-start;
+    align-items: center;
   }
 
 }

@@ -174,7 +174,7 @@ export class Preferences implements OnDestroy {
   constructor() {
     this.startResetHintTimer();
     void this.initClientIp();
-    this.previewLoadingScreen();
+    // this.previewLoadingScreen();
   }
 
   readonly canSubmitRecipe = computed(() => {

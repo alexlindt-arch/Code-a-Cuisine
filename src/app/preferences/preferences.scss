@@ -60,7 +60,7 @@
     width: 100%;
     text-align: center;
 
-     @include mix.smartphone() {
+    @include mix.smartphone() {
       font-size: var.$font-size-lg;
       width: 100%;
       text-align: center;
@@ -321,7 +321,7 @@
 }
 
 h1 {
-  font-size: 48px !important;
+  font-size: clamp(23px, 3.4vw, 48px) !important;
 }
 
 .content-limited {
@@ -344,12 +344,15 @@ h1 {
   color: var.$secondary-text-color;
   text-decoration: none;
   gap: var.$mgr-small;
-  font-size: var.$font-size-lg;
+  font-size: 14px;
   font-weight: var.$font-weight-medium;
 
+  @include mix.smartphone() {
+    font-size: 0px;
+  }
   & app-images-component:has(img) {
     height: auto;
-    width: 20px;
+    width: 25px;
     transition: all 0.2s ease-in-out;
   }
 
@@ -385,6 +388,10 @@ h1 {
   width: 100%;
   gap: 18px;
   padding: var.$mgr-small 0 var.$mgr-medium;
+
+  @include mix.smartphone() {
+   padding: 0px 8px;
+  }
 }
 
 .quota-card {
@@ -546,7 +553,7 @@ h1 {
   background-color: var.$btn-bg;
   color: var.$secondary-text-color;
   font-family: var.$font-family;
-  font-size: var.$font-size-lg;
+  font-size: 20px;
   padding: 6px 14px;
   cursor: pointer;
   transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
@@ -590,6 +597,7 @@ h1 {
   justify-content: center;
   width: 100%;
   margin-top: var.$mgr-small;
+  margin-bottom: var.$mgr-medium;
 
   .btn[disabled] {
     opacity: 0.75;
@@ -612,17 +620,18 @@ h1 {
   }
 
   .preferences-content {
-    padding: var.$mgr-small var.$mgr-medium var.$mgr-large;
+    padding:0 ;
   }
 }
 
 @media (max-width: 560px) {
   .top-section {
-    padding: var.$mgr-medium;
+    padding: 0 8px 16px ;
   }
 
   .preferences-content>h1 {
-    font-size: 30px;
+    text-align: start;
+    padding: 0 8px 0;
   }
 
   .pref-selection-content>h2 {
@@ -638,7 +647,7 @@ h1 {
   }
 
   .chip {
-    font-size: var.$font-size-md;
+    font-size: 20px;
     padding: 6px 12px;
   }
 
@@ -653,25 +662,30 @@ h1 {
   inset: 0;
   background-color: rgba(0, 0, 0, 0.55);
   z-index: 500;
-}
+
+  body {
+    overscroll-behavior: contain;
+  }
+
 
 .quota-dialog {
   position: fixed;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   z-index: 510;
   border: none;
-  border-radius: var.$border-radius;
-  background-color: var.$primary-bg;
-  color: var.$primary-text-color;
+  border-radius: 8px;
+  background-color: rgb(57, 96, 57);
+  color: #FAF0E6;
   padding: 32px;
   max-width: 440px;
   width: 90%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
 
   h2 {
     font-family: var.$font-family;
@@ -702,4 +716,5 @@ h1 {
     flex-direction: row-reverse;
     width: auto;
   }
+}
 }
