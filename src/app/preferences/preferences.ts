@@ -142,6 +142,7 @@ export class Preferences implements OnDestroy {
   private readonly recipeErrorKey = 'cac-recipe-error';
   private readonly recipeWebhookPath = environment.recipeWebhookUrl;
   private readonly localPerIpQuotaKey = 'cac-local-per-ip-quota';
+  private readonly quotaConfigKey = 'cac-local-per-ip-quota-config';
   private readonly localPerIpLimit = 3;
   private readonly localQuotaWindowMs = 24 * 60 * 60 * 1000;
   private readonly minGenerateLoadingMs = 1200;
@@ -172,6 +173,7 @@ export class Preferences implements OnDestroy {
    * @description Creates an instance of Preferences.
    */
   constructor() {
+    this.ensureLocalQuotaStateMatchesConfig();
     this.startResetHintTimer();
     void this.initClientIp();
     // this.previewLoadingScreen();
@@ -359,6 +361,29 @@ export class Preferences implements OnDestroy {
     this.cachedIp.set(ip);
     this.clearExpiredQuotaLock();
     void this.loadQuotaStatus();
+  }
+
+  private ensureLocalQuotaStateMatchesConfig(): void {
+    const currentConfig = { perIpLimit: this.localPerIpLimit, updatedAt: Date.now() };
+
+    try {
+      const rawConfig = localStorage.getItem(this.quotaConfigKey);
+      if (!rawConfig) {
+        localStorage.setItem(this.quotaConfigKey, JSON.stringify(currentConfig));
+        return;
+      }
+
+      const parsedConfig = JSON.parse(rawConfig) as { perIpLimit?: number };
+      if (typeof parsedConfig.perIpLimit === 'number' && parsedConfig.perIpLimit !== this.localPerIpLimit) {
+        localStorage.removeItem(this.localPerIpQuotaKey);
+        localStorage.setItem(this.quotaConfigKey, JSON.stringify(currentConfig));
+      } else {
+        localStorage.setItem(this.quotaConfigKey, JSON.stringify(currentConfig));
+      }
+    } catch (error) {
+      console.error('Unable to synchronize local quota config:', error);
+      localStorage.removeItem(this.localPerIpQuotaKey);
+    }
   }
 
   /**

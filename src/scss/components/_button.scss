@@ -58,6 +58,11 @@
   height: 30px;
   padding: 0;
 
+  @include mixin.smartphone {
+    width: 28px;
+    height: 30px;
+  }
+
   &:hover {
     background-color: var.$primary-text-color;
     border-radius: var.$border-radius;
@@ -99,7 +104,7 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
   border-radius: var.$border-radius-xxl;
   background-color: var.$input-bg-color;
   overflow: hidden;
-  min-width: 110px;
+  min-width: 85px;
   max-width: 110px;
   transition: grid-template-columns 140ms ease-in-out;
 
@@ -109,7 +114,6 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
     @include mixin.smartphone {
       grid-template-columns: 20px 1fr 20px;
       }
-
   }
 
   .form-control-input {
@@ -120,12 +124,6 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
     outline: none;
     border: unset;
   }
-
-  @include mixin.smartphone{
-    min-width: 90px;
-
-  }
-
 }
 
 .stepper-btn {
@@ -153,12 +151,5 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
   border: unset;
 }
 
-.number-stepper-edit {
-  min-width: 90px;
-
-  .form-control-input {
-    width: 100%;
-  }
-}
 
 /** End */

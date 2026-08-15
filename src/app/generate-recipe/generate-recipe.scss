@@ -27,7 +27,7 @@ h2 {
   width: 100%;
   text-align: center;
   font-family: var.$font-family;
-  font-size: var.$font-size-sub-headline-sm;
+  font-size: clamp(20px, 5vw, var.$font-size-lg);
   font-weight: var.$font-weight-large;
   margin: 0;
 }
@@ -73,7 +73,7 @@ section {
   @include mixin.flex-start();
   @include mixin.max-width(700px);
   width: 100%;
-  height: 100%;
+  max-height: 210px;
   padding: var.$pd-large;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
@@ -81,6 +81,7 @@ section {
   @include mixin.smartphone {
     @include mixin.flex-column-center();
     max-height: 100%;
+
   }
 }
 
@@ -89,15 +90,16 @@ section {
   @include mixin.max-width(700px);
   width: 100%;
   height: 100%;
-  min-height: 150px;
+  min-height: 310px;
   max-height: calc(45vh - 100px);
   padding: var.$pd-xxl;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
 
   @include mixin.smartphone {
-    @include mixin.flex-column-center();
-    max-height: 100%;
+    @include mixin.flex-start();
+    max-height: 210px;
+    padding: var.$pd-small;
   }
 
 }
@@ -187,19 +189,16 @@ section {
   @include mixin.desktop {
     gap: 5px;
     justify-content: flex-start;
-    align-items: center;
   }
 
   @include mixin.tablet {
     gap: 5px;
     justify-content: flex-start;
-    align-items: center;
   }
 
   @include mixin.smartphone {
     gap: 5px;
     justify-content: flex-start;
-    align-items: center;
   }
 
 }
@@ -237,14 +236,9 @@ section {
     font-size: 0.9rem;
     color: #b42318;
     font-family: var.$font-family;
-    background-color: rgba(var.$primary-bg, 0.3);
     border-radius: var.$border-radius;
     margin: 3px 0 0;
     padding: 4px 8px;
-
-    &.empty-hint {
-      background-color: rgba(var.$primary-bg, 0.3);
-    }
 
     .ingredient-field:has(.ingredient-validation-message) {
 
@@ -259,9 +253,6 @@ section {
     list-style: none;
     margin: 6px 0 0 0;
     padding: 6px;
-    position: relative;
-    top: 100%;
-    left: 0;
     width: 100%;
     border-radius: var.$border-radius;
     background-color: transparent;
@@ -315,7 +306,9 @@ ul {
     font-size: var.$font-size-md;
     color: var.$secondary-text-color;
     padding: 8px;
-
+    list-style: none;
+    @include mixin.smartphone {
+     padding: 6px 0px;   }
     &:hover {
       width: 100%;
       min-width: 85px;
@@ -362,29 +355,37 @@ ul {
 
   & app-images-component {
     position: absolute;
-    top: 60%;
-    transform: translate(0%, -50%) rotate(180deg);
+    top: 35%;
+    transform: translate(0%, 0%) rotate(180deg);
     right: 10px;
     pointer-events: none;
   }
 }
 
 .unit-selection-edit {
-  position: relative;
   display: flex;
   width: 80px;
 
   & app-images-component {
     position: absolute;
-    margin-top: 60%;
-    transform: translate(0%, -50%) rotate(180deg);
+    margin-top: 16%;
+    transform: translate(0%, 0%) rotate(180deg);
     right: 10px;
     pointer-events: none;
   }
 }
+.unit-selection-edit.open app-images-component {
+  margin-top: -16%;
+  animation: rotate 255ms ease-in-out forwards;
+}
+
+.custom-select-edit.open app-images-component {
+  margin-top: 20%;
+  animation: rotate 255ms ease-in-out forwards;
+}
 
 .custom-select.open app-images-component {
-  top: 5%;
+  margin-top: -38%;
   animation: rotate 255ms ease-in-out forwards;
 }
 
@@ -415,6 +416,57 @@ ul {
     li {
       width: 85px;
       padding: 0;
+      height: 100%;
+      margin: 0;
+    }
+
+    button {
+      width: 85px;
+      border: none;
+      background: transparent;
+      color: var.$secondary-text-color;
+      text-align: left;
+      padding: 6px 12px;
+      font-family: var.$font-family;
+      font-size: var.$font-size-md;
+      cursor: pointer;
+
+      &.selected {
+        background-color: rgba(var.$primary-bg, 0.4);
+      }
+    }
+  }
+}
+
+.custom-select-edit {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  .unit-trigger {
+    text-align: left;
+    padding-right: 28px;
+  }
+
+  .unit-options {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    top: calc(100% + 1px);
+    left: 0;
+    width: 100%;
+    max-width: 85px;
+    border: none;
+    outline: none;
+    border-radius: var.$border-radius;
+    background-color: transparent;
+    z-index: 20;
+
+    li {
+      width: 85px;
+      padding: 0;
+      height: 100%;
+      margin: 0;
     }
 
     button {
@@ -437,11 +489,11 @@ ul {
 
 @keyframes rotate {
   from {
-    transform: rotate(180deg);
+    transform: translate(0%, -50%) rotate(180deg);
   }
 
   to {
-    transform: rotate(-0deg);
+    transform: translate(0%, -50%) rotate(0deg);
   }
 }
 
@@ -467,11 +519,13 @@ ul {
 
 .card .ingredient-edit-row {
   display: flex;
+  height: 35px;
+  width: 100%;
 
   & .selection-content {
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     gap: var.$mgr-large;
 
     @include mixin.smartphone {
@@ -480,8 +534,16 @@ ul {
   }
 
   & .form-control-input {
-    width: 80px;
     background-color: var.$input-bg-color;
+  }
+
+  & .ingredient-name {
+    display: flex;
+    justify-content: flex-start;
+    align-items: start;
+    text-align: start;
+    gap: var.$mgr-large;
+    margin-top: 10px;
   }
 }
 
@@ -506,15 +568,6 @@ ul {
     }
   }
 
-  & .ingredient-name {
-    display: flex;
-    justify-content: flex-start;
-    align-items: start;
-    text-align: start;
-    gap: var.$mgr-large;
-    width: 100%;
-    min-width: 50%;
-  }
 
   @include mixin.smartphone {
     gap: 5px;

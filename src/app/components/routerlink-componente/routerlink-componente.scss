@@ -26,6 +26,14 @@ a.router-link app-images-component {
 
 a.router-link.--hero {
   width: 250px;
+
+  @include mix.tablet {
+   padding: 8px 0px 16px 0;
+  }
+
+  @include mix.smartphone {
+   padding: 8px 0px 16px 0;
+  }
 }
 
 //--------------------------------------------------------

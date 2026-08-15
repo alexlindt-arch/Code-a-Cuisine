@@ -94,7 +94,7 @@
                   <button class="stepper-btn" type="button" aria-label="Increase edit quantity"
                     (click)="incrementEditingIngredientQuantity()">+</button>
                 </div>
-                <div class="unit-selection-edit custom-select" [class.open]="isEditUnitMenuOpen()">
+                <div class="unit-selection-edit custom-select-edit" [class.open]="isEditUnitMenuOpen()">
                   <button class="form-control-input unit-trigger" type="button" (click)="toggleEditUnitMenu()">
                     {{editingIngredient().unit}}
                   </button>
@@ -111,16 +111,16 @@
                   }
                 </div>
                 <span class="ingredient-name">{{ingredient.name}}</span>
+                <span class="button-content">
+                  <button class="icon-button" type="button" (click)="saveIngredientEdit($index)">
+                    <app-images-component [class]="class" [src]="checkIcon"></app-images-component>
+                  </button>
+                  <button class="icon-button" type="button" (click)="cancelEdit()">
+                    <app-images-component [class]="class" [src]="deleteIcon"></app-images-component>
+                  </button>
+                </span>
+                </div>
               </div>
-              <span class="button-content">
-                <button class="icon-button" type="button" (click)="saveIngredientEdit($index)">
-                  <app-images-component [class]="class" [src]="checkIcon"></app-images-component>
-                </button>
-                <button class="icon-button" type="button" (click)="cancelEdit()">
-                  <app-images-component [class]="class" [src]="deleteIcon"></app-images-component>
-                </button>
-              </span>
-            </div>
             } @else {
             <div class="ingredient-display-row">
               <div class="ingredient-display-content">
