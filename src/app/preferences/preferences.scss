@@ -540,6 +540,7 @@ h1 {
     margin: 0;
     font-size: var.$font-size-xxl;
     font-weight: var.$font-weight-medium;
+    font-family: var.$font-family;
   }
 }
 
@@ -549,6 +550,7 @@ h1 {
   font-size: var.$font-size-sm;
   font-weight: var.$font-weight-medium;
   color: rgba(var.$secondary-text-color, 0.72);
+  font-family: var.$font-family;
   padding: 10px 0 0 0;
 }
 
@@ -595,6 +597,7 @@ h1 {
 
 .chip-subtitle {
   font-size: var.$font-size-sm;
+  font-family: var.$font-family;
 }
 
 .footer-actions {
@@ -645,10 +648,12 @@ h1 {
 
   .pref-value-label {
     font-size: var.$font-size-md;
+    font-family: var.$font-family;
   }
 
   .pref-block>h2 {
     font-size: var.$font-size-xl;
+    font-family: var.$font-family;
   }
 
   .chip {
@@ -690,6 +695,7 @@ h1 {
   align-items: center;
   gap: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  font-family: var.$font-family;
 
 
   h2 {

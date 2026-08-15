@@ -147,10 +147,10 @@ export class Preferences implements OnDestroy {
   private readonly localQuotaWindowMs = 24 * 60 * 60 * 1000;
   private readonly minGenerateLoadingMs = 1200;
   private readonly previewLoadingMs = 500000;
-  private readonly dailyLimitDialogTitle = 'Tageslimit erreicht';
-  private readonly connectionDialogTitle = 'Verbindung fehlgeschlagen';
-  private readonly connectionDialogMessage = 'Die Rezept-API ist aktuell nicht erreichbar. Bitte versuche es in wenigen Minuten erneut.';
-  private readonly noticeDialogTitle = 'Hinweis';
+  private readonly dailyLimitDialogTitle = 'Daily limit reached';
+  private readonly connectionDialogTitle = 'Connection failed';
+  private readonly connectionDialogMessage = 'The recipe API is currently unavailable. Please try again in a few minutes.';
+  private readonly noticeDialogTitle = 'Notice';
 
   readonly cooks = signal(1);
   readonly portions = signal(2);
@@ -938,7 +938,7 @@ export class Preferences implements OnDestroy {
   private buildDailyLimitDialogMessage(localPerIpUsed: number = this.getLocalPerIpUsageLast24Hours(), quota: QuotaStatus | null = this.quotaStatus()): string {
     const used = Math.max(localPerIpUsed, quota?.perIpUsed ?? 0);
     const limit = quota?.perIpLimit ?? this.localPerIpLimit;
-    return `Tageslimit erreicht: ${used} von ${limit} Anfragen wurden bereits genutzt. Bitte versuche es spaeter erneut.`;
+    return `Daily limit reached: ${used} of ${limit} requests have already been used. Please try again later.`;
   }
 
   private getQuotaDialogKind(error: unknown, message: string, isLimitCase: boolean): 'notice' | 'limit' | 'connection' {

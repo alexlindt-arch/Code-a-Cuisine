@@ -53,11 +53,11 @@ export class GenerateRecipe implements OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly databaseUrl = environment.firebaseDatabaseUrl;
-  private readonly ingredientHintMessage = 'Keine Sonderzeichen erlaubt. Maximal 40 Zeichen.';
-  private readonly requiredFieldsMessage = 'Bitte alle Felder ausfuellen.';
-  private readonly minIngredientsMessage = 'Bitte mindestens 3 Zutaten hinzufuegen.';
+  private readonly ingredientHintMessage = 'no special characters, max 40 characters';
+  private readonly requiredFieldsMessage = 'Please fill in all required fields.';
+  private readonly minIngredientsMessage = 'Please add at least 3 ingredients.';
   private readonly minIngredientsRequired = 3;
-  readonly emptyIngredientHintMessage = 'Bitte gib eine Zutat ein.';
+  readonly emptyIngredientHintMessage = 'Please enter an ingredient.';
   firebaseIngredientNames = signal<string[]>([]);
   ingredientValidationMessage = signal('');
   formValidationMessage = signal('');
