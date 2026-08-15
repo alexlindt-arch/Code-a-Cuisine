@@ -8,13 +8,13 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "afb0e9a4-f6fc-4909-82e3-76e7d9f0125f",
+      "id": "4b411c5d-5ca8-4d2e-9138-9e46a1242bcb",
       "name": "Recipe Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        3248,
-        352
+        -7792,
+        320
       ],
       "webhookId": "c0a2d42a-08c5-4693-b802-1fbacc27f886"
     },
@@ -22,13 +22,13 @@
       "parameters": {
         "jsCode": "const rawBody = $json.body ?? $json;\nlet body = rawBody;\n\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (error) {\n    throw new Error('Request body must be valid JSON');\n  }\n}\n\nconst payload = body && typeof body === 'object' && body.data && typeof body.data === 'object'\n  ? body.data\n  : body;\nconst ingredients = Array.isArray(payload?.ingredients) ? payload.ingredients : [];\nconst preferences = payload?.preferences ?? {};\n\nif (ingredients.length === 0) {\n  throw new Error('Missing ingredients array in request payload. Expected { ingredients: [...] }');\n}\n\nconst normalizedPreferences = {\n  portions: Number(preferences.portions ?? 1),\n  cooks: Number(preferences.cooks ?? 1),\n  cookingTime: String(preferences.cookingTime ?? 'medium'),\n  cuisine: String(preferences.cuisine ?? 'fusion'),\n  diets: Array.isArray(preferences.diets) ? preferences.diets : ['none'],\n};\n\nconst ingredientSummary = ingredients\n  .map((item) => `${item.quantity} ${item.unit} ${item.name}`.trim())\n  .join(', ');\n\nconst prompt = `You are a culinary AI planner. Create exactly 3 recipe suggestions based on the provided data.\n\nIngredients: ${ingredientSummary}\nPortions: ${normalizedPreferences.portions}\nPeople cooking: ${normalizedPreferences.cooks}\nCooking time preference: ${normalizedPreferences.cookingTime}\nCuisine preference: ${normalizedPreferences.cuisine}\nDiet preferences: ${normalizedPreferences.diets.join(', ')}\n\nOutput strict JSON with this schema:\n{\n  \"recipes\": [\n    {\n      \"title\": \"string\",\n      \"description\": \"string\",\n      \"estimatedMinutes\": number,\n      \"ingredients\": [\"string\"],\n      \"steps\": [\"Step title: Step description\"]\n    }\n  ]\n}\n\nRules for steps:\n- Return 4 to 8 steps per recipe.\n- Each steps entry must be one string in the exact format \"<short step title>: <clear instruction>\".\n- Keep titles short (2-6 words), action-oriented, and recipe-specific (example: \"Cook the pasta\").\n- Never use generic labels like \"Step\" as the title.`;\n\nreturn [{\n  json: {\n    ingredients,\n    preferences: normalizedPreferences,\n    prompt,\n  },\n}];"
       },
-      "id": "cef22c4f-b3c6-4e96-943e-aba41ee82200",
+      "id": "e2ffb20f-4251-4dcc-a09e-5bc6e4ac3e28",
       "name": "Prepare Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3968,
-        352
+        -7056,
+        304
       ],
       "onError": "continueErrorOutput"
     },
@@ -41,40 +41,40 @@
           "systemMessage": "You are an expert recipe generator. Return only valid JSON with a top-level object containing exactly 3 recipe items. Use the exact keys: title, description, estimatedMinutes, ingredients, steps. Each step must be a single string in the format 'Step title: instruction'."
         }
       },
-      "id": "88051cdf-381f-4890-bd16-74e16794cf4e",
+      "id": "b7327642-8160-4038-a812-3a0762dc2af7",
       "name": "Recipe AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
       "position": [
-        4192,
-        352
+        -6880,
+        128
       ],
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-       "jsCode": "const agentOutput = $json.output ?? $json.text ?? $json;\nconst quotaData = $('Check IP Quota').first().json;\nconst requestData = $('Prepare Prompt').first().json;\n\nconst fallback = () => {\n  const ingredients = Array.isArray(requestData?.ingredients) && requestData.ingredients.length ? requestData.ingredients : ['tomato', 'garlic', 'olive oil'];\n  const cuisine = requestData?.preferences?.cuisine || 'fusion';\n  return [1, 2, 3].map((number) => ({\n    title: `${cuisine} recipe ${number}`,\n    description: 'A simple recipe based on your ingredients.',\n    estimatedMinutes: 30,\n    ingredients: ingredients.slice(0, 7),\n    steps: ['Prepare ingredients: wash and chop everything.', 'Cook aromatics: heat oil and add the aromatics.', 'Combine ingredients: add the remaining ingredients.', 'Season and finish: cook until tender and serve.']\n  }));\n};\n\nlet result = agentOutput;\nif (typeof result === 'string') {\n  const cleaned = result.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '').trim();\n  try {\n    result = JSON.parse(cleaned);\n  } catch (error) {\n    result = { recipes: fallback() };\n  }\n}\n\nconst recipes = result && typeof result === 'object' && Array.isArray(result.recipes) ? result.recipes : [];\nconst valid = recipes.length === 3 && recipes.every((recipe) => recipe && typeof recipe.title === 'string' && typeof recipe.description === 'string' && Number.isFinite(Number(recipe.estimatedMinutes)) && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && Array.isArray(recipe.steps) && recipe.steps.length >= 4 && recipe.steps.length <= 8 && recipe.steps.every((step) => typeof step === 'string' && step.includes(':')));\n\nreturn [{ json: { ...quotaData, ingredients: requestData.ingredients, preferences: requestData.preferences, recipeResult: { recipes: valid ? recipes : fallback() }, recipeError: false, recipeErrorMessage: null } }];"},
-
-      "id": "c0d1b8e0-2a3f-4d6a-9d16-4a1e08dc4a71",
+        "jsCode": "const agentOutput = $json.output ?? $json.text ?? $json;\nconst quotaData = $('Check IP Quota').first().json;\nconst requestData = $('Prepare Prompt').first().json;\n\nconst fallback = () => {\n  const ingredients = Array.isArray(requestData?.ingredients) && requestData.ingredients.length ? requestData.ingredients : ['tomato', 'garlic', 'olive oil'];\n  const cuisine = requestData?.preferences?.cuisine || 'fusion';\n  return [1, 2, 3].map((number) => ({\n    title: `${cuisine} recipe ${number}`,\n    description: 'A simple recipe based on your ingredients.',\n    estimatedMinutes: 30,\n    ingredients: ingredients.slice(0, 7),\n    steps: ['Prepare ingredients: wash and chop everything.', 'Cook aromatics: heat oil and add the aromatics.', 'Combine ingredients: add the remaining ingredients.', 'Season and finish: cook until tender and serve.']\n  }));\n};\n\nlet result = agentOutput;\nif (typeof result === 'string') {\n  const cleaned = result.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '').trim();\n  try {\n    result = JSON.parse(cleaned);\n  } catch (error) {\n    result = { recipes: fallback() };\n  }\n}\n\nconst recipes = result && typeof result === 'object' && Array.isArray(result.recipes) ? result.recipes : [];\nconst valid = recipes.length === 3 && recipes.every((recipe) => recipe && typeof recipe.title === 'string' && typeof recipe.description === 'string' && Number.isFinite(Number(recipe.estimatedMinutes)) && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && Array.isArray(recipe.steps) && recipe.steps.length >= 4 && recipe.steps.length <= 8 && recipe.steps.every((step) => typeof step === 'string' && step.includes(':')));\n\nreturn [{ json: { ...quotaData, ingredients: requestData.ingredients, preferences: requestData.preferences, recipeResult: { recipes: valid ? recipes : fallback() }, recipeError: false, recipeErrorMessage: null } }];"
+      },
+      "id": "1a618fee-e7d9-4261-a689-d02c20d18aec",
       "name": "Validate Recipe Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4416,
-        352
+        -6512,
+        112
       ]
     },
     {
       "parameters": {
         "jsCode": "const webhookInput = $('Recipe Webhook').first().json;\nconst rawBody = webhookInput.body ?? webhookInput;\nconst body = typeof rawBody === 'string' ? JSON.parse(rawBody) : rawBody;\nconst payload = body?.data && typeof body.data === 'object' ? body.data : body;\n\nreturn [{\n  json: {\n    ...$json,\n    ingredients: Array.isArray(payload?.ingredients) ? payload.ingredients : [],\n    preferences: payload?.preferences ?? {},\n  },\n}];"
       },
-      "id": "a6f9a7c1-16b2-4b02-9c95-5c0e4bdadf64",
+      "id": "e32b81cb-4e5d-4a15-a38e-fd38017a8e90",
       "name": "Normalize Request Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3600,
-        352
+        -7408,
+        320
       ]
     },
     {
@@ -88,13 +88,13 @@
           ]
         }
       },
-      "id": "d7d7f0be-8df3-4f89-b2b8-3c5d6a07a201",
+      "id": "a3629b62-e459-4025-8e15-78f70dd71cbb",
       "name": "Route Recipe Errors",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        4640,
-        352
+        -6320,
+        112
       ]
     },
     {
@@ -105,13 +105,13 @@
           "responseCode": 502
         }
       },
-      "id": "efcf48a6-b2f5-4b99-a0b3-7e2e4e7e4f36",
+      "id": "90ce0e3c-b3f6-4050-85f7-fa75881bcd9e",
       "name": "Return Recipe Error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        4880,
-        496
+        -6064,
+        464
       ]
     },
     {
@@ -122,13 +122,13 @@
           "responseCode": 200
         }
       },
-      "id": "2d0a5baf-0b62-4c4b-a827-900afcc82321",
+      "id": "32f0a17f-f3a1-4ea0-9168-c949ed560ef0",
       "name": "Return Recipes",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        4880,
-        208
+        -6304,
+        320
       ]
     },
     {
@@ -139,10 +139,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        4080,
-        704
+        -6960,
+        672
       ],
-      "id": "e9ad6989-f87a-4285-b506-4a853e73ae56",
+      "id": "41de01c9-af17-4906-9423-08cfb793d9cd",
       "name": "Ollama Chat Model",
       "credentials": {
         "ollamaApi": {
@@ -155,13 +155,13 @@
       "parameters": {
         "jsCode": "const body = $json.body ?? $json;\n\nlet ip = String(body.clientIp || '').trim();\n\nif (!ip || ip === '127.0.0.1') {\n  try {\n    const ipResponse = await fetch('https://api.ipify.org?format=json');\n    if (ipResponse.ok) {\n      const ipData = await ipResponse.json();\n      ip = ipData.ip || '127.0.0.1';\n    }\n  } catch (error) {\n    ip = '127.0.0.1';\n  }\n}\n\nconst ipSlug = ip.replace(/[^a-zA-Z0-9]/g, '-').replace(/^-+|-+$/g, '') || 'localhost';\nconst now = Date.now();\nconst windowMs = 24 * 60 * 60 * 1000;\nconst cutoff = now - windowMs;\nconst today = new Date(now).toISOString().slice(0, 10);\nconst dbUrl = 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com';\nconst perIpPath = `${dbUrl}/quotaRolling/ips/${ipSlug}.json`;\nconst globalPath = `${dbUrl}/quota/${today}/global.json`;\nconst perIpLimit = 50;\nconst globalLimit = 50;\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.quotaRollingIps || typeof staticData.quotaRollingIps !== 'object') {\n  staticData.quotaRollingIps = {};\n}\nif (!staticData.quotaGlobalDaily || typeof staticData.quotaGlobalDaily !== 'object') {\n  staticData.quotaGlobalDaily = {};\n}\n\nconst normalizeRecentTimestamps = (value, minTimestamp) => {\n  const source = Array.isArray(value) ? value : [];\n  return source\n    .map((entry) => Number(entry))\n    .filter((entry) => Number.isFinite(entry) && entry >= minTimestamp)\n    .sort((a, b) => a - b);\n};\n\nconst extractRecentTimestamps = (value, minTimestamp) => {\n  let rawTimestamps = [];\n\n  if (Array.isArray(value)) {\n    rawTimestamps = value;\n  } else if (value && typeof value === 'object' && Array.isArray(value.timestamps)) {\n    rawTimestamps = value.timestamps;\n  }\n\n  return rawTimestamps\n    .map((entry) => Number(entry))\n    .filter((entry) => Number.isFinite(entry) && entry >= minTimestamp)\n    .sort((a, b) => a - b);\n};\n\nconst readCounter = (value) => {\n  if (typeof value === 'number' && Number.isFinite(value)) {\n    return Math.max(0, value);\n  }\n\n  if (value && typeof value === 'object') {\n    const possibleCount = value.count ?? value.used ?? value.perIpUsed ?? value.globalUsed;\n    if (typeof possibleCount === 'number' && Number.isFinite(possibleCount)) {\n      return Math.max(0, possibleCount);\n    }\n  }\n\n  return 0;\n};\n\nconst readJson = async (path) => {\n  try {\n    const response = await fetch(path);\n    if (!response.ok) {\n      let details = '';\n      try {\n        details = await response.text();\n      } catch (error) {\n        details = '';\n      }\n\n      return {\n        success: false,\n        data: null,\n        error: `Read failed (${response.status} ${response.statusText}) ${details}`.trim(),\n      };\n    }\n\n    return {\n      success: true,\n      data: await response.json(),\n      error: null,\n    };\n  } catch (error) {\n    return {\n      success: false,\n      data: null,\n      error: error.message,\n    };\n  }\n};\n\nconst writeJson = async (path, value) => {\n  const response = await fetch(path, {\n    method: 'PUT',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify(value),\n  });\n\n  if (!response.ok) {\n    let details = '';\n    try {\n      details = await response.text();\n    } catch (error) {\n      details = '';\n    }\n\n    throw new Error(`Write failed (${response.status} ${response.statusText}) ${details}`.trim());\n  }\n};\n\nconst localPerIpTimestamps = normalizeRecentTimestamps(staticData.quotaRollingIps[ipSlug], cutoff);\nstaticData.quotaRollingIps[ipSlug] = localPerIpTimestamps;\nconst localGlobalUsed = Math.max(0, Number(staticData.quotaGlobalDaily[today] ?? 0));\n\nconst [remotePerIpResult, remoteGlobalResult] = await Promise.all([\n  readJson(perIpPath),\n  readJson(globalPath),\n]);\n\nconst remotePerIpTimestamps = remotePerIpResult.success\n  ? extractRecentTimestamps(remotePerIpResult.data, cutoff)\n  : null;\nconst remoteGlobalUsed = remoteGlobalResult.success\n  ? readCounter(remoteGlobalResult.data)\n  : null;\n\nconst perIpTimestamps = remotePerIpTimestamps ?? localPerIpTimestamps;\nconst perIpUsed = perIpTimestamps.length;\nconst globalUsed = Number.isFinite(remoteGlobalUsed) ? remoteGlobalUsed : localGlobalUsed;\n\nconst quota = {\n  date: new Date(now).toISOString(),\n  ipAddress: ip,\n  ipVersion: 'unknown',\n  windowHours: 24,\n  perIpLimit,\n  perIpUsed,\n  perIpRemaining: Math.max(0, perIpLimit - perIpUsed),\n  globalLimit,\n  globalUsed,\n  globalRemaining: Math.max(0, globalLimit - globalUsed),\n};\n\nlet quotaOk = quota.perIpRemaining > 0 && quota.globalRemaining > 0;\nlet quotaExceededMessage = null;\nlet quotaWriteOk = true;\nlet quotaWarning = null;\n\nif (!quotaOk) {\n  quotaExceededMessage = quota.perIpRemaining <= 0\n    ? `Generation limit reached. You can generate up to ${perIpLimit} recipes within 24 hours from this IP address.`\n    : `System-wide daily generation limit reached. Up to ${globalLimit} recipes can be generated across the app per day.`;\n} else {\n  const nextPerIpTimestamps = [...perIpTimestamps, now];\n  const nextGlobalUsed = globalUsed + 1;\n\n  staticData.quotaRollingIps[ipSlug] = nextPerIpTimestamps;\n  staticData.quotaGlobalDaily[today] = nextGlobalUsed;\n\n  const writeErrors = [];\n\n  try {\n    await writeJson(perIpPath, { timestamps: nextPerIpTimestamps, updatedAt: new Date(now).toISOString() });\n  } catch (error) {\n    writeErrors.push(`per-ip write: ${error.message}`);\n  }\n\n  try {\n    await writeJson(globalPath, nextGlobalUsed);\n  } catch (error) {\n    writeErrors.push(`global write: ${error.message}`);\n  }\n\n  quota.perIpUsed = nextPerIpTimestamps.length;\n  quota.perIpRemaining = Math.max(0, perIpLimit - nextPerIpTimestamps.length);\n  quota.globalUsed = nextGlobalUsed;\n  quota.globalRemaining = Math.max(0, globalLimit - nextGlobalUsed);\n\n  if (writeErrors.length > 0) {\n    quotaWriteOk = false;\n    quotaWarning = `Firebase sync failed, local fallback is active: ${writeErrors.join(' | ')}`;\n    console.log(quotaWarning);\n  }\n}\n\nreturn [{\n  json: {\n    ...$json,\n    ipAddress: ip,\n    ipSlug,\n    quotaDate: today,\n    quotaOk,\n    quotaWriteOk,\n    quotaWarning,\n    quota,\n    quotaExceededMessage,\n  },\n}];"
       },
-      "id": "de715c5c-fd9f-4535-bd15-c8cb85b2c5a2",
+      "id": "79c11e3c-6fa9-4555-8a37-7f76ab948100",
       "name": "Check IP Quota",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3488,
-        352
+        -7552,
+        320
       ]
     },
     {
@@ -175,13 +175,13 @@
           ]
         }
       },
-      "id": "f2b8cd3b-1bf9-4db8-b06e-b9ec02c59433",
+      "id": "e220a462-cad1-4bbe-b263-b21a9e010ca2",
       "name": "Route on Quota",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        3728,
-        352
+        -7248,
+        320
       ]
     },
     {
@@ -192,13 +192,13 @@
           "responseCode": 429
         }
       },
-      "id": "f7928872-4915-4698-ad49-858afe123b3f",
+      "id": "2cc4f4af-8bb2-4d93-9f11-81ca73b1828c",
       "name": "Return Quota Exceeded",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        3808,
-        624
+        -7232,
+        592
       ]
     },
     {
@@ -210,10 +210,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        4224,
-        592
+        -6816,
+        448
       ],
-      "id": "4f2e9948-ef23-48c7-a4be-66b91e95ec53",
+      "id": "114a4365-c0cd-41e1-9a03-673b6b809943",
       "name": "Structured Output Parser"
     }
   ],
@@ -342,6 +342,11 @@
             "node": "Recipe AI Agent",
             "type": "ai_languageModel",
             "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
           }
         ]
       ]
@@ -364,7 +369,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "68f0e1eb-c6fe-4cca-809d-55df5ed1f1c3",
+  "versionId": "d8458218-1ad8-4a47-8313-344e05c622c6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b0105fbcc87f6390266ad9a3730b5b7522178ec8b52ed4bf400cee053dd24b62"
