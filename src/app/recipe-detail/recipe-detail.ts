@@ -7,6 +7,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
+import { extractResult, ingredientsMatch, normalizeIngredientName, parseRecipeArray, toStepView, type RecipeStepView } from './recipe-detail.utils';
 
 /**
  * @description Interface Recipe.
@@ -31,11 +32,6 @@ interface RecipeRequestPayload {
     cuisine: string;
     diets: string[];
   };
-}
-
-interface RecipeStepView {
-  title: string;
-  description: string;
 }
 
 @Component({
@@ -95,14 +91,23 @@ export class RecipeDetail {
 
   readonly ingredientColumns = computed(() => {
     const recipe = this.selectedRecipe();
+    const request = this.requestPayload();
     if (!recipe) {
       return { left: [] as string[], right: [] as string[] };
     }
 
-    const midpoint = Math.ceil(recipe.ingredients.length / 2);
+    const requestedIngredientNames = (request?.ingredients ?? [])
+      .map((ingredient) => normalizeIngredientName(ingredient.name));
+    const yourIngredients = recipe.ingredients.filter((ingredient) =>
+      requestedIngredientNames.some((requestedName) => ingredientsMatch(ingredient, requestedName))
+    );
+    const extraIngredients = recipe.ingredients.filter((ingredient) =>
+      !requestedIngredientNames.some((requestedName) => ingredientsMatch(ingredient, requestedName))
+    );
+
     return {
-      left: recipe.ingredients.slice(0, midpoint),
-      right: recipe.ingredients.slice(midpoint),
+      left: yourIngredients,
+      right: extraIngredients,
     };
   });
 
@@ -125,7 +130,7 @@ export class RecipeDetail {
       return [] as RecipeStepView[];
     }
 
-    return recipe.steps.map((rawStep, index) => this.toStepView(rawStep, index));
+    return recipe.steps.map((rawStep, index) => toStepView(rawStep, index));
   });
 
   readonly estimatedNutrition = computed(() => {
@@ -236,112 +241,6 @@ export class RecipeDetail {
   }
 
   /**
-   * @description Method toStepView.
-   */
-  private toStepView(raw: string, index: number): RecipeStepView {
-    const trimmed = raw.trim();
-
-    const colonMatch = trimmed.match(/^([^:]{3,80}):\s+([\s\S]+)$/);
-    if (colonMatch) {
-      const title = colonMatch[1].trim();
-      const description = colonMatch[2].trim();
-      return {
-        title: this.isGenericStepTitle(title)
-          ? this.buildStepTitleFromDescription(description, index)
-          : title,
-        description,
-      };
-    }
-
-    const lines = trimmed
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    if (lines.length > 1 && lines[0].length <= 80) {
-      const title = lines[0];
-      const description = lines.slice(1).join(' ');
-      return {
-        title: this.isGenericStepTitle(title)
-          ? this.buildStepTitleFromDescription(description, index)
-          : title,
-        description,
-      };
-    }
-
-    const cleanedSingleLine = this.stripGenericStepPrefix(trimmed);
-    if (cleanedSingleLine && cleanedSingleLine !== trimmed) {
-      return {
-        title: this.buildStepTitleFromDescription(cleanedSingleLine, index),
-        description: cleanedSingleLine,
-      };
-    }
-
-    if (this.isGenericStepTitle(trimmed)) {
-      return {
-        title: this.buildStepTitleFromDescription(trimmed, index),
-        description: trimmed,
-      };
-    }
-
-    return {
-      title: `Step ${index + 1}`,
-      description: trimmed,
-    };
-  }
-
-  /**
-   * @description Method isGenericStepTitle.
-   */
-  private isGenericStepTitle(value: string): boolean {
-    const compact = value
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-
-    return /^step\d*$/.test(compact)
-      || /^schritt\d*$/.test(compact);
-  }
-
-  /**
-   * @description Method stripGenericStepPrefix.
-   */
-  private stripGenericStepPrefix(value: string): string {
-    return value
-      .replace(/^step\s*\d*\s*[:.)\-–—]*\s*/i, '')
-      .replace(/^schritt\s*\d*\s*[:.)\-–—]*\s*/i, '')
-      .replace(/^\d+\s*[:.)\-–—]+\s*/, '')
-      .trim();
-  }
-
-  /**
-   * @description Method buildStepTitleFromDescription.
-   */
-  private buildStepTitleFromDescription(description: string, index: number): string {
-    const cleaned = this.stripGenericStepPrefix(description);
-
-    if (!cleaned) {
-      return `Step ${index + 1}`;
-    }
-
-    const firstSentence = cleaned.split(/[.!?]/)[0]?.trim() ?? '';
-    const titleWords = firstSentence
-      .replace(/[^A-Za-z0-9' -]/g, ' ')
-      .split(/\s+/)
-      .filter((word) => word.length > 0)
-      .slice(0, 5);
-
-    if (titleWords.length < 2) {
-      return `Step ${index + 1}`;
-    }
-
-    const title = titleWords
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-    return title;
-  }
-
-  /**
    * @description Method likeRecipe.
    */
   async likeRecipe() {
@@ -394,8 +293,8 @@ export class RecipeDetail {
 
     try {
       const parsed = JSON.parse(raw) as unknown;
-      const candidate = this.extractResult(parsed);
-      const recipes = this.parseRecipeArray(candidate);
+      const candidate = extractResult(parsed);
+      const recipes = parseRecipeArray(candidate);
       this.recipes.set(recipes);
     } catch (error) {
       console.error('Failed to parse recipe response:', error);
@@ -444,146 +343,7 @@ export class RecipeDetail {
    * @description Method persistLikedRecipeIds.
    */
   private persistLikedRecipeIds() {
-    try {
-      localStorage.setItem(this.likedRecipeIdsKey, JSON.stringify(this.likedRecipeIds()));
-    } catch (error) {
-      console.error('Failed to store liked recipe ids:', error);
-    }
-  }
-
-  /**
-   * @description Method extractResult.
-   */
-  private extractResult(payload: unknown): unknown {
-    if (typeof payload !== 'object' || payload === null) {
-      return payload;
-    }
-
-    const obj = payload as {
-      result?: unknown;
-      output?: unknown;
-      data?: unknown;
-      response?: unknown;
-    };
-
-    if (typeof obj.result !== 'undefined') {
-      return obj.result;
-    }
-
-    if (typeof obj.output !== 'undefined') {
-      return obj.output;
-    }
-
-    if (typeof obj.data !== 'undefined') {
-      return obj.data;
-    }
-
-    if (typeof obj.response !== 'undefined') {
-      return obj.response;
-    }
-
-    return payload;
-  }
-
-  /**
-   * @description Method parseRecipeArray.
-   */
-  private parseRecipeArray(input: unknown): Recipe[] {
-    if (Array.isArray(input)) {
-      return input
-        .filter((item) => this.isRecipe(item))
-        .map((item) => ({
-          title: item.title,
-          description: item.description,
-          estimatedMinutes: item.estimatedMinutes,
-          ingredients: item.ingredients,
-          steps: item.steps,
-        }));
-    }
-
-    if (typeof input === 'string') {
-      const parsedFromText = this.tryParseFromText(input);
-      return parsedFromText ? this.parseRecipeArray(parsedFromText) : [];
-    }
-
-    if (typeof input !== 'object' || input === null) {
-      return [];
-    }
-
-    const maybeRecipes = (input as { recipes?: unknown; data?: { recipes?: unknown }; output?: { recipes?: unknown }; response?: { recipes?: unknown } }).recipes
-      ?? (input as { data?: { recipes?: unknown } }).data?.recipes
-      ?? (input as { output?: { recipes?: unknown } }).output?.recipes
-      ?? (input as { response?: { recipes?: unknown } }).response?.recipes;
-
-    if (!Array.isArray(maybeRecipes)) {
-      return [];
-    }
-
-    return maybeRecipes
-      .filter((item) => this.isRecipe(item))
-      .map((item) => ({
-        title: item.title,
-        description: item.description,
-        estimatedMinutes: item.estimatedMinutes,
-        ingredients: item.ingredients,
-        steps: item.steps,
-      }));
-  }
-
-  /**
-   * @description Method tryParseFromText.
-   */
-  private tryParseFromText(value: string): unknown {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      console.warn('Failed to parse JSON from text, attempting to extract JSON object...');
-    }
-
-    const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (fencedMatch && fencedMatch[1]) {
-      try {
-        return JSON.parse(fencedMatch[1]);
-      } catch {
-        return null;
-      }
-    }
-
-    const objectStart = trimmed.indexOf('{');
-    const objectEnd = trimmed.lastIndexOf('}');
-    if (objectStart !== -1 && objectEnd > objectStart) {
-      const candidate = trimmed.slice(objectStart, objectEnd + 1);
-      try {
-        return JSON.parse(candidate);
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * @description Method isRecipe.
-   */
-  private isRecipe(value: unknown): value is Recipe {
-    if (typeof value !== 'object' || value === null) {
-      return false;
-    }
-
-    const recipe = value as Recipe;
-    return typeof recipe.title === 'string'
-      && typeof recipe.description === 'string'
-      && typeof recipe.estimatedMinutes === 'number'
-      && Array.isArray(recipe.ingredients)
-      && Array.isArray(recipe.steps)
-      && recipe.ingredients.every((item) => typeof item === 'string')
-      && recipe.steps.every((item) => typeof item === 'string');
+    localStorage.setItem(this.likedRecipeIdsKey, JSON.stringify(this.likedRecipeIds()));
   }
 
   /**

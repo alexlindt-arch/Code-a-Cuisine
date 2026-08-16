@@ -21,10 +21,6 @@
         } @else if (loadingState() === 'error') {
         <p class="category-status category-status-error">Could not load category recipes from database.</p>
         } @else {
-        @if (isUsingFallbackRecipes()) {
-        <p class="category-status">No recipes found for this category yet. Showing the latest recipes from all
-          categories instead.</p>
-        }
         <ol class="recipe-list">
           @for (recipe of visibleRecipes(); track recipe.id; let i = $index) {
           <li>

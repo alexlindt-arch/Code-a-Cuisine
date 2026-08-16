@@ -20,7 +20,7 @@
                 autocorrect="off" spellcheck="false" maxlength="40"
                 title="Bitte nur Buchstaben, Zahlen, Leerzeichen, Bindestriche, Apostroph oder Klammern verwenden"
                 [value]="ingredientsSignal().name" (input)="setIngredientName($event)"
-                (focus)="onIngredientFieldFocus()" (blur)="onIngredientFieldBlur()">
+                (blur)="onIngredientFieldBlur()">
 
               @if (isIngredientSuggestionsOpen() && ingredientSuggestions().length > 0) {
               <ul class="ingredient-suggestions" role="listbox" aria-label="Ingredient suggestions">

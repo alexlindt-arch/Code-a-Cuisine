@@ -6,11 +6,11 @@
         label="Hero Image"></app-images-component>
       <div class="loading-card">
 
-          <img [src]="schusselIcon" alt="Schüssel Icon" />
-          <img [src]="karotteIcon" alt="Karotte Icon" />
-          <img [src]="kohlIcon2" alt="Kohl Icon" />
-          <img [src]="rettichIcon3" alt="Rettich Icon" />
-        </div>
+        <img [src]="schusselIcon" alt="Schüssel Icon" />
+        <img [src]="karotteIcon" alt="Karotte Icon" />
+        <img [src]="kohlIcon2" alt="Kohl Icon" />
+        <img [src]="rettichIcon3" alt="Rettich Icon" />
+      </div>
       <p>Generating ...</p>
     </div>
   </div>
@@ -127,29 +127,25 @@
           {{ generateButtonLabel() }}
         </button>
       </div>
-    @if (showQuotaDialog()) {
-  <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true">
-  <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
-    <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
-    <p>{{ quotaDialogMessage() }}</p>
-    @if (quotaResetHint(); as hint) {
-    <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>
+      @if (showQuotaDialog()) {
+      <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true">
+        <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
+          <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
+          <p>{{ quotaDialogMessage() }}</p>
+          @if (quotaResetHint(); as hint) {
+          <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>
 
-    }<div class="dialog-button-content">
+          }<div class="dialog-button-content">
 
-      <a (click)="closeQuotaDialog()" [routerLink]="'/generate-recipe'"
-        class="btn --generate-btn quota-dialog-btn router-link"><app-images-component [class]="arrowClass"
-          [src]="heroImageArrowLight" label="Arrow Icon"></app-images-component>Go back to ingredients</a>
+            <a (click)="closeQuotaDialog()" [routerLink]="'/generate-recipe'"
+              class="btn --generate-btn quota-dialog-btn router-link"><app-images-component [class]="arrowClass"
+                [src]="heroImageArrowLight" label="Arrow Icon"></app-images-component>Go back to ingredients</a>
+          </div>
+          <!-- <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Go back to ingredients</button> -->
+        </dialog>
+      </div>
+      }
     </div>
-    <!-- <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Go back to ingredients</button> -->
-  </dialog>
-  </div>
-  }
-    </div>
-
-
-
-
   </div>
   }
 </section>

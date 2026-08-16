@@ -35,20 +35,11 @@ export class CookbookCategoryPage {
       return [];
     }
 
-    return this.recipes().filter((recipe) => recipe.categorySlug === category.slug);
+    const selectedCuisine = category.cuisine.trim().toLowerCase();
+    return this.recipes().filter((recipe) => recipe.cuisine.trim().toLowerCase() === selectedCuisine);
   });
 
-  readonly isUsingFallbackRecipes = computed(() => {
-    if (!this.selectedCategory()) {
-      return false;
-    }
-
-    return this.loadingState() === 'idle' && this.filteredRecipes().length === 0 && this.recipes().length > 0;
-  });
-
-  readonly displayedRecipes = computed<CookbookRecipeRecord[]>(() =>
-    this.isUsingFallbackRecipes() ? this.recipes() : this.filteredRecipes()
-  );
+  readonly displayedRecipes = computed<CookbookRecipeRecord[]>(() => this.filteredRecipes());
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.displayedRecipes().length / this.pageSize)));
 
@@ -72,7 +63,7 @@ export class CookbookCategoryPage {
 
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const categorySlug = params.get('category');
-      const nextCategory = cookbookCategories.find((category) => category.slug === categorySlug) ?? null;
+      const nextCategory = cookbookCategories.find((category) => category.cuisine === categorySlug) ?? null;
       this.selectedCategory.set(nextCategory);
       this.currentPage.set(1);
     });
