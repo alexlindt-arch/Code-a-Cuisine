@@ -10,6 +10,7 @@ import { Results } from '../app/results/results';
 import { RecipeDetail } from './recipe-detail/recipe-detail';
 import { Cookbook } from './cookbook/cookbook';
 import { CookbookCategoryPage } from './cookbook-category/cookbook-category';
+import { Impress } from './impress/impress';
 /**
  * The routes array defines the routing configuration for the application.
  * It specifies the paths, components, and additional data for each route.
@@ -54,5 +55,10 @@ export const routes: Routes = [
     component: CookbookCategoryPage,
     data: { headerStyle: 'light' },
     title: 'Cookbook Category'
+  },
+  { path: 'impress',
+    component: Impress,
+    data: { headerStyle: 'light' },
+    title: 'Imprint'
   }
 ];

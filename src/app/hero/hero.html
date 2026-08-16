@@ -15,6 +15,7 @@
           <app-routerlink-componente [targetClass]="'--light --hero'" [linkText]="'Go to cookbook'"
             [targetPath]="cookbookRouterLink"></app-routerlink-componente>
         </div>
+        <a [routerLink]="impressRouterLink" class="impressum-link">Imprint</a>
       </div>
       <div class="content-right">
         <app-images-component [class]="heroImageClass" [src]="heroImageThree"
@@ -27,5 +28,6 @@
           label="Hero Image 5"></app-images-component>
       </div>
     </div>
+
   </div>
 </section>

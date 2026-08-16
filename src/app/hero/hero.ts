@@ -8,10 +8,10 @@ import { ImagesComponent } from '../components/images-component/images-component
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { RouterLink } from "@angular/router";
 
-
 @Component({
   selector: 'app-hero',
   imports: [Button, ImagesComponent, RouterLink, RouterlinkComponente],
+  standalone: true,
   templateUrl: './hero.html',
   styleUrls: ['./hero.scss'],
 })
@@ -31,4 +31,5 @@ export class Hero {
   heroImageArrow = 'assets/icons/Arrow-right.png';
   recipeRouterLink: string = '/generate-recipe';
   cookbookRouterLink: string = '/cookbook';
+  impressRouterLink: string = '/impress';
 }

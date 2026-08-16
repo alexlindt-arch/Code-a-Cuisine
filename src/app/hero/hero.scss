@@ -129,6 +129,27 @@
       }
     }
 
+    .impressum-link{
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      font-size: clamp(var.$font-size-md, 2vw, var.$font-size-xl);
+      color: var.$primary-text-color;
+      margin: 20px 0px;
+      &:hover{
+        text-decoration: underline;
+      }
+      @include mixin.tablet {
+        position: relative;
+        margin-top: 80px;
+      }
+      @include mixin.smartphone {
+        position: relative;
+        margin-top: 15px;
+        text-align: start;
+      }
+    }
+
   }
 
   .content-right {

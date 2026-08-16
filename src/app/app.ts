@@ -6,7 +6,6 @@ import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet, ActivatedRoute } from '@angular/router';
 import { Header } from './components/header/header';
 
-
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, Header],
