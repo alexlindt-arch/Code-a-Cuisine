@@ -55,12 +55,12 @@
   align-items: center;
   justify-content: center;
   width: 36px;
-  height: 30px;
+  height: 36px;
   padding: 0;
-
   @include mixin.smartphone {
-    width: 28px;
+    width: 24px;
     height: 30px;
+    margin: 3px 0;
   }
 
   &:hover {

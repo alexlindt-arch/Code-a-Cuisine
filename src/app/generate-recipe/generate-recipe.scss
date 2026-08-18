@@ -121,7 +121,6 @@ section {
   }
 
   & .form-actions {
-    margin-top: 5px;
 
     @include mixin.smartphone {
       margin: 0;
@@ -255,7 +254,7 @@ section {
     padding: 6px;
     width: 99%;
     border-radius: var.$border-radius;
-    background-color: rgba(var.$primary-bg, 0.3);
+    background-color: rgb(195, 207, 195);
     z-index: 25;
 
     li {
@@ -305,10 +304,12 @@ ul {
     font-family: var.$font-family;
     font-size: var.$font-size-md;
     color: var.$secondary-text-color;
-    padding: 8px;
     list-style: none;
+
     @include mixin.smartphone {
-     padding: 6px 0px;   }
+      padding: 6px 0px;
+    }
+
     &:hover {
       width: 100%;
       min-width: 85px;
@@ -321,6 +322,7 @@ ul {
       align-items: center;
       font-weight: var.$font-weight-medium;
       gap: var.$mgr-medium;
+      padding: 6px 0px;
 
       @include mixin.smartphone {
         gap: 70px;
@@ -374,6 +376,7 @@ ul {
     pointer-events: none;
   }
 }
+
 .unit-selection-edit.open app-images-component {
   margin-top: -16%;
   animation: rotate 255ms ease-in-out forwards;
@@ -487,6 +490,17 @@ ul {
   }
 }
 
+.ingredient-edit-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+
+  @include mixin.smartphone {
+    gap: 2px;
+  }
+}
+
 @keyframes rotate {
   from {
     transform: translate(0%, -50%) rotate(180deg);
@@ -524,9 +538,10 @@ ul {
 
   & .selection-content {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: flex-start;
     gap: var.$mgr-large;
+    width: 100%;
 
     @include mixin.smartphone {
       gap: 5px;

@@ -82,30 +82,20 @@
         <article class="panel directions-panel" aria-label="Directions">
           <img src="assets/img/Directions-section.png" alt="Directions" class="section-banner">
           <img [src]="sectionBannerMobDirections" alt="Directions-mob" class="section-banner-mob">
-          <div class="steps-columns">
+          <div class="steps-columns" >
+            @for (column of stepColumns().columns; track $index; let columnIndex = $index) {
             <ol>
-              @for (step of stepColumns().left; track step; let i = $index) {
+              @for (step of column; track step; let stepIndex = $index) {
               <li>
-                <p class="step-headline"><span>{{ i + 1 }}.</span><span class="step-title">{{ step.title }}</span>
-                  <img class="step-chef-badge" src="assets/icons/Cook-icon-1.png" alt="Chef 1">
+                <p class="step-headline"><span>{{ getStepNumber(columnIndex, stepIndex) }}.</span><span class="step-title">{{ step.title }}</span>
+                  <img class="step-chef-badge" [src]="'assets/icons/Cook-icon-' + (columnIndex + 1) + '.png'"
+                    [alt]="'Chef ' + (columnIndex + 1)">
                 </p>
                 <p>{{ step.description }}</p>
               </li>
               }
             </ol>
-            <ol>
-              @for (step of stepColumns().right; track step; let i = $index) {
-              <li>
-                <p class="step-headline"><span>{{ i + stepColumns().left.length + 1 }}.</span><span
-                    class="step-title">{{ step.title }}</span>
-                  <img class="step-chef-badge"
-                    [src]="hasSecondChef() ? 'assets/icons/Cook-icon-2.png' : 'assets/icons/Cook-icon-1.png'"
-                    [alt]="hasSecondChef() ? 'Chef 2' : 'Chef 1'">
-                </p>
-                <p>{{ step.description }}</p>
-              </li>
-              }
-            </ol>
+            }
           </div>
           <button class="directions-intro-btn" (click)="showDirections()"><span>Show Directions<img
                 src="assets/icons/arrow_drop_down.png" alt=""></span></button>

@@ -344,7 +344,7 @@ h1 {
   color: var.$secondary-text-color;
   text-decoration: none;
   gap: var.$mgr-small;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: var.$font-weight-medium;
 
   @include mix.smartphone() {

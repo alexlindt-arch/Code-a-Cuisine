@@ -71,7 +71,7 @@ export class RecipeDetail {
       return 1;
     }
 
-    return Math.min(2, Math.max(1, Math.floor(cooks)));
+    return Math.min(3, Math.max(1, Math.floor(cooks)));
   });
 
   readonly cookIconIndexes = computed(() =>
@@ -113,15 +113,23 @@ export class RecipeDetail {
 
   readonly stepColumns = computed(() => {
     const steps = this.stepViews();
+    const columnsCount = this.cookIconCount();
+    const columns = Array.from({ length: columnsCount }, () => [] as RecipeStepView[]);
+
     if (!steps.length) {
-      return { left: [] as RecipeStepView[], right: [] as RecipeStepView[] };
+      return { columns };
     }
 
-    const midpoint = Math.ceil(steps.length / 2);
-    return {
-      left: steps.slice(0, midpoint),
-      right: steps.slice(midpoint),
-    };
+    let offset = 0;
+    for (let columnIndex = 0; columnIndex < columnsCount; columnIndex += 1) {
+      const baseSize = Math.floor(steps.length / columnsCount);
+      const remainder = steps.length % columnsCount;
+      const size = baseSize + (columnIndex < remainder ? 1 : 0);
+      columns[columnIndex] = steps.slice(offset, offset + size);
+      offset += size;
+    }
+
+    return { columns };
   });
 
   readonly stepViews = computed(() => {
@@ -145,6 +153,17 @@ export class RecipeDetail {
       carbs: Math.max(34, Math.round(ingredientCount * 5.5)),
     };
   });
+
+  getStepNumber(columnIndex: number, stepIndex: number): number {
+    const columns = this.stepColumns().columns;
+    let previousColumnSize = 0;
+
+    for (let index = 0; index < columnIndex; index += 1) {
+      previousColumnSize += columns[index]?.length ?? 0;
+    }
+
+    return previousColumnSize + stepIndex + 1;
+  }
 
   /**
    * @description Creates an instance of RecipeDetail.
