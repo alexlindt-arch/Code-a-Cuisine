@@ -5,6 +5,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
 import { RecipeLibraryService, type CookbookRecipeRecord } from '../recipe-library.service';
 import { extractResult, ingredientsMatch, normalizeIngredientName, parseRecipeArray, toStepView, type RecipeStepView } from './recipe-detail.utils';
@@ -60,10 +61,13 @@ export class RecipeDetail {
   readonly likeCount = signal<number | null>(null);
   readonly likeState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
   readonly backLink = signal('/results');
+  readonly backLinkLabel = computed(() => this.backLink().startsWith('/results') ? 'Results' : 'Cookbook');
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
   readonly sectionBannerMobIngredients = 'assets/img/Ingredients-Mob.png';
   readonly sectionBannerMobDirections = 'assets/img/Directions-Mob.png';
   readonly arrowClass = 'arrow-icon';
+
+  readonly path = computed(() => this.activatedRoute.snapshot.routeConfig?.path ?? '');
 
   readonly cookIconCount = computed(() => {
     const cooks = this.requestPayload()?.preferences.cooks;
@@ -174,22 +178,40 @@ export class RecipeDetail {
     this.loadSavedRecipeIds();
     this.loadLikedRecipeIds();
 
-    this.activatedRoute.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+    combineLatest([
+      this.activatedRoute.paramMap,
+      this.activatedRoute.queryParamMap,
+    ]).pipe(takeUntilDestroyed()).subscribe(([params, queryParams]) => {
       const recipeId = params.get('recipeId');
       if (recipeId) {
+        this.setBackLinkFromQueryParam(queryParams.get('from'), '/cookbook');
         void this.selectCookbookRecipeFromRoute(recipeId);
         return;
       }
 
+      this.setBackLinkFromQueryParam(queryParams.get('from'), '/results');
       this.selectResultRecipeFromRoute(params.get('index'));
     });
+  }
+
+  /**
+   * @description Method setBackLinkFromQueryParam.
+   */
+  private setBackLinkFromQueryParam(fromParam: string | null, fallbackPath: '/results' | '/cookbook') {
+    if (!fromParam) {
+      this.backLink.set(fallbackPath);
+      return;
+    }
+
+    const normalizedPath = fromParam.trim();
+    const isAllowedPath = normalizedPath.startsWith('/results') || normalizedPath.startsWith('/cookbook');
+    this.backLink.set(isAllowedPath ? normalizedPath : fallbackPath);
   }
 
   /**
    * @description Method selectResultRecipeFromRoute.
    */
   private selectResultRecipeFromRoute(indexParam: string | null) {
-    this.backLink.set('/results');
     const index = Number(indexParam);
 
     if (!Number.isInteger(index) || index < 0 || index >= this.recipes().length) {
@@ -210,7 +232,6 @@ export class RecipeDetail {
    * @description Method selectCookbookRecipeFromRoute.
    */
   private async selectCookbookRecipeFromRoute(recipeId: string) {
-    this.backLink.set('/cookbook');
     this.selectedRecipeId.set(recipeId);
     this.likeCount.set(null);
     this.likeState.set('idle');

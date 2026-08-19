@@ -25,6 +25,7 @@
           @for (recipe of visibleRecipes(); track recipe.id; let i = $index) {
           <li>
             <a class="recipe-entry-link" [routerLink]="['/cookbook/recipe', recipe.id]"
+              [queryParams]="{ from: detailBackPath() }"
               [attr.aria-label]="'Open recipe: ' + recipe.title">
               <div class="recipe-entry-main">
                 <p class="recipe-meta"><img src="assets/icons/clock_Icon.png" alt="Cooking time"> Cooking time: {{

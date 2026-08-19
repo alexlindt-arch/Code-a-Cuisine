@@ -30,7 +30,6 @@
             failed.</p>
           }
         </div>
-
         <div class="hero-image-wrap">
           <img [src]="getHeroImage()" alt="AI generated recipe visual" class="hero-image">
         </div>
@@ -45,11 +44,10 @@
             <img src="assets/icons/clock_Icon.png" alt="Clock icon"> Cooking time: {{
             recipe.estimatedMinutes }}min
           </p>
-          <a class="view-btn" [routerLink]="['/results', i]">View</a>
+          <a class="view-btn" [routerLink]="['/results', i]" [queryParams]="{ from: '/results' }">View</a>
         </article>
         }
       </div>
-
       <div class="bottom-actions">
         <app-routerlink-componente [targetClass]="'--light'" [linkText]="'Generate new recipe'"
           [targetPath]="'/generate-recipe'"></app-routerlink-componente>

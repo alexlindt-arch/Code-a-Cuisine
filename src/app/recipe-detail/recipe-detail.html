@@ -2,7 +2,7 @@
 
   <div class="top-section">
     <div class="content-limited">
-      <app-routerlink-componente [targetClass]="'--dark'" [linkText]="'Cookbook'" [targetPath]="'/cookbook'"
+      <app-routerlink-componente [targetClass]="'--dark'" [linkText]="backLinkLabel()" [targetPath]="backLink()"
         [imageArrow]="'assets/icons/Arrow-left-dark.png'"></app-routerlink-componente>
     </div>
   </div>
@@ -19,13 +19,13 @@
             @if (requestPayload(); as request) {
             <p class="cook-count">Cooking person: {{ request.preferences.cooks }}
               @for (chef of cookIconIndexes(); track chef) {
-              <span class="chef-badge"><img [src]="'assets/icons/Cook-icon-' + chef + '.png'" [alt]="'Chef ' + chef">
+              <span class="chef-badge"><img [src]="'assets/icons/Cook-icon-' + chef + '.svg'" [alt]="'Chef ' + chef">
               </span>
               }
             </p>
             <div class="cook-icons">
             @for (chef of cookIconIndexes(); track chef) {
-            <img class="--mobil" [src]="'assets/icons/Cook-icon-' + chef + '.png'" [alt]="'Chef ' + chef">
+            <img class="--mobil" [src]="'assets/icons/Cook-icon-' + chef + '.svg'" [alt]="'Chef ' + chef">
             }
             </div>
             }
@@ -88,7 +88,7 @@
               @for (step of column; track step; let stepIndex = $index) {
               <li>
                 <p class="step-headline"><span>{{ getStepNumber(columnIndex, stepIndex) }}.</span><span class="step-title">{{ step.title }}</span>
-                  <img class="step-chef-badge" [src]="'assets/icons/Cook-icon-' + (columnIndex + 1) + '.png'"
+                  <img class="step-chef-badge" [src]="'assets/icons/Cook-icon-' + (columnIndex + 1) + '.svg'"
                     [alt]="'Chef ' + (columnIndex + 1)">
                 </p>
                 <p>{{ step.description }}</p>

@@ -40,6 +40,10 @@ export class CookbookCategoryPage {
   });
 
   readonly displayedRecipes = computed<CookbookRecipeRecord[]>(() => this.filteredRecipes());
+  readonly detailBackPath = computed(() => {
+    const category = this.selectedCategory();
+    return category ? `/cookbook/${category.cuisine}` : '/cookbook';
+  });
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.displayedRecipes().length / this.pageSize)));
 
