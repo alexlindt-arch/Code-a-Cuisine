@@ -36,6 +36,9 @@ section {
   height: calc(100svh - 100px);
   background-color: var.$primary-bg;
   color: var.$primary-text-color;
+  @include mixin.landscape-min {
+    height: 100%;
+  }
 }
 
 .content-limited {

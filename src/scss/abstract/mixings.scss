@@ -66,3 +66,18 @@
     @content;
   }
 }
+
+  // @mixin landscape {
+  //   @media only screen and (min-width: 1024px) and (orientation: landscape) {
+  //     @content;
+  //   }
+ 
+  // }
+
+
+  @mixin landscape-min {
+    @media only screen and (min-width: 756px) and (max-width: 1023px) and (orientation: landscape) {
+      @content;
+    }
+  }
+    

@@ -14,12 +14,19 @@
     height: calc(100vh - 100px);
   }
 
+  @include mixin.landscape-min {
+    height: 100%;
+  }
+
   .content-left {
     position: relative;
     @include mixin.flex-between();
     flex-direction: column;
     height: calc(100vh - 169px);
-
+    
+    @include mixin.landscape-min {
+      height: 100%;
+    }
     .top-content {
       flex-direction: column;
 
@@ -34,6 +41,7 @@
         @include mixin.smartphone {
           width: 60%;
         }
+
       }
 
       @include mixin.desktop {
@@ -127,27 +135,41 @@
         flex-direction: column;
         align-items: baseline;
       }
+
+      // @include mixin.landscape {
+      //   position: relative;
+      //   margin-top: 25px;
+      // }
+      
     }
 
-    .impressum-link{
+    .impressum-link {
       width: 100%;
       text-align: center;
       text-decoration: none;
       font-size: clamp(var.$font-size-md, 2vw, var.$font-size-xl);
       color: var.$primary-text-color;
       margin: 20px 0px;
-      &:hover{
+
+      &:hover {
         text-decoration: underline;
       }
+
       @include mixin.tablet {
         position: relative;
-        margin-top: 80px;
+        margin-top: 55px;
       }
+
       @include mixin.smartphone {
         position: relative;
         margin-top: 15px;
         text-align: start;
       }
+
+      //   @include mixin.landscape {
+      //   position: relative;
+      //   margin-top: 0px;
+      // }
     }
 
   }
