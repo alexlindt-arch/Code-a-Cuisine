@@ -36,13 +36,9 @@ export class IngredientEditorService {
     return query.length < 3 ? [] : Array.from(new Set([...this.firebaseIngredientNames(), ...this.ingredientCatalog])).filter((name) => name.toLowerCase().startsWith(query)).slice(0, 8);
   });
 
-  constructor() { this.resetIngredientState(); void this.loadIngredientsFromFirebase(); }
-
-  resetIngredientState() {
-    this.ingredients.set([]); this.ingredientsSignal.set({ name: '', quantity: 0, unit: 'gram' });
-    this.editingIndex.set(null); this.isIngredientSuggestionsOpen.set(false); this.isCreateUnitMenuOpen.set(false); this.isEditUnitMenuOpen.set(false);
-    this.formValidationMessage.set(''); this.ingredientValidationMessage.set('');
-    localStorage.removeItem(this.storageKey); localStorage.removeItem(this.recipePayloadKey); localStorage.removeItem(this.recipesResponseKey);
+  constructor() {
+    this.loadIngredientsFromStorage();
+    void this.loadIngredientsFromFirebase();
   }
 
   setIngredientName(event: Event) {
@@ -87,6 +83,11 @@ export class IngredientEditorService {
 
   protected persistIngredients() { const context = readStoredRecipeContext(this.storageKey); localStorage.setItem(this.storageKey, JSON.stringify({ ...context, ingredients: this.ingredients() })); this.clearRecipeGenerationCache(); }
   protected clearRecipeGenerationCache() { localStorage.removeItem(this.recipePayloadKey); localStorage.removeItem(this.recipesResponseKey); }
-  protected async loadIngredientsFromFirebase() { try { const response = await firstValueFrom(this.http.get<Record<string, { name?: string }> | null>(`${this.databaseUrl}/ingredients.json`)); const names = Object.values(response ?? {}).map((item) => item?.name?.trim() ?? '').filter(Boolean); this.firebaseIngredientNames.set(Array.from(new Set([...this.ingredientCatalog, ...names]))); } catch (error) { console.error('Unable to load ingredients from Firebase:', error); } }
+  protected async loadIngredientsFromFirebase() 
+  { try { const response = await firstValueFrom(this.http.get<Record<string, { name?: string }> | null>(`${this.databaseUrl}/ingredients.json`)); 
+  const names = Object.values(response ?? {}).map((item) => item?.name?.trim() ?? '').filter(Boolean); 
+  this.firebaseIngredientNames.set(Array.from(new Set([...this.ingredientCatalog, ...names]))); } 
+  
+  catch (error) { console.error('Unable to load ingredients from Firebase:', error); } }
   protected async persistIngredientToFirebase(name: string) { const normalized = name.trim(); if (!normalized || this.firebaseIngredientNames().some((item) => item.toLowerCase() === normalized.toLowerCase())) return; try { await firstValueFrom(this.http.put(`${this.databaseUrl}/ingredients/${toIngredientSlug(normalized)}.json`, { name: normalized, createdAt: new Date().toISOString() })); this.firebaseIngredientNames.update((items) => Array.from(new Set([...items, normalized]))); } catch (error) { console.error('Unable to persist ingredient to Firebase:', error); } }
 }

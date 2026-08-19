@@ -24,21 +24,6 @@
     <div class="preferences-content">
       <h1>Choose your preferences</h1>
 
-      <!-- @if (quotaStatus(); as quota) {
-      @if (showQuotaCard()) {
-      <article class="quota-card" aria-live="polite">
-        <div>
-          <h2>24h quota (this IP)</h2>
-          <p>{{ quota.perIpRemaining }} of {{ quota.perIpLimit }} recipe requests left for the next 24 hours.</p>
-        </div>
-        <div>
-          <h2>Detected address type</h2>
-          <p>{{ quota.ipVersion === 'ipv4' ? 'IPv4' : quota.ipVersion === 'ipv6' ? 'IPv6' : 'Unknown IP type' }} · {{ quota.perIpUsed }} request(s) used in the last 24 hours.</p>
-        </div>
-      </article>
-      }
-      } -->
-
       @if (!showQuotaDialog() && quotaMessage(); as message) {
       <p class="quota-message" aria-live="assertive">{{ message }}</p>
       }
