@@ -69,9 +69,7 @@
                 </button>
               </div>
             </div>
-            @if (formValidationMessage()) {
-            <p class="form-validation-message" role="alert">{{ formValidationMessage() }}</p>
-            }
+            
           </div>
 
         </form>
@@ -143,6 +141,10 @@
       </div>
     </div>
     <div class="recipe-button-content">
+
+      @if (formValidationMessage()) {
+            <p class="form-validation-message" role="alert">{{ formValidationMessage() }}</p>
+            }
       <button class="btn --generate-btn" type="button" (click)="goToPreferences()">Next Step</button>
     </div>
   </div>

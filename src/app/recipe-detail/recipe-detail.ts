@@ -63,8 +63,8 @@ export class RecipeDetail {
   readonly backLink = signal('/results');
   readonly backLinkLabel = computed(() => this.backLink().startsWith('/results') ? 'Results' : 'Cookbook');
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
-  readonly sectionBannerMobIngredients = 'assets/img/Ingredients-Mob.png';
-  readonly sectionBannerMobDirections = 'assets/img/Directions-Mob.png';
+  readonly sectionBannerMobIngredients = 'assets/img/Ingredients-Mob.svg';
+  readonly sectionBannerMobDirections = 'assets/img/Directions-Mob.svg';
   readonly arrowClass = 'arrow-icon';
 
   readonly path = computed(() => this.activatedRoute.snapshot.routeConfig?.path ?? '');

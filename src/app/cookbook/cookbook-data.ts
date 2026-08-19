@@ -21,7 +21,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Sun-soaked pasta, vibrant sauces and warm comfort classics.',
     image: 'assets/img/cookboog-gericht6.png',
     banner: 'assets/img/Italian-section.png',
-    bannerMob: 'assets/img/Italian-Mob.png',
+    bannerMob: 'assets/img/Italian-Mob.svg',
     accent: 'assets/icons/hand.png',
   },
   {
@@ -31,7 +31,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Hearty plates, familiar flavors and rich home-style cooking.',
     image: 'assets/img/cookboog-gericht1.png',
     banner: 'assets/img/German-section.png',
-    bannerMob: 'assets/img/German-Mob.png',
+    bannerMob: 'assets/img/German-Mob.svg',
     accent: 'assets/icons/brezel.png',
   },
   {
@@ -41,7 +41,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Clean compositions, careful technique and precise balance.',
     image: 'assets/img/cookboog-gericht2.png',
     banner: 'assets/img/Japanese-section.png',
-    bannerMob: 'assets/img/Japanese-Mob.png',
+    bannerMob: 'assets/img/Japanese-Mob.svg',
     accent: 'assets/icons/stapchen.png',
   },
   {
@@ -51,7 +51,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Plated elegance with restaurant-inspired combinations.',
     image: 'assets/img/cookboog-gericht3.png',
     banner: 'assets/img/Gourmet-section.png',
-    bannerMob: 'assets/img/Gourmet-Mob.png',
+    bannerMob: 'assets/img/Gourmet-Mob.svg',
     accent: 'assets/icons/sterne.png',
   },
   {
@@ -61,7 +61,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Aromatic spice layers, cozy bowls and bold depth.',
     image: 'assets/img/cookboog-gericht4.png',
     banner: 'assets/img/Indian-section.png',
-    bannerMob: 'assets/img/Indian-Mob.png',
+    bannerMob: 'assets/img/Indian-Mob.svg',
     accent: 'assets/icons/suppen.png',
   },
   {
@@ -71,7 +71,7 @@ export const cookbookCategories: CookbookCategory[] = [
     description: 'Unexpected pairings that still feel thoughtful and complete.',
     image: 'assets/img/cookboog-gericht5.png',
     banner: 'assets/img/Fusion-section.png',
-    bannerMob: 'assets/img/Fusion-Mob.png',
+    bannerMob: 'assets/img/Fusion-Mob.svg',
     accent: 'assets/icons/spieß.png',
   },
 ];
