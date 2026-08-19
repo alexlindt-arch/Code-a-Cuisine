@@ -194,11 +194,6 @@ export class GenerateRecipe extends IngredientEditorService implements OnDestroy
       return;
     }
 
-    if (!Number.isFinite(validQuantity) || validQuantity <= 0 || !ingredient.unit) {
-      this.formValidationMessage.set(this.requiredFieldsMessage);
-      return;
-    }
-
     const nextIngredient = {
       name: normalizedName,
       quantity: validQuantity,

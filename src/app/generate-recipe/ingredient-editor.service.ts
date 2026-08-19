@@ -15,7 +15,7 @@ export class IngredientEditorService {
   protected readonly maxIngredientNameLength = 40;
   protected readonly ingredientHintMessage = 'no special characters, max 40 characters';
   readonly emptyIngredientHintMessage = 'Please enter an ingredient.';
-  readonly requiredFieldsMessage = 'Please fill in all required fields.';
+  // readonly requiredFieldsMessage = 'Please fill in all required fields.';
   readonly minIngredientsRequired = 3;
   readonly minIngredientsMessage = 'Please add at least 3 ingredients.';
   readonly firebaseIngredientNames = signal<string[]>([]);
@@ -67,7 +67,7 @@ export class IngredientEditorService {
     const item = this.ingredientsSignal(); const name = sanitizeIngredientName(item.name); const quantity = Number(item.quantity);
     if (!name) { this.ingredientValidationMessage.set(this.emptyIngredientHintMessage); return; }
     if (!isValidIngredientName(name, this.ingredientNamePattern, this.maxIngredientNameLength)) { this.ingredientValidationMessage.set(this.ingredientHintMessage); return; }
-    if (!Number.isFinite(quantity) || quantity <= 0 || !item.unit) { this.formValidationMessage.set(this.requiredFieldsMessage); return; }
+    // if (!Number.isFinite(quantity) || quantity <= 0 || !item.unit) { this.formValidationMessage.set(this.requiredFieldsMessage); return; }
     const next = { name, quantity, unit: item.unit }; const index = this.editingIndex();
     this.ingredients.update((items) => index === null ? [...items, next] : items.map((old, i) => i === index ? next : old));
     this.editingIndex.set(null); this.persistIngredients(); void this.persistIngredientToFirebase(name);
