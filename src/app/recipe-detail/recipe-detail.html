@@ -36,9 +36,7 @@
             <div class="meta-tags">
               <span class="tag">{{ request.preferences.cuisine }}</span>
               <span class="tag">{{ request.preferences.cookingTime }}</span>
-              @for (diet of request.preferences.diets; track diet) {
-              <span class="tag">{{ diet }}</span>
-              }
+              <span class="tag"><img src="assets/icons/heart.png" alt="Likes"> {{ displayedLikes() }}</span>
             </div>
             }
 

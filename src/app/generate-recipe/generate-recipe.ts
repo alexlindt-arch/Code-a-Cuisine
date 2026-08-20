@@ -322,6 +322,13 @@ export class GenerateRecipe extends IngredientEditorService implements OnDestroy
    * @description Method saveIngredientEdit.
    */
   override saveIngredientEdit(index: number) {
+    const quantityInput = document.getElementById(`edit-quantity-${index}`) as HTMLInputElement | null;
+
+    if (quantityInput && !quantityInput.checkValidity()) {
+      quantityInput.reportValidity();
+      return;
+    }
+
     const ingredient = this.ingredients()[index];
 
     if (!ingredient) {

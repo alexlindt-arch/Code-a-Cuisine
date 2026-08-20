@@ -26,14 +26,15 @@
         } @else {
         <div class="favorite-cards">
           @for (recipe of featuredRecipes(); track recipe.id) {
-          <article class="favorite-card">
+          <a class="favorite-card" [routerLink]="['/cookbook/recipe', recipe.id]" [queryParams]="{ from: '/cookbook' }"
+            [attr.aria-label]="'Open recipe: ' + recipe.title">
             <span class="recipe-image-wrapper">
               <p class="recipe-meta"><img src="assets/icons/clock_Icon.png" alt="Cooking time"> Cooking time: {{
                 recipe.estimatedMinutes }}min</p>
                 <p class="likes-pill"><img src="assets/icons/heart.png" alt="Likes"> {{ recipe.likes }}</p>
             </span>
             <h3>{{ recipe.title }}</h3>
-          </article>
+          </a>
           }
         </div>
         }

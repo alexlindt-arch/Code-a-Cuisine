@@ -154,6 +154,8 @@
   grid-template-rows: auto auto;
   gap: 24px;
   min-width: calc(370px - min(45px, 8vw));
+  text-decoration: none;
+  color: var.$secondary-text-color;
 
   @include mix.smartphone {
     min-width: calc(320px - 90px);

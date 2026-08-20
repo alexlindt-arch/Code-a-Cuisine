@@ -19,6 +19,7 @@ interface Recipe {
   estimatedMinutes: number;
   ingredients: string[];
   steps: string[];
+  likes?: number;
 }
 
 /**
@@ -145,6 +146,16 @@ export class RecipeDetail {
     return recipe.steps.map((rawStep, index) => toStepView(rawStep, index));
   });
 
+  readonly displayedLikes = computed(() => {
+    const explicitLikeCount = this.likeCount();
+    if (typeof explicitLikeCount === 'number') {
+      return explicitLikeCount;
+    }
+
+    const recipeLikes = this.selectedRecipe()?.likes;
+    return typeof recipeLikes === 'number' ? recipeLikes : 0;
+  });
+
   readonly estimatedNutrition = computed(() => {
     const recipe = this.selectedRecipe();
     const ingredientCount = recipe?.ingredients.length ?? 0;
@@ -261,6 +272,7 @@ export class RecipeDetail {
       estimatedMinutes: recipe.estimatedMinutes,
       ingredients: recipe.ingredients,
       steps: recipe.steps,
+      likes: recipe.likes,
     };
   }
 

@@ -140,7 +140,7 @@
   font-family: 'quicksand-book-regular', sans-serif;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
 
 
 
@@ -200,6 +200,12 @@
   font-family: 'quicksand-book-regular', sans-serif;
   font-weight: var.$font-weight-medium;
   text-transform: capitalize;
+
+  & img {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
 }
 
 .nutrition {

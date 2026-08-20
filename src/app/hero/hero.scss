@@ -23,10 +23,11 @@
     @include mixin.flex-between();
     flex-direction: column;
     height: calc(100vh - 169px);
-    
+
     @include mixin.landscape-min {
       height: 100%;
     }
+
     .top-content {
       flex-direction: column;
 
@@ -123,24 +124,29 @@
           width: 65%;
           text-align: left;
         }
+
+        margin-top: calc(50% - 210px);
       }
 
       @include mixin.tablet {
         flex-direction: column;
         align-items: flex-start;
+        
       }
 
       @include mixin.smartphone {
         position: relative;
         flex-direction: column;
         align-items: baseline;
+        margin-top: 55px;
       }
 
-      // @include mixin.landscape {
-      //   position: relative;
-      //   margin-top: 25px;
-      // }
-      
+      @include mixin.landscape-min {
+        position: relative;
+        flex-direction: column;
+        align-items: baseline;
+        margin-top: 210px;
+      }
     }
 
     .impressum-link {
@@ -149,7 +155,7 @@
       text-decoration: none;
       font-size: clamp(var.$font-size-md, 2vw, var.$font-size-xl);
       color: var.$primary-text-color;
-      margin: 0px 0px;
+      margin: 35px 0px 35px 0px;
 
       &:hover {
         text-decoration: underline;
@@ -166,12 +172,12 @@
         text-align: start;
       }
 
-      //   @include mixin.landscape {
-      //   position: relative;
-      //   margin-top: 0px;
-      // }
+      @include mixin.landscape-min {
+        position: relative;
+        margin: 15px 0px 15px 0px;
+        text-align: start;
+      }
     }
-
   }
 
   .content-right {
