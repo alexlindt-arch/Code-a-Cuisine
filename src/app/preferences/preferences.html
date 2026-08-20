@@ -33,11 +33,11 @@
           <h2>How many portions you need?</h2>
           <div class="pref-number-stepper" role="group" aria-label="Portions">
             <button class="pref-stepper-btn" type="button" aria-label="Reduce portions"
-              (click)="decrementPortions()">-</button>
+              [disabled]="portions() <= 1" (click)="decrementPortions()">-</button>
             <span class="pref-value">{{ portions() }}</span>
             <span class="pref-value-label">Portions</span>
             <button class="pref-stepper-btn" type="button" aria-label="Increase portions"
-              (click)="incrementPortions()">+</button>
+              [disabled]="portions() >= 12" (click)="incrementPortions()">+</button>
           </div>
         </div>
 
@@ -45,11 +45,11 @@
           <h2>How many are cooking?</h2>
           <div class="pref-number-stepper" role="group" aria-label="Number of cooks">
             <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks"
-              (click)="decrementCooks()"><span>-</span></button>
+              [disabled]="cooks() <= 1" (click)="decrementCooks()"><span>-</span></button>
             <span class="pref-value">{{ cooks() }}</span>
             <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'Person' }}</span>
             <button class="pref-stepper-btn" type="button" aria-label="Increase cooks"
-              (click)="incrementCooks()"><span>+</span></button>
+              [disabled]="cooks() >= 3" (click)="incrementCooks()"><span>+</span></button>
           </div>
         </div>
       </article>

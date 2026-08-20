@@ -10,6 +10,11 @@
   transition: background-color 0.3s ease, color 0.3s ease;
   border: unset;
 
+  @include mixin.smartphone {
+    padding: var.$pd-small var.$pd-medium;
+    font-size: var.$font-size-sm;
+  }
+
   &.--primary {
     background-color: var.$btn-bg;
     color: var.$btn-text-color;

@@ -234,9 +234,28 @@ export class RecipeDetail {
     }
 
     this.selectedRecipe.set(this.recipes()[index]);
-    this.selectedRecipeId.set(this.savedRecipeIds()[index] ?? null);
+    const recipeId = this.savedRecipeIds()[index] ?? null;
+    this.selectedRecipeId.set(recipeId);
     this.likeCount.set(null);
     this.likeState.set('idle');
+
+    if (recipeId) {
+      void this.refreshLikeCount(recipeId);
+    }
+  }
+
+  /**
+   * @description Fetches the persisted like count from Firebase so it survives a reload.
+   */
+  private async refreshLikeCount(recipeId: string) {
+    try {
+      const recipe = await this.recipeLibraryService.getRecipeById(recipeId);
+      if (recipe && this.selectedRecipeId() === recipeId) {
+        this.likeCount.set(recipe.likes);
+      }
+    } catch (error) {
+      console.error('Failed to load current like count:', error);
+    }
   }
 
   /**

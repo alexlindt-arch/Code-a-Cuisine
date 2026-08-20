@@ -482,6 +482,15 @@ h1 {
     outline: 2px solid var.$primary-bg;
     outline-offset: 2px;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: transparent;
+    }
+  }
 }
 
 .pref-value {
