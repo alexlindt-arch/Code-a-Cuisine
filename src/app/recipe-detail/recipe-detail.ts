@@ -62,7 +62,7 @@ export class RecipeDetail {
   readonly likeCount = signal<number | null>(null);
   readonly likeState = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
   readonly backLink = signal('/results');
-  readonly backLinkLabel = computed(() => this.backLink().startsWith('/results') ? 'Results' : 'Cookbook');
+  readonly backLinkLabel = computed(() => this.backLink().startsWith('/results') ? 'Recipe results' : 'Cookbook');
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
   readonly sectionBannerMobIngredients = 'assets/img/Ingredients-Mob.svg';
   readonly sectionBannerMobDirections = 'assets/img/Directions-Mob.svg';
