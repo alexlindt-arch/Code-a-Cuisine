@@ -391,7 +391,7 @@
     gap: 18px;
 
     @include mix.smartphone {
-      padding: 0;
+       grid-template-columns: 1fr;
     }
   }
 
