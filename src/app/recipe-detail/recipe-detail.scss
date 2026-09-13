@@ -1,9 +1,25 @@
 @use '../../scss/components/variablen' as var;
 @use '../../scss/abstract/mixings' as mix;
 
+$macro-carbs-color: #D4953A;
+
 .recipe-detail-page {
   background-color: var.$secondary-bg;
   min-height: calc(100vh - 72px);
+
+  // Neutralize the global section/header element styles for nested semantic elements.
+  section {
+    height: auto;
+    background-color: transparent;
+    color: inherit;
+  }
+
+  header {
+    height: auto;
+    width: auto;
+    background-color: transparent;
+    color: inherit;
+  }
 }
 
 .detail-shell {
@@ -41,7 +57,7 @@
   gap: var.$mgr-small;
   color: var.$secondary-text-color;
   text-decoration: none;
-  font-size: var.$font-size-sm;
+  font-size: var.$font-size-md;
   font-weight: var.$font-weight-medium;
 
   & app-images-component:has(img) {
@@ -64,6 +80,7 @@
 }
 
 .recipe-card-shell {
+  display: block;
   border: 1px solid rgba(var.$primary-bg, 0.2);
   border-radius: 12px;
   padding: 14px;
@@ -83,15 +100,17 @@
   grid-template-columns: 1.4fr 1fr;
   gap: 18px;
 
-  h3 {
+  h1 {
     margin: 6px 0 0;
+    width: auto;
     font-size: clamp(24px, 4vw, 54px);
     line-height: 1.08;
+    font-weight: var.$font-weight-large;
     font-family: 'quicksand-bold-regular', sans-serif;
   }
 }
 
-.hero-main {
+.recipe-detail-page .hero-main {
   display: flex;
   flex-direction: column;
 }
@@ -100,6 +119,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 
   @include mix.smartphone {
     flex-direction: column-reverse;
@@ -185,6 +205,9 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 
   @include mix.smartphone {
     gap: 4px;
@@ -208,7 +231,14 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Nutrition
+// ---------------------------------------------------------------------------
+
 .nutrition {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   border-radius: 10px;
   background: rgba(var.$primary-text-color, 0.45);
   padding: 10px;
@@ -230,31 +260,169 @@
   }
 }
 
+.nutrition-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(var.$primary-bg, 0.5);
+  border-radius: 30px;
+  background-color: rgba(var.$secondary-bg, 0.7);
+}
+
+.nutrition-toggle-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 30px;
+  background: transparent;
+  color: var.$secondary-text-color;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: var.$font-size-md;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+
+  &.is-active {
+    background-color: var.$primary-bg;
+    color: var.$primary-text-color;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$secondary-text-color;
+    outline-offset: 2px;
+  }
+}
+
+.nutrition-scope,
+.nutrition-unavailable,
+.macro-chart-empty {
+  margin: 0;
+  width: 100%;
+  font-size: var.$font-size-md;
+  font-family: 'quicksand-book-regular', sans-serif;
+  line-height: 1.4;
+}
+
 .nutrition-grid {
-  margin-top: 8px;
+  margin: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 
-
-  div {
+  .nutrition-item {
     display: flex;
     flex-direction: column;
     gap: 8px;
-
   }
 
-  span {
+  dt {
+    font-size: var.$font-size-md;
+    font-family: 'quicksand-bold-regular', sans-serif;
+  }
+
+  dd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nutrition-amount {
     font-size: var.$font-size-lg;
     font-weight: var.$font-weight-medium;
     font-family: 'quicksand-book-regular', sans-serif;
   }
 
-  strong {
-    font-size: var.$font-size-md;
-    font-family: 'quicksand-bold-regular', sans-serif;
+  .nutrition-share {
+    font-size: var.$font-size-sm;
+    font-family: 'quicksand-book-regular', sans-serif;
+    color: rgba(var.$secondary-text-color, 0.85);
   }
 }
+
+.macro-chart {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.macro-donut {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 120px;
+  max-width: 100%;
+}
+
+.macro-donut-track,
+.macro-donut-segment {
+  fill: none;
+  stroke-width: 16;
+}
+
+.macro-donut-track {
+  stroke: rgba(var.$secondary-text-color, 0.12);
+}
+
+.macro-donut-segment {
+  transform: rotate(-90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.macro-donut-value {
+  fill: var.$secondary-text-color;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: 22px;
+}
+
+.macro-donut-unit {
+  fill: var.$secondary-text-color;
+  font-family: 'quicksand-book-regular', sans-serif;
+  font-size: 14px;
+}
+
+.macro-chart-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.macro-chart-title {
+  font-size: var.$font-size-md;
+  font-family: 'quicksand-bold-regular', sans-serif;
+}
+
+.macro-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var.$font-size-md;
+    font-family: 'quicksand-book-regular', sans-serif;
+  }
+}
+
+.macro-swatch {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+// ---------------------------------------------------------------------------
+// Panels
+// ---------------------------------------------------------------------------
 
 .panel {
   margin-top: 16px;
@@ -264,6 +432,12 @@
   @include mix.smartphone {
     padding: 0;
   }
+}
+
+.section-heading {
+  margin: 0;
+  font-size: inherit;
+  line-height: 0;
 }
 
 .section-banner-mob {
@@ -296,7 +470,16 @@
   margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 0;
+}
+
+.empty-note {
+  margin: 0;
+  width: 100%;
+  font-size: var.$font-size-md;
+  font-family: 'quicksand-book-regular', sans-serif;
+  color: rgba(var.$secondary-text-color, 0.8);
 }
 
 .ingredient-columns {
@@ -346,6 +529,10 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Directions
+// ---------------------------------------------------------------------------
+
 .steps-columns {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -380,82 +567,56 @@
       padding: 0;
     }
   }
+}
 
-  ol {
+.step-number {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 10px;
+  margin-right: var.$mgr-small;
+  font-size: var.$font-size-lg;
+  background: rgba(var.$primary-bg, 0.08);
+  font-family: 'quicksand-bold-regular', sans-serif;
+
+  @include mix.smartphone {
     margin: 0;
-    padding-left: 18px;
-    list-style: none;
-    display: grid;
-    grid-auto-columns: auto auto;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
+  }
+}
 
-    @include mix.smartphone {
-       grid-template-columns: 1fr;
-    }
+.step-title {
+  width: 100%;
+  margin: 0;
+}
+
+// Legacy layout: recipes without step details, steps split evenly into columns.
+.step-column {
+  margin: 0;
+  padding-left: 18px;
+  list-style: none;
+  display: grid;
+  grid-auto-columns: auto auto;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+
+  @include mix.smartphone {
+    grid-template-columns: 1fr;
   }
 
   li {
     margin-bottom: 10px;
   }
-
-  p {
-    justify-content: space-between;
-    margin: 6px 0 0;
-    line-height: 1.38;
-    font-family: "quicksand-book-regular", sans-serif;
-    display: flex;
-    width: 100%;
-
-    @include mix.tablet {
-      justify-content: space-between;
-      width: 100%;
-      transition: all 0.2s ease-in-out;
-    }
-
-    @include mix.smartphone {
-      justify-content: space-between;
-      width: 100%;
-      transition: all 0.2s ease-in-out;
-    }
-  }
-
-  span {
-    border-radius: 50%;
-    padding: 5px 10px;
-    margin-right: var.$mgr-small;
-    font-size: var.$font-size-lg;
-    background: rgba(var.$primary-bg, 0.08);
-    font-family: 'quicksand-bold-regular', sans-serif;
-
-    @include mix.smartphone {
-      margin: 0;
-    }
-
-    &.step-title {
-      border-radius: unset;
-      width: 100%;
-      background-color: transparent;
-      margin: 0;
-    }
-  }
-
-  li>p:not(.step-headline) {
-    font-family: 'quicksand-book-regular', sans-serif;
-    font-size: var.$font-size-lg;
-    font-weight: var.$font-weight-medium;
-  }
 }
 
 .step-headline {
-  display: inline-flex;
-
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  width: 100%;
   font-weight: var.$font-weight-medium;
-  margin: 0;
+  margin: 6px 0 0;
   font-family: 'quicksand-bold-regular', sans-serif;
   font-size: var.$font-size-xxl;
-  line-height: 1.1;
+  line-height: 1.38;
   padding: 4px 10px;
 
   @include mix.smartphone {
@@ -472,6 +633,16 @@
   }
 }
 
+.step-description {
+  display: flex;
+  width: 100%;
+  margin: 6px 0 0;
+  line-height: 1.38;
+  font-family: 'quicksand-book-regular', sans-serif;
+  font-size: var.$font-size-lg;
+  font-weight: var.$font-weight-medium;
+}
+
 .step-chef-badge {
   display: inline-flex;
   align-items: center;
@@ -481,11 +652,145 @@
   font-family: 'quicksand-book-regular', sans-serif;
 }
 
+// New layout: one to-do list per cook.
+.steps-columns.has-cook-lists {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.cook-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(var.$primary-bg, 0.2);
+  border-radius: 12px;
+  background-color: #f5eee3 !important;
+
+  @include mix.smartphone {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+}
+
+.cook-list-heading {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: var.$font-size-xxl;
+  font-weight: var.$font-weight-medium;
+  color: var.$secondary-text-color;
+}
+
+.cook-list-icon {
+  width: 64px;
+  height: auto;
+}
+
+.cook-list-count {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 30px;
+  background-color: rgba(var.$primary-bg, 0.12);
+  font-family: 'quicksand-book-regular', sans-serif;
+  font-size: var.$font-size-sm;
+}
+
+.cook-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cook-step {
+  padding: 12px;
+  border-left: 4px solid transparent;
+  border-radius: 10px;
+  background-color: #fffdf8;
+
+  &.is-parallel {
+    border-left-color: $macro-carbs-color;
+  }
+}
+
+.cook-step-headline {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: var.$font-size-xl;
+  font-weight: var.$font-weight-medium;
+  line-height: 1.25;
+
+  .step-number {
+    margin: 0;
+    padding: 2px 10px;
+  }
+}
+
+.cook-step-meta {
+  margin: 8px 0 0;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var.$font-size-sm;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 30px;
+  font-family: 'quicksand-bold-regular', sans-serif;
+  font-size: var.$font-size-sm;
+  line-height: 1.5;
+
+  img {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.step-badge-parallel {
+  border: 1px solid $macro-carbs-color;
+  background-color: rgba($macro-carbs-color, 0.2);
+  color: #6b400b;
+}
+
+.step-badge-duration {
+  border: 1px solid transparent;
+  background-color: rgba(var.$primary-bg, 0.1);
+  color: var.$secondary-text-color;
+}
+
+.cook-step-instruction {
+  margin: 8px 0 0;
+  width: 100%;
+  font-family: 'quicksand-book-regular', sans-serif;
+  font-size: var.$font-size-lg;
+  font-weight: var.$font-weight-medium;
+  line-height: 1.45;
+}
+
 .cook-icons {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 
   @include mix.smartphone {
     display: flex;
@@ -517,6 +822,8 @@
 }
 
 .like-button {
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   background: transparent;
   padding: 4px;
@@ -576,8 +883,6 @@
   align-items: center;
   justify-content: center;
   gap: 18px;
-  display: flex;
-  align-items: center;
 
   p {
     margin: 0;
@@ -586,6 +891,10 @@
   }
 
   a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
     text-decoration: none;
     background: var.$primary-bg;
     color: var.$primary-text-color;
@@ -627,57 +936,12 @@
   justify-content: flex-end;
 }
 
-.directions-intro-btn {
-  display: none;
-  background: transparent;
-  border: 0;
-  font-family: 'quicksand-bold-regular', sans-serif;
-  font-size: var.$font-size-md;
-  color: var.$secondary-text-color;
-  text-align: left;
-  padding: 10px 30px;
-  border: 1px solid transparent;
-  border-radius: 30px;
-  margin: 15px auto 10px;
-
-  & img {
-    position: relative;
-    transition: all 0.2s ease-in-out;
-    width: 9px;
-    height: 10px;
-    margin-left: 10px;
-    transform: rotate(180deg);
-  }
-
-  @include mix.tablet {
-    display: block;
-    text-align: center;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-  }
-
-  &:hover {
-    border: 1px solid rgba(var.$primary-bg, 0.5);
-    border-radius: 30px;
-  }
-
-  @include mix.smartphone {
-    display: block;
-    text-align: center;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-  }
-
-  &:hover {
-    border: 1px solid rgba(var.$primary-bg, 0.5);
-    border-radius: 30px;
-  }
-}
-
+.directions-intro-btn,
 .ingredients-intro-btn {
   display: none;
+  min-height: 44px;
+  min-width: 44px;
   background: transparent;
-  border: 0;
   font-family: 'quicksand-bold-regular', sans-serif;
   font-size: var.$font-size-md;
   color: var.$secondary-text-color;
@@ -686,6 +950,7 @@
   border: 1px solid transparent;
   border-radius: 30px;
   margin: 15px auto 10px;
+  cursor: pointer;
 
   & img {
     position: relative;
@@ -703,11 +968,6 @@
     margin-bottom: 10px;
   }
 
-  &:hover {
-    border: 1px solid rgba(var.$primary-bg, 0.5);
-    border-radius: 30px;
-  }
-
   @include mix.smartphone {
     display: block;
     text-align: center;
@@ -719,17 +979,13 @@
     border: 1px solid rgba(var.$primary-bg, 0.5);
     border-radius: 30px;
   }
-}
 
-.directions-intro-btn.active {
-  & img {
-    transform: rotate(-0deg);
-    animation: rotate 0.2s ease-in-out;
+  &:focus-visible {
+    outline: 2px solid var.$secondary-text-color;
+    outline-offset: 2px;
   }
-}
 
-.ingredients-intro-btn.active {
-  & img {
+  &.active img {
     transform: rotate(-0deg);
     animation: rotate 0.2s ease-in-out;
   }
@@ -742,13 +998,6 @@
 
   .nutrition-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    @include mix.smartphone {
-      grid-template-columns: repeat(4, minmax(61px, 1fr));
-      gap: 0;
-    }
-
-
   }
 
   .ingredient-columns,
@@ -757,6 +1006,10 @@
     gap: 20px;
     padding: 24px 16px 0;
 
+  }
+
+  .steps-columns.has-cook-lists {
+    grid-template-rows: none;
   }
 
   .cta-banner {

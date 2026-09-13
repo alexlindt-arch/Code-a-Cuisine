@@ -44,6 +44,10 @@ h1 {
 }
 
 .results-hero {
+  // Neutralize the global header element styles.
+  height: auto;
+  background-color: transparent;
+  color: inherit;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 96px;
@@ -60,21 +64,21 @@ h1 {
   gap: 8px;
 }
 
+.hero-image-wrap {
+  padding: 10px;
+  margin: 88px 0 0;
+
+  @include mix.smartphone {
+    display: none;
+  }
+}
+
 .hero-image-wrap.--mobile {
   display: none;
 
   @include mix.smartphone {
     display: block;
-    margin-top: 10px;
-  }
-}
-
-.hero-image-wrap {
-  padding: 10px;
-  margin-top: 88px;
-
-  @include mix.smartphone {
-    display: none;
+    margin: 10px 0 0;
   }
 }
 
@@ -102,7 +106,7 @@ h1 {
 
 .persistence-note {
   margin: 12px 0 0;
-  font-size: var.$font-size-sm;
+  font-size: var.$font-size-md;
   color: rgba(var.$primary-text-color, 0.84);
 }
 
@@ -115,7 +119,9 @@ h1 {
 }
 
 .result-tags {
-  margin-top: 14px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -136,7 +142,9 @@ h1 {
 }
 
 .result-grid {
-  margin-top: 88px;
+  list-style: none;
+  margin: 88px 0 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
@@ -146,7 +154,13 @@ h1 {
   }
 }
 
+.result-grid-item {
+  display: flex;
+  min-width: 0;
+}
+
 .recipe-card {
+  flex: 1 1 auto;
   background-color: rgb(219, 224, 219);
   color: var.$secondary-text-color;
   border-radius: 10px;
@@ -190,22 +204,25 @@ h1 {
   }
 }
 
-.recipe-time {
+.recipe-facts {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recipe-time,
+.recipe-cuisine {
   margin: 0;
   font-size: var.$font-size-xl;
   line-height: 20px;
-  margin-bottom: 10px;
 
   @include mix.smartphone {
     font-size: var.$font-size-md;
     width: 100%;
   }
-}
-
-.recipe-description {
-  margin: 8px 0;
-  font-size: var.$font-size-sm;
-  min-height: 80px;
 }
 
 .recipe-time {
@@ -223,6 +240,7 @@ h1 {
   margin-left: 10px;
   margin-top: 48px;
   align-self: flex-start;
+  min-height: 44px;
   border: 0;
   background-color: var.$btn-bg;
   color: rgb(65, 110, 65);
@@ -273,7 +291,10 @@ h1 {
 }
 
 .empty-state {
+  // Neutralize the global section element height.
+  height: auto;
   background-color: rgba(var.$primary-text-color, 0.08);
+  color: inherit;
   border-radius: 12px;
   padding: 20px;
 

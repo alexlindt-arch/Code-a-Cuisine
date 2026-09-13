@@ -60,6 +60,67 @@ export interface RecipeResponsePayload {
   quota?: QuotaStatus;
 }
 
+/** Macro nutrients of a recipe: energy in kcal, protein/carbs/fat in grams. */
+export interface RecipeMacros {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+/** Nutrition values of a recipe for one portion and for the whole recipe. */
+export interface RecipeNutrition {
+  perPortion: RecipeMacros;
+  total: RecipeMacros;
+}
+
+/** One structured cooking step, assigned to a cook (1..cooks). */
+export interface RecipeStepDetail {
+  title: string;
+  instruction: string;
+  cook: number;
+  parallel: boolean;
+  durationMinutes: number;
+}
+
+/** A recipe exactly as returned by the n8n webhook (new response contract). */
+export interface GeneratedRecipe {
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  ingredients: string[];
+  extraIngredients: string[];
+  steps: string[];
+  stepDetails: RecipeStepDetail[];
+  nutrition: RecipeNutrition;
+  ingredientCoverage: number;
+}
+
+/** Successful (HTTP 200) response body of the recipe generation webhook. */
+export interface RecipeGenerationSuccessResponse {
+  request: {
+    ingredients: StoredIngredient[];
+    preferences: RecipeRequestPayload['preferences'];
+  };
+  requesterIp: string;
+  generatedAt: string;
+  quota: QuotaStatus;
+  warnings: string[];
+  attempts: number;
+  result: {
+    recipes: GeneratedRecipe[];
+  };
+}
+
+/** Error response body of the recipe generation webhook (HTTP 400, 429 or 500). */
+export interface RecipeGenerationErrorResponse {
+  message: string;
+  /** For example 'INVALID_REQUEST' (400) or 'RECIPE_GENERATION_FAILED' (500). */
+  code: string;
+  errors?: string[];
+  quota?: QuotaStatus;
+}
+
 export interface QuotaResponsePayload {
   message?: string;
   quota?: QuotaStatus;

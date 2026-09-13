@@ -1,14 +1,16 @@
 /**
  * @file recipe-library.service.ts
- * @description TypeScript module for recipe library.service.
+ * @description Stores generated recipes in the Firebase Realtime Database and reads them back for the cookbook.
  */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
+import type { RecipeNutrition, RecipeStepDetail } from './preferences/preferences.models';
+import { parseStringArray, readOptionalRecipeFields, type OptionalRecipeFields } from './recipe-detail/recipe-detail.utils';
 
 /**
- * @description Interface StoredRecipeIngredient.
+ * An ingredient as entered by the user.
  */
 export interface StoredRecipeIngredient {
   name: string;
@@ -17,7 +19,7 @@ export interface StoredRecipeIngredient {
 }
 
 /**
- * @description Interface StoredRecipeRequestPayload.
+ * The request payload stored in localStorage when recipes are generated.
  */
 export interface StoredRecipeRequestPayload {
   ingredients: StoredRecipeIngredient[];
@@ -32,7 +34,8 @@ export interface StoredRecipeRequestPayload {
 }
 
 /**
- * @description Interface StoredRecipeResult.
+ * A generated recipe as parsed from the webhook response.
+ * The optional fields are only present for recipes of the new response contract.
  */
 export interface StoredRecipeResult {
   title: string;
@@ -40,10 +43,14 @@ export interface StoredRecipeResult {
   estimatedMinutes: number;
   ingredients: string[];
   steps: string[];
+  extraIngredients?: string[];
+  stepDetails?: RecipeStepDetail[];
+  nutrition?: RecipeNutrition;
+  ingredientCoverage?: number;
 }
 
 /**
- * @description Interface FirebaseRecipeRecord.
+ * A recipe record as written to Firebase.
  */
 export interface FirebaseRecipeRecord {
   title: string;
@@ -51,6 +58,10 @@ export interface FirebaseRecipeRecord {
   estimatedMinutes: number;
   ingredients: string[];
   steps: string[];
+  extraIngredients?: string[];
+  stepDetails?: RecipeStepDetail[];
+  nutrition?: RecipeNutrition;
+  ingredientCoverage?: number;
   cuisine: string;
   categorySlug: string;
   cookingTime: string;
@@ -66,7 +77,7 @@ export interface FirebaseRecipeRecord {
 }
 
 /**
- * @description Interface CookbookRecipeRecord.
+ * A validated recipe record read from Firebase, including its database id.
  */
 export interface CookbookRecipeRecord {
   id: string;
@@ -75,6 +86,10 @@ export interface CookbookRecipeRecord {
   estimatedMinutes: number;
   ingredients: string[];
   steps: string[];
+  extraIngredients?: string[];
+  stepDetails?: RecipeStepDetail[];
+  nutrition?: RecipeNutrition;
+  ingredientCoverage?: number;
   cuisine: string;
   categorySlug: string;
   cookingTime: string;
@@ -93,14 +108,17 @@ type FirebaseRecipesResponse = Record<string, Partial<FirebaseRecipeRecord>>;
 
 @Injectable({ providedIn: 'root' })
 /**
- * @description Component or service class RecipeLibraryService.
+ * Saves generated recipes to Firebase and loads, validates and likes cookbook recipes.
  */
 export class RecipeLibraryService {
   private readonly http = inject(HttpClient);
   private readonly databaseUrl = environment.firebaseDatabaseUrl;
 
   /**
-   * @description Method saveGeneratedRecipes.
+   * Saves each generated recipe as a new record in Firebase.
+   * @param recipes The parsed recipes of one generation request.
+   * @param requestPayload The request (ingredients and preferences) that produced the recipes.
+   * @returns The Firebase ids of the saved recipes, in the same order.
    */
   async saveGeneratedRecipes(recipes: StoredRecipeResult[], requestPayload: StoredRecipeRequestPayload): Promise<string[]> {
     const records = recipes.map((recipe) => this.toFirebaseRecord(recipe, requestPayload));
@@ -117,7 +135,9 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method incrementRecipeLike.
+   * Increments the like counter of a recipe.
+   * @param recipeId Firebase id of the recipe.
+   * @returns The new like count.
    */
   async incrementRecipeLike(recipeId: string): Promise<number> {
     const likesUrl = `${this.databaseUrl}/recipes/${recipeId}/likes.json`;
@@ -128,7 +148,8 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method getAllRecipes.
+   * Loads all valid recipes from Firebase, newest first.
+   * @returns The validated cookbook recipes.
    */
   async getAllRecipes(): Promise<CookbookRecipeRecord[]> {
     const response = await firstValueFrom(this.http.get<FirebaseRecipesResponse | null>(`${this.databaseUrl}/recipes.json`));
@@ -147,7 +168,9 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method getRecipeById.
+   * Loads a single recipe from Firebase.
+   * @param recipeId Firebase id of the recipe.
+   * @returns The validated recipe, or null when it does not exist or is invalid.
    */
   async getRecipeById(recipeId: string): Promise<CookbookRecipeRecord | null> {
     const response = await firstValueFrom(this.http.get<Partial<FirebaseRecipeRecord> | null>(`${this.databaseUrl}/recipes/${recipeId}.json`));
@@ -159,7 +182,10 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method toFirebaseRecord.
+   * Builds the Firebase record of a generated recipe, including the optional new-contract fields.
+   * @param recipe The generated recipe.
+   * @param requestPayload The request that produced the recipe.
+   * @returns The record to store.
    */
   private toFirebaseRecord(recipe: StoredRecipeResult, requestPayload: StoredRecipeRequestPayload): FirebaseRecipeRecord {
     const cuisine = requestPayload.preferences.cuisine;
@@ -171,6 +197,7 @@ export class RecipeLibraryService {
       estimatedMinutes: recipe.estimatedMinutes,
       ingredients: recipe.ingredients,
       steps: recipe.steps,
+      ...readOptionalRecipeFields(recipe as unknown as Record<string, unknown>),
       cuisine,
       categorySlug: this.toCategorySlug(cuisine),
       cookingTime: requestPayload.preferences.cookingTime,
@@ -187,39 +214,21 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method toCategorySlug.
+   * Maps a cuisine id or label to its cookbook category.
+   * @param cuisine Cuisine id (e.g. "italian") or label (e.g. "Italian").
+   * @returns The category slug; "Fusion" for unknown cuisines.
    */
   private toCategorySlug(cuisine: string): string {
-    const normalizedCuisine = cuisine.trim();
-    if (normalizedCuisine.includes('German')) {
-      return 'German';
-    }
-
-    if (normalizedCuisine.includes('Italian')) {
-      return 'Italian';
-    }
-
-    if (normalizedCuisine.includes('Indian')) {
-      return 'Indian';
-    }
-
-    if (normalizedCuisine.includes('Japanese')) {
-      return 'Japanese';
-    }
-
-    if (normalizedCuisine.includes('Gourmet')) {
-      return 'Gourmet';
-    }
-
-    if (normalizedCuisine.includes('Fusion')) {
-      return 'Fusion';
-    }
-
-    return 'Fusion';
+    const normalizedCuisine = cuisine.trim().toLowerCase();
+    const categories = ['German', 'Italian', 'Indian', 'Japanese', 'Gourmet', 'Fusion'];
+    return categories.find((category) => normalizedCuisine.includes(category.toLowerCase())) ?? 'Fusion';
   }
 
   /**
-   * @description Method toDifficulty.
+   * Derives the difficulty label from the cooking time.
+   * @param minutes Estimated cooking time in minutes.
+   * @param fallback Cooking time preference used for recipes longer than 40 minutes.
+   * @returns The difficulty label.
    */
   private toDifficulty(minutes: number, fallback: string): 'Quick' | 'Medium' | 'Complex' {
     if (minutes <= 20) {
@@ -243,7 +252,10 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method toCookbookRecipeRecord.
+   * Validates a raw Firebase record and converts it into a cookbook recipe.
+   * @param id Firebase id of the record.
+   * @param recipe Raw record data (types are not trusted).
+   * @returns The cookbook recipe, or null when required fields are missing or invalid.
    */
   private toCookbookRecipeRecord(id: string, recipe: Partial<FirebaseRecipeRecord>): CookbookRecipeRecord | null {
     const estimatedMinutes = this.toNumber(recipe.estimatedMinutes);
@@ -283,14 +295,16 @@ export class RecipeLibraryService {
       ? recipe.cookingTime
       : this.toCookingTimeFallback(estimatedMinutes);
 
+    const ingredients = parseStringArray(recipe.ingredients);
+    const steps = parseStringArray(recipe.steps);
     const resolvedCooks = typeof cooks === 'number' ? cooks : 1;
     const resolvedPortions = typeof portions === 'number' ? portions : 1;
 
     if (typeof recipe.title !== 'string'
       || typeof recipe.description !== 'string'
       || typeof estimatedMinutes !== 'number'
-      || !Array.isArray(recipe.ingredients)
-      || !Array.isArray(recipe.steps)
+      || !ingredients
+      || !steps
       || !cuisine
       || !categorySlug
       || !cookingTime) {
@@ -302,8 +316,9 @@ export class RecipeLibraryService {
       title: recipe.title,
       description: recipe.description,
       estimatedMinutes,
-      ingredients: recipe.ingredients,
-      steps: recipe.steps,
+      ingredients,
+      steps,
+      ...this.readStoredOptionalFields(recipe),
       cuisine,
       categorySlug,
       cookingTime,
@@ -322,7 +337,27 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method toCookingTimeFallback.
+   * Reads the optional new-contract fields of a stored record.
+   * Firebase drops empty arrays, so a new-format record (with step details or nutrition)
+   * without extraIngredients is treated as having no extra ingredients.
+   * @param recipe Raw record data.
+   * @returns The valid optional fields.
+   */
+  private readStoredOptionalFields(recipe: Partial<FirebaseRecipeRecord>): OptionalRecipeFields {
+    const fields = readOptionalRecipeFields(recipe as unknown as Record<string, unknown>);
+    const isNewFormat = Boolean(fields.stepDetails || fields.nutrition || typeof fields.ingredientCoverage === 'number');
+
+    if (!fields.extraIngredients && isNewFormat) {
+      fields.extraIngredients = [];
+    }
+
+    return fields;
+  }
+
+  /**
+   * Derives a cooking time label when a record has none.
+   * @param estimatedMinutes Estimated cooking time in minutes, if known.
+   * @returns "Quick", "Medium" or "Complex".
    */
   private toCookingTimeFallback(estimatedMinutes: number | null): string {
     if (typeof estimatedMinutes !== 'number') {
@@ -341,7 +376,9 @@ export class RecipeLibraryService {
   }
 
   /**
-   * @description Method toNumber.
+   * Converts a number or numeric string into a finite number.
+   * @param value Unknown value.
+   * @returns The number, or null when it is not a finite number.
    */
   private toNumber(value: unknown): number | null {
     if (typeof value === 'number' && Number.isFinite(value)) {

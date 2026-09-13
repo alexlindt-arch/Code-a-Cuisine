@@ -1,60 +1,69 @@
-<section class="results-page">
+<section class="results-page" aria-labelledby="results-title">
   <div class="content-limited">
     <div class="results-shell">
       @if (hasResults()) {
 
-      <div class="results-hero">
+      <header class="results-hero">
         <div class="hero-content">
-          <h1>The recipe results</h1>
-          <div class="hero-image-wrap --mobile">
+          <h1 id="results-title">The recipe results</h1>
+          <figure class="hero-image-wrap --mobile">
             <img [src]="getHeroImage()" alt="AI generated recipe visual" class="hero-image">
-          </div>
+          </figure>
           <p class="results-copy">
             We took what you have and let our AI do the thinking.
             Here are {{ recipes().length }} easy recipes you can make right now.
           </p>
 
           @if (requestPayload(); as request) {
-          <div class="result-tags">
-            <span class="tag">{{ request.preferences.cuisine }}</span>
-            <span class="tag">{{ request.preferences.cookingTime }}</span>
+          <ul class="result-tags" aria-label="Your preferences">
+            <li class="tag">{{ request.preferences.cuisine }}</li>
+            <li class="tag">{{ request.preferences.cookingTime }}</li>
+          </ul>
+          }
+
+          <div role="status" aria-live="polite">
+            @if (persistenceState() === 'saving') {
+            <p class="persistence-note">Saving these recipes to the cookbook database...</p>
+            } @else if (persistenceState() === 'saved') {
+            <p class="persistence-note persistence-note-success">Saved to the cookbook database.</p>
+            } @else if (persistenceState() === 'error') {
+            <p class="persistence-note persistence-note-error">The recipes were generated, but saving them to the
+              database failed.</p>
+            }
           </div>
-          }
-
-          @if (persistenceState() === 'saving') {
-          <p class="persistence-note">Saving these recipes to the cookbook database...</p>
-          } @else if (persistenceState() === 'saved') {
-          <p class="persistence-note persistence-note-success">Saved to the cookbook database.</p>
-          } @else if (persistenceState() === 'error') {
-          <p class="persistence-note persistence-note-error">The recipes were generated, but saving them to the database
-            failed.</p>
-          }
         </div>
-        <div class="hero-image-wrap">
+        <figure class="hero-image-wrap">
           <img [src]="getHeroImage()" alt="AI generated recipe visual" class="hero-image">
-        </div>
-      </div>
+        </figure>
+      </header>
 
-      <div class="result-grid">
-        @for (recipe of recipes(); track recipe.title; let i = $index) {
-        <article class="recipe-card">
-          <p class="recipe-index"><img [src]="getRecipeCardIcon()" alt="Recipe icon"> Recipe {{ i + 1 }}</p>
-          <h2>{{ recipe.title }}</h2>
-          <p class="recipe-time">
-            <img src="assets/icons/clock_Icon.png" alt="Clock icon"> Cooking time: {{
-            recipe.estimatedMinutes }}min
-          </p>
-          <a class="view-btn" [routerLink]="['/results', i]" [queryParams]="{ from: '/results' }">View</a>
-        </article>
+      <ol class="result-grid" aria-label="Generated recipes">
+        @for (recipe of recipes(); track $index; let i = $index) {
+        <li class="result-grid-item">
+          <article class="recipe-card" [attr.aria-labelledby]="'recipe-card-title-' + i">
+            <p class="recipe-index"><img [src]="getRecipeCardIcon()" alt=""> Recipe {{ i + 1 }}</p>
+            <h2 [id]="'recipe-card-title-' + i">{{ recipe.title }}</h2>
+            <ul class="recipe-facts">
+              <li class="recipe-time">
+                <img src="assets/icons/clock_Icon.png" alt=""> Cooking time: {{ recipe.estimatedMinutes }}min
+              </li>
+              @if (cuisineLabel(); as cuisine) {
+              <li class="recipe-cuisine">Cuisine: {{ cuisine }}</li>
+              }
+            </ul>
+            <a class="view-btn" [routerLink]="['/results', i]" [queryParams]="{ from: '/results' }"
+              [attr.aria-label]="'View recipe: ' + recipe.title">View</a>
+          </article>
+        </li>
         }
-      </div>
-      <div class="bottom-actions">
+      </ol>
+      <nav class="bottom-actions" aria-label="Next steps">
         <app-routerlink-componente [targetClass]="'--light'" [linkText]="'Generate new recipe'"
           [targetPath]="'/generate-recipe'"></app-routerlink-componente>
-      </div>
+      </nav>
       } @else {
-      <div class="empty-state">
-        <h1>No results yet</h1>
+      <section class="empty-state" aria-labelledby="results-title">
+        <h1 id="results-title">No results yet</h1>
         @if (generationError(); as error) {
         <p>{{ error }}</p>
         } @else if (hasStoredResponse()) {
@@ -64,7 +73,7 @@
         <p>Generate a recipe first. The n8n workflow response will appear here.</p>
         }
         <a [routerLink]="'/preferences'" class="view-btn empty-link">Back to preferences</a>
-      </div>
+      </section>
       }
     </div>
   </div>

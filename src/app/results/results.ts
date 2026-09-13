@@ -1,17 +1,18 @@
 /**
  * @file results.ts
- * @description TypeScript module for results.
+ * @description Results page: shows the generated recipes and saves them to the cookbook database.
  */
 import { Component, computed, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
 import { RecipeLibraryService, type StoredRecipeRequestPayload, type StoredRecipeResult } from '../recipe-library.service';
 import { RouterlinkComponente } from '../components/routerlink-componente/routerlink-componente';
+import { extractResult, parseRecipeArray } from '../recipe-detail/recipe-detail.utils';
 
 /**
- * @description Interface Recipe.
+ * A generated recipe shown as a result card.
  */
-interface Recipe extends StoredRecipeResult {}
+type Recipe = StoredRecipeResult;
 
 @Component({
   selector: 'app-results',
@@ -20,7 +21,7 @@ interface Recipe extends StoredRecipeResult {}
   styleUrls: ['./results.scss'],
 })
 /**
- * @description Component or service class Results.
+ * Loads the stored webhook response, renders one card per recipe and persists new results to Firebase.
  */
 export class Results implements OnDestroy {
   private readonly responseKey = 'cac-recipe-results';
@@ -41,10 +42,22 @@ export class Results implements OnDestroy {
   readonly heroImageArrow = 'assets/icons/Arrow-left-dark.png';
   readonly arrowClass = 'arrow-icon';
 
+  /** Whether at least one recipe could be parsed. */
   readonly hasResults = computed(() => this.recipes().length > 0);
 
+  /** Human readable cuisine of the request (e.g. "italian" becomes "Italian"), or null when unknown. */
+  readonly cuisineLabel = computed(() => {
+    const cuisine = this.requestPayload()?.preferences.cuisine;
+    if (typeof cuisine !== 'string' || !cuisine.trim()) {
+      return null;
+    }
+
+    const trimmed = cuisine.trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  });
+
   /**
-   * @description Creates an instance of Results.
+   * Loads request, error and recipes from localStorage.
    */
   constructor() {
     this.loadRequestPayload();
@@ -53,7 +66,7 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method loadGenerationError.
+   * Reads the last generation error message from localStorage.
    */
   private loadGenerationError() {
     const raw = localStorage.getItem(this.errorKey);
@@ -72,7 +85,7 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method loadRequestPayload.
+   * Reads the stored request payload (ingredients and preferences) from localStorage.
    */
   private loadRequestPayload() {
     const raw = localStorage.getItem(this.requestKey);
@@ -91,7 +104,7 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method loadRecipes.
+   * Parses the stored webhook response (including the new optional recipe fields) and triggers persistence.
    */
   private loadRecipes() {
     const raw = localStorage.getItem(this.responseKey);
@@ -103,8 +116,7 @@ export class Results implements OnDestroy {
 
     try {
       const parsed = JSON.parse(raw) as unknown;
-      const candidate = this.extractResult(parsed);
-      const recipes = this.parseRecipeArray(candidate);
+      const recipes = parseRecipeArray(extractResult(parsed));
       this.recipes.set(recipes);
       void this.persistRecipesIfNeeded(recipes);
     } catch (error) {
@@ -113,7 +125,9 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method persistRecipesIfNeeded.
+   * Saves the recipes to Firebase once per generation request.
+   * @param recipes The parsed recipes.
+   * @returns A promise that resolves when saving has finished or failed.
    */
   private async persistRecipesIfNeeded(recipes: Recipe[]) {
     const requestPayload = this.requestPayload();
@@ -142,7 +156,7 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method showSavedStateTemporarily.
+   * Shows the "saved" notice for four seconds.
    */
   private showSavedStateTemporarily(): void {
     this.clearSavedNoticeTimer();
@@ -154,7 +168,7 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method clearSavedNoticeTimer.
+   * Cancels a pending "saved" notice timer.
    */
   private clearSavedNoticeTimer(): void {
     if (this.savedNoticeTimeoutId !== null) {
@@ -164,155 +178,25 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method extractResult.
-   */
-  private extractResult(payload: unknown): unknown {
-    if (typeof payload !== 'object' || payload === null) {
-      return payload;
-    }
-
-    const obj = payload as {
-      result?: unknown;
-      output?: unknown;
-      data?: unknown;
-      response?: unknown;
-    };
-
-    if (typeof obj.result !== 'undefined') {
-      return obj.result;
-    }
-
-    if (typeof obj.output !== 'undefined') {
-      return obj.output;
-    }
-
-    if (typeof obj.data !== 'undefined') {
-      return obj.data;
-    }
-
-    if (typeof obj.response !== 'undefined') {
-      return obj.response;
-    }
-
-    return payload;
-  }
-
-  /**
-   * @description Method parseRecipeArray.
-   */
-  private parseRecipeArray(input: unknown): Recipe[] {
-    if (Array.isArray(input)) {
-      return input
-        .filter((item) => this.isRecipe(item))
-        .map((item) => ({
-          title: item.title,
-          description: item.description,
-          estimatedMinutes: item.estimatedMinutes,
-          ingredients: item.ingredients,
-          steps: item.steps,
-        }));
-    }
-
-    if (typeof input === 'string') {
-      const parsedFromText = this.tryParseFromText(input);
-      return parsedFromText ? this.parseRecipeArray(parsedFromText) : [];
-    }
-
-    if (typeof input !== 'object' || input === null) {
-      return [];
-    }
-
-    const maybeRecipes = (input as { recipes?: unknown; data?: { recipes?: unknown }; output?: { recipes?: unknown }; response?: { recipes?: unknown } }).recipes
-      ?? (input as { data?: { recipes?: unknown } }).data?.recipes
-      ?? (input as { output?: { recipes?: unknown } }).output?.recipes
-      ?? (input as { response?: { recipes?: unknown } }).response?.recipes;
-    if (!Array.isArray(maybeRecipes)) {
-      return [];
-    }
-
-    return maybeRecipes
-      .filter((item) => this.isRecipe(item))
-      .map((item) => ({
-        title: item.title,
-        description: item.description,
-        estimatedMinutes: item.estimatedMinutes,
-        ingredients: item.ingredients,
-        steps: item.steps,
-      }));
-  }
-
-  /**
-   * @description Method tryParseFromText.
-   */
-  private tryParseFromText(value: string): unknown {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      console.warn('Failed to parse JSON from text, attempting to extract JSON from fenced code block or object literal.');
-    }
-
-    const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (fencedMatch && fencedMatch[1]) {
-      try {
-        return JSON.parse(fencedMatch[1]);
-      } catch {
-        return null;
-      }
-    }
-
-    const objectStart = trimmed.indexOf('{');
-    const objectEnd = trimmed.lastIndexOf('}');
-    if (objectStart !== -1 && objectEnd > objectStart) {
-      const candidate = trimmed.slice(objectStart, objectEnd + 1);
-      try {
-        return JSON.parse(candidate);
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * @description Method isRecipe.
-   */
-  private isRecipe(value: unknown): value is Recipe {
-    if (typeof value !== 'object' || value === null) {
-      return false;
-    }
-
-    const recipe = value as Recipe;
-    return typeof recipe.title === 'string'
-      && typeof recipe.description === 'string'
-      && typeof recipe.estimatedMinutes === 'number'
-      && Array.isArray(recipe.ingredients)
-      && Array.isArray(recipe.steps)
-      && recipe.ingredients.every((item) => typeof item === 'string')
-      && recipe.steps.every((item) => typeof item === 'string');
-  }
-
-  /**
-   * @description Method getHeroImage.
+   * Returns the hero image of the results page.
+   * @returns Path of the hero image.
    */
   getHeroImage(): string {
     return 'assets/img/ChatGPT-Image.png';
   }
 
   /**
-   * @description Method getRecipeCardIcon.
+   * Returns the icon shown on each recipe card.
+   * @returns Path of the card icon.
    */
   getRecipeCardIcon(): string {
     return 'assets/icons/deckel-ickon.png';
   }
 
   /**
-   * @description Method getDurationLabel.
+   * Maps a cooking time to a difficulty label.
+   * @param minutes Estimated cooking time in minutes.
+   * @returns "Quick", "Medium" or "Complex".
    */
   getDurationLabel(minutes: number): string {
     if (minutes <= 20) {
@@ -327,14 +211,16 @@ export class Results implements OnDestroy {
   }
 
   /**
-   * @description Method ngOnDestroy.
+   * Clears the notice timer when the page is left.
    */
   ngOnDestroy(): void {
     this.clearSavedNoticeTimer();
   }
 
   /**
-   * @description Method startNewRecipeSession.
+   * Clears the stored recipe session and navigates back to the ingredient input.
+   * @param event The click event of the link.
+   * @returns A promise that resolves after navigation.
    */
   async startNewRecipeSession(event: Event): Promise<void> {
     event.preventDefault();
