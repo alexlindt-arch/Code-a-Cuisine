@@ -1,14 +1,15 @@
-<section class="impressum">
+<section class="impressum" aria-labelledby="imprint-title">
   <div class="content-limited">
-    <app-routerlink-componente [linkText]="homeLinkText" [targetClass]="homeTargetClass"
-      [imageArrow]="homeImageArrow" [targetPath]="homeTargetPath"></app-routerlink-componente>
-    <div class="impressum-content">
-      <h1>Imprint</h1>
-      <span>Code à Cuisine is a project by <a href="https://alexanderlindtwebdesign.com" target="_blank"
-          rel="noopener noreferrer">Alexander Lindt</a>, </span>
-      <span>a software engineer and cooking enthusiast. The project is hosted
-        on <a href="https://github.com/alexlindt-arch/Code-a-Cuisine" target="_blank" rel="noopener noreferrer">GitHub</a> and
-        is open-source under the MIT license.</span>
-    </div>
+    <nav aria-label="Back to home">
+      <app-routerlink-componente [linkText]="homeLinkText" [targetClass]="homeTargetClass"
+        [imageArrow]="homeImageArrow" [targetPath]="homeTargetPath" [ariaLabel]="homeAriaLabel"></app-routerlink-componente>
+    </nav>
+    <article class="impressum-content">
+      <h1 id="imprint-title">Imprint</h1>
+      <p>Code à Cuisine is a project by <a href="https://alexanderlindtwebdesign.com" target="_blank"
+          rel="noopener noreferrer">Alexander Lindt</a>, a software engineer and cooking enthusiast. The project is hosted
+        on <a href="https://github.com/alexlindt-arch/Code-a-Cuisine" target="_blank" rel="noopener noreferrer">GitHub</a>
+        and is open-source under the MIT license.</p>
+    </article>
   </div>
 </section>

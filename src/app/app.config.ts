@@ -1,6 +1,6 @@
 /**
  * @file app.config.ts
- * @description TypeScript module for app.config.
+ * @description Application providers: global error listeners, hash-based router and HttpClient.
  */
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';

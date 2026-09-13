@@ -1,18 +1,19 @@
 /**
  * @file loading-state.service.ts
- * @description TypeScript module for loading state.service.
+ * @description Global flag for a running recipe request (used e.g. by the header to switch its style).
  */
 import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 /**
- * @description Component or service class LoadingStateService.
+ * Shares whether a recipe request is currently running.
  */
 export class LoadingStateService {
   readonly isLoading = signal(false);
 
   /**
-   * @description Method setLoading.
+   * Sets the global loading flag.
+   * @param isLoading - True while a request is running.
    */
   setLoading(isLoading: boolean): void {
     this.isLoading.set(isLoading);

@@ -1,6 +1,6 @@
 /**
  * @file hero.ts
- * @description TypeScript module for hero.
+ * @description Landing page with the call to action, the cookbook link and decorative dish images.
  */
 import { Component } from '@angular/core';
 import { Button } from '../components/button/button';
@@ -15,10 +15,8 @@ import { RouterLink } from "@angular/router";
   templateUrl: './hero.html',
   styleUrls: ['./hero.scss'],
 })
-
 /**
- * The Hero class represents the hero section of the application.
- * It contains properties for hero images, CSS classes, and routing information.
+ * Hero section of the landing page; holds image paths, CSS classes and route targets.
  */
 export class Hero {
   heroImageOne = 'assets/img/menu-3.png';

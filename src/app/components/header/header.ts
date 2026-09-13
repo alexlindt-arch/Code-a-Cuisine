@@ -1,6 +1,6 @@
 /**
  * @file header.ts
- * @description TypeScript module for header.
+ * @description Global page header with the logo link; switches between dark and light style per route.
  */
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, startWith } from 'rxjs';
 import { LoadingStateService } from '../../loading-state.service';
+
 @Component({
   selector: 'app-header',
   imports: [RouterLink],
@@ -15,11 +16,8 @@ import { LoadingStateService } from '../../loading-state.service';
   templateUrl: './header.html',
   styleUrls: ['./header.scss'],
 })
-/** * The Header class represents the header component of the application.
- * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
- * */
 /**
- * @description Component or service class Header.
+ * Header component; reads the 'headerStyle' route data after each navigation.
  */
 export class Header {
   private readonly router = inject(Router);
@@ -28,6 +26,11 @@ export class Header {
 
   readonly isLightHeader = signal(false);
   readonly isLoading = this.loadingStateService.isLoading;
+
+  /**
+   * Logo matching the header background.
+   * @returns The light logo while loading or on dark headers, otherwise the dark logo.
+   */
   readonly logoSrc = computed(() => {
     if (this.isLoading()) {
       return 'assets/img/logo-light.png';
@@ -35,12 +38,9 @@ export class Header {
 
     return this.isLightHeader() ? 'assets/img/logo-dark.png' : 'assets/img/logo-light.png';
   });
-/**
- * The Header class represents the header component of the application.
- * It manages the header's appearance based on the current route and listens for route changes to update the header state accordingly.
- * */
+
   /**
-   * @description Creates an instance of Header.
+   * Updates the header style on every completed navigation.
    */
   constructor() {
     this.router.events
@@ -50,22 +50,22 @@ export class Header {
         takeUntilDestroyed()
       )
       .subscribe(() => this.syncHeaderStateFromRoute());
-
   }
-/** * Synchronizes the header state based on the current route's data.
- * It retrieves the deepest activated route and checks for the 'headerStyle' data property.
- * If the 'headerStyle' is set to 'light', it updates the isLightHeader signal accordingly.
- */
+
+  /**
+   * Sets the light header when the deepest active route has headerStyle 'light'.
+   */
   private syncHeaderStateFromRoute(): void {
     const deepestRoute = this.getDeepestRoute(this.activatedRoute);
     const headerStyle = deepestRoute.snapshot.data['headerStyle'];
     this.isLightHeader.set(headerStyle === 'light');
   }
-/** * Retrieves the deepest activated route from the provided route.
- * It traverses the route tree to find the last child route, which represents the most specific route in the hierarchy.
- * @param route - The starting activated route to traverse.
- * @returns The deepest activated route found in the route tree.
- */
+
+  /**
+   * Walks down the route tree to the most specific active route.
+   * @param route - Route to start from.
+   * @returns The deepest activated route.
+   */
   private getDeepestRoute(route: ActivatedRoute): ActivatedRoute {
     let currentRoute = route;
 

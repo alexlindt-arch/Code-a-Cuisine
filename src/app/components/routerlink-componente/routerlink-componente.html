@@ -1,5 +1,3 @@
-
-    <a [routerLink]="targetPath()" class="router-link {{ targetClass() }}">{{ linkText() }}
-      <app-images-component [class]="arrowClass" [src]="imageArrow()" label="Arrow Icon"></app-images-component>
-    </a>
-
+<a [routerLink]="targetPath()" class="router-link {{ targetClass() }}" [attr.aria-label]="ariaLabel()">{{ linkText() }}
+  <app-images-component [class]="arrowClass" [src]="imageArrow()" label=""></app-images-component>
+</a>

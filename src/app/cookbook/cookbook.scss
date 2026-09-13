@@ -92,8 +92,14 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
-  overflow-x: scroll;
-  padding-bottom: 10px;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0 0 10px;
+  list-style: none;
+
+  li {
+    display: flex;
+  }
   max-width: calc(330px + 850px);
   min-width: calc(320px - 95px);
 }
@@ -211,6 +217,13 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 26px 28px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+  }
 
   @include mix.smartphone {
     grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -278,6 +291,12 @@
 
 .category-card:hover h2:nth-child(1) img {
   transform: rotate(20deg);
+}
+
+.all-recipes-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
 .bottom-actions {

@@ -1,18 +1,25 @@
 /**
  * @file cookbook-data.ts
- * @description TypeScript module for cookbook data.
+ * @description Static cookbook categories (one per cuisine) plus the virtual "All recipes" category.
  */
+
+/** A cookbook category shown on the cookbook page and as its own category page. */
 export interface CookbookCategory {
   slug: string;
   cuisine: string;
   title: string;
   description: string;
   image: string;
-  banner: string;
+  /** Desktop banner; categories without a banner show a text heading instead. */
+  banner?: string;
   bannerMob?: string;
   accent: string;
 }
 
+/** Route slug of the category that lists every generated recipe without filtering. */
+export const ALL_RECIPES_SLUG = 'all';
+
+/** The cuisine categories, in display order. */
 export const cookbookCategories: CookbookCategory[] = [
   {
     slug: 'Italian',
@@ -75,3 +82,29 @@ export const cookbookCategories: CookbookCategory[] = [
     accent: 'assets/icons/spieß.png',
   },
 ];
+
+/** Virtual category that shows all generated recipes of every cuisine. */
+export const allRecipesCategory: CookbookCategory = {
+  slug: ALL_RECIPES_SLUG,
+  cuisine: 'All',
+  title: 'All recipes',
+  description: 'Every recipe generated with Code à Cuisine, newest first.',
+  image: 'assets/img/cookboock-gericht5.png',
+  accent: 'assets/icons/heart.png',
+};
+
+/**
+ * Finds a cookbook category by its route slug (case-insensitive), including the "all" category.
+ * @param slug - Route parameter of the category page.
+ * @returns The category, or null when the slug is unknown.
+ */
+export function findCookbookCategory(slug: string | null): CookbookCategory | null {
+  const normalizedSlug = slug?.trim().toLowerCase();
+  if (!normalizedSlug) {
+    return null;
+  }
+  if (normalizedSlug === ALL_RECIPES_SLUG) {
+    return allRecipesCategory;
+  }
+  return cookbookCategories.find((category) => category.slug.toLowerCase() === normalizedSlug) ?? null;
+}

@@ -1,6 +1,6 @@
 /**
  * @file app.ts
- * @description TypeScript module for app.
+ * @description Root component: global header and the single main landmark around the routed pages.
  */
 import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet, ActivatedRoute } from '@angular/router';
@@ -13,14 +13,14 @@ import { Header } from './components/header/header';
   styleUrls: ['./app.scss']
 })
 /**
- * The App class represents the root component of the application.
- * It manages the application title and listens for route changes to update the title accordingly.
+ * Root component of the application; keeps the title in sync with the route data.
  */
 export class App {
   protected readonly title = signal('Code-a-Cuisine');
-   private activatedRoute = inject(ActivatedRoute);
+  private activatedRoute = inject(ActivatedRoute);
+
   /**
-   * @description Creates an instance of App.
+   * Subscribes to the route data and updates the title when a route provides one.
    */
   constructor() {
     this.activatedRoute.data.subscribe((data) => {
@@ -28,5 +28,5 @@ export class App {
         this.title.set(data['title']);
       }
     });
-     }
+  }
 }

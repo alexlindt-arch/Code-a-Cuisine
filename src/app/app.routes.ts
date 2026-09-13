@@ -1,6 +1,6 @@
 /**
  * @file app.routes.ts
- * @description TypeScript module for app.routes.
+ * @description Route configuration: page components, header style and document title per route.
  */
 import { Routes } from '@angular/router';
 import { Hero } from './hero/hero';

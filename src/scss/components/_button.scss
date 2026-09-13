@@ -2,11 +2,13 @@
 @use '../../scss/abstract/mixings' as mixin;
 
 .btn {
+  min-height: 44px;
   padding: var.$pd-medium var.$pd-large;
   font-family: var.$font-family;
   font-size: var.$font-size-md;
   font-weight: var.$font-weight-medium;
   cursor: pointer;
+  touch-action: manipulation;
   transition: background-color 0.3s ease, color 0.3s ease;
   border: unset;
 
@@ -51,40 +53,55 @@
   }
 }
 
+/** Icon buttons keep a 36px (24px on phones) icon inside a 44x44px hit area. */
 .icon-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  @include mixin.smartphone {
-    width: 24px;
-    height: 30px;
-    margin: 3px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  app-images-component {
+    display: block;
+    width: 36px;
+
+    @include mixin.smartphone {
+      width: 24px;
+    }
   }
 
   &:hover {
     background-color: var.$primary-text-color;
     border-radius: var.$border-radius;
   }
+
+  &:focus-visible {
+    outline: 2px solid var.$primary-bg;
+    border-radius: var.$border-radius;
+  }
 }
+
 /** Generate-Recipe Form Number input style  Global*/
 .form-control-input {
   @include mixin.flex-column-center();
   width: 100%;
+  min-height: 44px;
   text-align: start;
   border: unset;
   background-color: var.$input-bg-color;
   font-family: var.$font-family;
+  // At least 16px so iOS does not zoom into focused inputs.
   font-size: var.$font-size-md;
   padding: 9px 8px;
   color: var.$secondary-text-color;
   border-radius: var.$border-radius-xxl;
+  touch-action: manipulation;
 
   &:focus {
     outline: none;
@@ -142,6 +159,7 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
   height: 100%;
   opacity: 0;
   pointer-events: none;
+  touch-action: manipulation;
   transition: opacity 140ms ease-in-out;
 
   &:hover {
@@ -156,5 +174,22 @@ input[type='number'].form-control-input::-webkit-inner-spin-button {
   border: unset;
 }
 
+/**
+ * Touch devices: the steppers are always visible with 44px wide buttons, because tapping a
+ * button can drop the focus that reveals them on desktop.
+ */
+@media (hover: none), (pointer: coarse) {
+  .number-stepper,
+  .number-stepper:focus-within {
+    grid-template-columns: 44px 1fr 44px;
+    min-width: 132px;
+    max-width: 150px;
+  }
+
+  .stepper-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
 
 /** End */

@@ -1,6 +1,6 @@
 /**
  * @file button.ts
- * @description TypeScript module for button.
+ * @description Primary call-to-action button of the landing page.
  */
 import { Component } from '@angular/core';
 
@@ -11,17 +11,8 @@ import { Component } from '@angular/core';
   styleUrls: ['./button.scss'],
 })
 /**
- * The Button class represents a button component in the application.
- * It contains properties for the button label and home screen button text.
- * The constructor initializes the home screen button with a default label.
+ * Call-to-action button with the label "Get started"; navigation comes from the routerLink on the host element.
  */
 export class Button {
-  label: string = '';
-  homeScreenButton: string = this.label = 'Get started';
-  /**
-   * @description Creates an instance of Button.
-   */
-  constructor(){
-   this.homeScreenButton;
-  }
+  label = 'Get started';
 }

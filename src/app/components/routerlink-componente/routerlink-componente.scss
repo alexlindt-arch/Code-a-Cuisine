@@ -7,7 +7,9 @@ a.router-link {
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  min-height: 44px;
   padding: 16px 26px;
+  touch-action: manipulation;
   &:hover {
     background-color: rgba(236, 240, 236, 0.7);
   }

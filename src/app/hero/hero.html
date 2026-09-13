@@ -1,31 +1,28 @@
-<section class="home">
+<section class="home" aria-labelledby="hero-title">
   <div class="content-limited">
 
     <div class="home-content">
       <div class="content-left">
-        <div class="top-content">
+        <header class="top-content">
           <p>AI-Powered recipe generator</p>
-          <h1>Code à Cuisine</h1>
+          <h1 id="hero-title">Code à Cuisine</h1>
           <div class="button-content">
             <app-button [routerLink]="recipeRouterLink"></app-button>
           </div>
-        </div>
-        <div class="bottom-section">
+        </header>
+        <aside class="bottom-section" aria-label="Cookbook">
           <p>Hungry for inspiration?</p>
           <app-routerlink-componente [targetClass]="'--light --hero'" [linkText]="'Go to cookbook'"
             [targetPath]="cookbookRouterLink"></app-routerlink-componente>
-        </div>
+        </aside>
         <a [routerLink]="impressRouterLink" class="impressum-link">Imprint</a>
       </div>
-      <div class="content-right">
-        <app-images-component [class]="heroImageClass" [src]="heroImageThree"
-          label="Hero Image 3"></app-images-component>
-        <app-images-component [class]="heroImageClass" [src]="heroImageTwo" label="Hero Image 2"></app-images-component>
-        <app-images-component [class]="heroImageClass" [src]="heroImageOne" label="Hero Image 1"></app-images-component>
-        <app-images-component [class]="heroImageClass" [src]="heroImageFour"
-          label="Hero Image 4"></app-images-component>
-        <app-images-component [class]="heroImageClass" [src]="heroImageFive"
-          label="Hero Image 5"></app-images-component>
+      <div class="content-right" aria-hidden="true">
+        <app-images-component [class]="heroImageClass" [src]="heroImageThree" label=""></app-images-component>
+        <app-images-component [class]="heroImageClass" [src]="heroImageTwo" label=""></app-images-component>
+        <app-images-component [class]="heroImageClass" [src]="heroImageOne" label=""></app-images-component>
+        <app-images-component [class]="heroImageClass" [src]="heroImageFour" label=""></app-images-component>
+        <app-images-component [class]="heroImageClass" [src]="heroImageFive" label=""></app-images-component>
       </div>
     </div>
 
