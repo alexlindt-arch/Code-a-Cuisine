@@ -6,11 +6,33 @@
       ".read": true,
       "$recipeId": {
         ".write": "!data.exists()",
-        "likes": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" }
+        "likes": {
+          ".write": true,
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
       }
     },
-    "ingredients": { ".read": true, "$ingredientId": { ".write": "!data.exists()" } },
-    "quota": { ".read": true, ".write": true },
-    "quotaRolling": { ".read": true, ".write": true }
+    "ingredients": {
+      ".read": true,
+      "$ingredientId": {
+        ".write": "!data.exists()"
+      }
+    },
+    "quota": {
+      ".read": true,
+      ".write": true
+    },
+    "quotaRolling": {
+      ".read": true,
+      ".write": true
+    },
+    "logs": {
+      ".read": false,
+      "$logType": {
+        "$entryId": {
+          ".write": "!data.exists() && newData.exists()"
+        }
+      }
+    }
   }
 }

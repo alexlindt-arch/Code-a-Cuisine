@@ -1,0 +1,96 @@
+{
+  "name": "Code-a-Cuisine Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "93397895-a3e9-42ff-9bae-4e200018a0a9",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "notes": "Starts when a workflow that uses this workflow as its error workflow fails.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turns the Error Trigger data into an email text and stores the report in Firebase.\nconst dbUrl = 'https://code-a-cuisine-7b803-default-rtdb.europe-west1.firebasedatabase.app';\nconst { execution = {}, workflow = {} } = $json;\nconst report = {\n  at: new Date().toISOString(),\n  workflow: workflow.name ?? 'unknown',\n  workflowId: workflow.id ?? null,\n  executionId: execution.id ?? null,\n  executionUrl: execution.url ?? null,\n  failedNode: execution.lastNodeExecuted ?? null,\n  message: execution.error?.message ?? 'Unknown error',\n  mode: execution.mode ?? null,\n};\n\ntry {\n  await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${dbUrl}/logs/workflowErrors.json`,\n    body: JSON.stringify(report),\n    headers: { 'Content-Type': 'application/json' },\n  });\n} catch (error) {\n  console.log(`Writing the error log failed: ${error.message}`);\n}\n\nconst subject = `[Code à Cuisine] Error in workflow \"${report.workflow}\"`;\nconst text = [\n  `Time: ${report.at}`,\n  `Workflow: ${report.workflow}`,\n  `Failed node: ${report.failedNode}`,\n  `Error: ${report.message}`,\n  `Execution: ${report.executionUrl ?? report.executionId}`,\n].join('\\n');\n\nreturn [{ json: { ...report, subject, text } }];\n"
+      },
+      "id": "4ab99173-382d-42bc-acb3-6f44347acab1",
+      "name": "Format Error Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "notes": "Builds the email text and stores the report in Firebase logs/workflowErrors.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fromEmail": "",
+        "toEmail": "",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "10a1280f-bf79-45b8-9573-70ea9c42fd0b",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        300
+      ],
+      "notes": "Sends the report by email. Needs an SMTP credential and a sender and recipient address.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "## Error handler\n1. Open **Send Error Email**, add an SMTP credential and fill in sender and recipient.\n2. In the recipe workflow open Settings -> Error workflow and choose this workflow.",
+        "height": 460,
+        "width": 780,
+        "color": 5
+      },
+      "id": "76a5d374-2cf0-426c-b889-2038a7a45830",
+      "name": "Note: Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Report": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
