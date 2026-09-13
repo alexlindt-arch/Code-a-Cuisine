@@ -11,10 +11,11 @@ The Angular app sends `POST <n8nBaseUrl>webhook/code-a-cuisine-recipe` and expec
    - or self-host: `docker run -it --rm -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n`
      (needs a public HTTPS domain, otherwise the deployed app cannot reach it)
 2. **Import the workflow**: Workflows → *Import from File* → `code-a-cuisine-recipe-agent.json`
-3. **Connect the AI model**: open the *Ollama Chat Model* node and create an Ollama credential
-   - Ollama Cloud: Base URL `https://ollama.com`, API key from https://ollama.com/settings/keys
-   - or your own Ollama server with the model `gemma4:31b` pulled
-   - any other chat model node (OpenAI, Anthropic, Gemini) can replace it, keep the *Structured Output Parser* attached
+3. **Connect the AI model**: open the *Ollama Cloud Chat Model* node (an OpenAI Chat Model node) and create an **OpenAI** credential
+   - API Key: your key from https://ollama.com/settings/keys
+   - Base URL: `https://ollama.com/v1`
+   - model `gemma4:31b` is set by ID; any OpenAI-compatible provider works the same way
+   - the native Ollama Chat Model node did not send the API key to Ollama Cloud (401 Unauthorized), hence the OpenAI-compatible route
 4. **Activate** the workflow (toggle top right). Only the production URL `/webhook/...` works when active; `/webhook-test/...` is not used by the app.
 5. **Firebase**: the *Check IP Quota* node writes to the same Realtime Database as the app (`const dbUrl = ...`). Rules live in `database.rules.json` (`firebase deploy --only database`)
 6. **Point the app at it**: set `n8nBaseUrl` in `src/environments/environment.ts` and `environment.prod.ts`

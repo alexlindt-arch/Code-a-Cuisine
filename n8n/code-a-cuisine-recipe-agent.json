@@ -132,22 +132,21 @@
     },
     {
       "parameters": {
-        "model": "gemma4:31b",
+        "model": {
+          "__rl": true,
+          "value": "gemma4:31b",
+          "mode": "id"
+        },
         "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
-      "typeVersion": 1,
+      "id": "b7c1f2a4-3d5e-4f60-9a8b-1c2d3e4f5a6b",
+      "name": "Ollama Cloud Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
       "position": [
         -1600,
         656
-      ],
-      "id": "a62b13f0-06e2-4714-a9c4-e621a90913b2",
-      "name": "Ollama Chat Model",
-      "credentials": {
-        "ollamaApi": {
-          "name": "Ollama account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -333,7 +332,18 @@
         ]
       ]
     },
-    "Ollama Chat Model": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Recipe AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Cloud Chat Model": {
       "ai_languageModel": [
         [
           {
@@ -344,17 +354,6 @@
           {
             "node": "Structured Output Parser",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Structured Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "Recipe AI Agent",
-            "type": "ai_outputParser",
             "index": 0
           }
         ]
