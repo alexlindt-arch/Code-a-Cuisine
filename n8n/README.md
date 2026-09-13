@@ -16,7 +16,7 @@ The Angular app sends `POST <n8nBaseUrl>webhook/code-a-cuisine-recipe` and expec
    - or your own Ollama server with the model `gemma4:31b` pulled
    - any other chat model node (OpenAI, Anthropic, Gemini) can replace it, keep the *Structured Output Parser* attached
 4. **Activate** the workflow (toggle top right). Only the production URL `/webhook/...` works when active; `/webhook-test/...` is not used by the app.
-5. **Set your Firebase URL** in the *Check IP Quota* node (`const dbUrl = ...`), deploy the rules with `firebase deploy --only database`
+5. **Firebase**: the *Check IP Quota* node writes to the same Realtime Database as the app (`const dbUrl = ...`). Rules live in `database.rules.json` (`firebase deploy --only database`)
 6. **Point the app at it**: set `n8nBaseUrl` in `src/environments/environment.ts` and `environment.prod.ts`
    to your instance URL (with trailing slash), then build and deploy.
 

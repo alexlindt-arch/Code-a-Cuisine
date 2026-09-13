@@ -6,5 +6,5 @@ export const environment = {
   production: true,
   n8nBaseUrl,
   recipeWebhookUrl: `${n8nBaseUrl}webhook/`,
-  firebaseDatabaseUrl: 'https://code-a-cuisine-ccf1f-default-rtdb.firebaseio.com',
+  firebaseDatabaseUrl: 'https://code-a-cuisine-7b803-default-rtdb.europe-west1.firebasedatabase.app',
 };
