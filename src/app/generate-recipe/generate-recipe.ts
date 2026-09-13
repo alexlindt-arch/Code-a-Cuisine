@@ -20,11 +20,6 @@ import { IngredientEditorService } from './ingredient-editor.service';
 export class GenerateRecipe extends IngredientEditorService {
   private readonly router = inject(Router);
 
-  readonly iconClass = 'recipe-image';
-  readonly addIcon = 'assets/icons/add-icon.png';
-  readonly editIcon = 'assets/icons/edit-icon.png';
-  readonly checkIcon = 'assets/icons/check.png';
-  readonly deleteIcon = 'assets/icons/delete.png';
   readonly arrowDropDownIcon = 'assets/icons/arrow_drop_down.png';
 
   /**

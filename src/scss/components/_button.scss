@@ -67,6 +67,32 @@
   cursor: pointer;
   touch-action: manipulation;
 
+  // Vector icons stay sharp at any size, unlike the former 13px PNGs.
+  .ui-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+    fill: var.$secondary-text-color;
+    transition: transform 150ms ease-in-out;
+
+    @include mixin.smartphone {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$secondary-text-color;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  @media (hover: hover) {
+    &:hover .ui-icon {
+      transform: scale(1.1);
+    }
+  }
+
   app-images-component {
     display: block;
     width: 36px;

@@ -72,7 +72,7 @@
               </div>
               <div class="form-actions">
                 <button class="icon-button" type="submit" aria-label="Add ingredient">
-                  <app-images-component [class]="iconClass" [src]="addIcon" label=""></app-images-component>
+                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 13H5v-2h6V5h2v6h6v2h-6v6h-2z"/></svg>
                 </button>
               </div>
             </div>
@@ -126,10 +126,10 @@
                 </div>
                 <div class="button-content">
                   <button class="icon-button" type="submit" [attr.aria-label]="'Save ' + ingredient.name">
-                    <app-images-component [class]="iconClass" [src]="checkIcon" label=""></app-images-component>
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.55 18l-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"/></svg>
                   </button>
                   <button class="icon-button" type="button" aria-label="Cancel editing" (click)="cancelEdit()">
-                    <app-images-component [class]="iconClass" [src]="deleteIcon" label=""></app-images-component>
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.4 19L5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4z"/></svg>
                   </button>
                 </div>
               </div>
@@ -147,11 +147,11 @@
               <div class="button-content">
                 <button class="icon-button" type="button" [attr.aria-label]="'Edit ' + ingredient.name"
                   (click)="editIngredient($index)">
-                  <app-images-component [class]="iconClass" [src]="editIcon" label=""></app-images-component>
+                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19h1.425L16.2 9.225 14.775 7.8 5 17.575zm-2 2v-4.25L16.2 3.575q.3-.275.663-.425.362-.15.762-.15t.775.15q.375.15.65.45L20.425 5q.3.275.438.65T21 6.4q0 .4-.137.763-.138.362-.438.662L7.25 21zM19 6.4 17.6 5zm-3.525 2.125-.7-.725L16.2 9.225z"/></svg>
                 </button>
                 <button class="icon-button" type="button" [attr.aria-label]="'Delete ' + ingredient.name"
                   (click)="deleteIngredient($index)">
-                  <app-images-component [class]="iconClass" [src]="deleteIcon" label=""></app-images-component>
+                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 21q-.825 0-1.412-.587Q5 19.825 5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413Q17.825 21 17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"/></svg>
                 </button>
               </div>
             </div>
