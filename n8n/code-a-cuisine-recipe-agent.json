@@ -101,7 +101,7 @@
         "respondWith": "json",
         "responseBody": "={{ { message: $json.recipeErrorMessage ?? $json.error?.message ?? 'Recipe generation failed', code: 'RECIPE_GENERATION_FAILED', generatedAt: new Date().toISOString() } }}",
         "options": {
-          "responseCode": 502
+          "responseCode": 500
         }
       },
       "id": "ec31678d-ec62-4b13-8f20-2730c93caedf",
