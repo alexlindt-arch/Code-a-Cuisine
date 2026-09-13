@@ -40,14 +40,14 @@
     @include mix.flex-column-center();
     position: relative;
     gap: 12px;
-    min-width: 400px;
+    min-width: min(400px, 100%);
     min-height: 500px;
     padding: 24px 32px;
     border-radius: 14px;
     background-color: rgba(var.$secondary-bg, 0.08);
 
     @include mix.smartphone() {
-      min-width: 300px;
+      min-width: min(300px, 100%);
       min-height: 400px;
     }
 
@@ -324,6 +324,17 @@ h1 {
   font-size: clamp(23px, 3.4vw, 48px) !important;
 }
 
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  padding: 0;
+}
+
 .content-limited {
   display: flex;
   flex-direction: column;
@@ -341,15 +352,19 @@ h1 {
   display: inline-flex;
   align-items: center;
   flex-direction: row;
+  min-width: 44px;
+  min-height: 44px;
   color: var.$secondary-text-color;
   text-decoration: none;
   gap: var.$mgr-small;
   font-size: 20px;
   font-weight: var.$font-weight-medium;
+  touch-action: manipulation;
 
   @include mix.smartphone() {
     font-size: 0px;
   }
+
   & app-images-component:has(img) {
     height: auto;
     width: 25px;
@@ -370,17 +385,36 @@ h1 {
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-
   color: var.$secondary-text-color;
+}
 
-  >h1 {
+.preferences-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var.$mgr-small;
+  width: 100%;
+
+  h1 {
     font-size: clamp(28px, 3.4vw, 40px);
-    font-family: 'quicksand-light-regular', sans-serif;
+    font-family: var.$font-family;
     font-weight: var.$font-weight-medium;
     letter-spacing: 0.3px;
     margin: 8px 0 6px;
     text-align: center;
   }
+}
+
+.quota-summary {
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 30px;
+  background-color: rgba(var.$primary-bg, 0.12);
+  font-family: var.$font-family;
+  font-size: var.$font-size-md;
+  text-align: center;
 }
 
 .preferences-intro {
@@ -390,31 +424,7 @@ h1 {
   padding: var.$mgr-small 0 var.$mgr-medium;
 
   @include mix.smartphone() {
-   padding: 0px 8px;
-  }
-}
-
-.quota-card {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(var.$primary-bg, 0.14) 0%, rgba(var.$primary-bg, 0.08) 100%);
-
-  h2 {
-    margin: 0 0 6px;
-    font-size: var.$font-size-xl;
-    font-weight: var.$font-weight-medium;
-    font-family: var.$font-family;
-  }
-
-  p {
-    margin: 0;
-    font-size: var.$font-size-md;
-    font-family: var.$font-family;
-    color: rgba(var.$secondary-text-color, 0.92);
+    padding: 0px 8px;
   }
 }
 
@@ -446,7 +456,11 @@ h1 {
   max-width: 360px;
   gap: var.$mgr-small;
 
-  >h2 {
+  legend {
+    margin-bottom: var.$mgr-small;
+  }
+
+  h2 {
     margin: 0;
     font-size: var.$font-size-xl;
     font-weight: var.$font-weight-medium;
@@ -457,10 +471,11 @@ h1 {
 .pref-number-stepper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .pref-stepper-btn {
+  @include mix.touch-target();
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,6 +485,7 @@ h1 {
   min-height: 20px;
   background: transparent;
   color: var.$secondary-text-color;
+  font-size: var.$font-size-md;
   font-weight: var.$font-weight-large;
   font-family: var.$font-family;
   cursor: pointer;
@@ -522,18 +538,15 @@ h1 {
   &:not(:first-child) {
     margin-top: 24px;
   }
-
-  >h2 {
-    margin: 0;
-    font-size: var.$font-size-xxl;
-    font-weight: var.$font-weight-medium;
-  }
 }
 
 .chip-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .chip-grid-time {
@@ -544,6 +557,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 12px;
 
   h2 {
     margin: 0;
@@ -551,6 +565,11 @@ h1 {
     font-weight: var.$font-weight-medium;
     font-family: var.$font-family;
   }
+}
+
+.chip-time-wrapper {
+  display: flex;
+  flex-direction: column;
 }
 
 .chip-subtitle {
@@ -564,6 +583,7 @@ h1 {
 }
 
 .chip {
+  min-height: 44px;
   border: 1px solid rgba(var.$primary-bg, 0.24);
   border-radius: var.$border-radius-xxl;
   background-color: var.$btn-bg;
@@ -572,11 +592,14 @@ h1 {
   font-size: 20px;
   padding: 6px 14px;
   cursor: pointer;
+  touch-action: manipulation;
   transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
 
-  &:hover {
-    transform: translateY(-1px);
-    border-color: rgba(var.$primary-bg, 0.5);
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(var.$primary-bg, 0.5);
+    }
   }
 
   &:focus-visible {
@@ -595,6 +618,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: 2px;
   min-width: 116px;
   text-align: left;
@@ -602,11 +626,6 @@ h1 {
 
 .chip-title {
   font-size: var.$font-size-xl;
-}
-
-.chip-subtitle {
-  font-size: var.$font-size-sm;
-  font-family: var.$font-family;
 }
 
 .footer-actions {
@@ -623,10 +642,6 @@ h1 {
 }
 
 @media (max-width: 900px) {
-  .quota-card {
-    grid-template-columns: 1fr;
-  }
-
   .preferences-intro {
     flex-direction: column;
     gap: 14px;
@@ -637,21 +652,25 @@ h1 {
   }
 
   .preferences-content {
-    padding:0 ;
+    padding: 0;
   }
 }
 
 @media (max-width: 560px) {
   .top-section {
-    padding: 0 8px 16px ;
+    padding: 0 8px 16px;
   }
 
-  .preferences-content>h1 {
-    text-align: start;
-    padding: 0 8px 0;
+  .preferences-header {
+    align-items: flex-start;
+    padding: 0 8px;
+
+    h1 {
+      text-align: start;
+    }
   }
 
-  .pref-selection-content>h2 {
+  .pref-selection-content h2 {
     font-size: var.$font-size-lg;
   }
 
@@ -660,9 +679,13 @@ h1 {
     font-family: var.$font-family;
   }
 
-  .pref-block>h2 {
+  .pref-block-header h2 {
     font-size: var.$font-size-xl;
     font-family: var.$font-family;
+  }
+
+  .card {
+    padding: 16px;
   }
 
   .chip {
@@ -673,7 +696,6 @@ h1 {
   .chip-time {
     min-width: 104px;
   }
-
 }
 
 .quota-dialog-backdrop {
@@ -681,24 +703,23 @@ h1 {
   inset: 0;
   background-color: rgba(0, 0, 0, 0.55);
   z-index: 500;
-
-  body {
-    overscroll-behavior: contain;
-  }
-
+}
 
 .quota-dialog {
   position: fixed;
   top: 50%;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 510;
+  margin: 0;
   border: none;
   border-radius: 8px;
   background-color: rgb(57, 96, 57);
   color: #FAF0E6;
   padding: 32px;
-  max-width: 440px;
-  width: 90%;
+  width: min(440px, calc(100% - 32px));
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -706,12 +727,17 @@ h1 {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   font-family: var.$font-family;
 
+  @include mix.smartphone() {
+    padding: 32px 20px 24px;
+  }
 
   h2 {
     font-family: var.$font-family;
     font-size: var.$font-size-sub-headline-sm;
     font-weight: var.$font-weight-medium;
     margin: 0;
+    padding: 0 36px;
+    text-align: center;
   }
 
   p {
@@ -721,20 +747,56 @@ h1 {
     opacity: 0.9;
     color: var.$secondary-bg;
     width: 100%;
-
   }
 
+  .quota-dialog-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #FAF0E6;
+    font-family: var.$font-family;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: manipulation;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #FAF0E6;
+      outline-offset: 2px;
+    }
+  }
+
+  .quota-dialog-errors {
+    width: 100%;
+    margin: 0;
+    padding-left: 20px;
+    font-size: var.$font-size-md;
+    color: var.$secondary-bg;
+  }
 
   .dialog-button-content {
     display: flex;
     justify-content: center;
+    width: 100%;
   }
 
   .quota-dialog-btn {
     align-self: flex-end;
+    justify-content: center;
     margin-top: 8px;
     flex-direction: row-reverse;
     width: auto;
+    max-width: 100%;
+    color: var.$primary-text-color;
+    font-size: var.$font-size-lg;
   }
-}
 }

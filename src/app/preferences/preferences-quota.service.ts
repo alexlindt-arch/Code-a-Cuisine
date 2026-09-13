@@ -1,92 +1,245 @@
-import { Injectable, signal } from '@angular/core';
-import type { LocalQuotaWindowStore, QuotaCardSummary, QuotaStatus, RecipeResponsePayload } from './preferences.models';
+/**
+ * @file preferences-quota.service.ts
+ * @description Quota state of the preferences page: server quota, local usage, dialog and summary text.
+ */
+import { Injectable, inject, signal } from '@angular/core';
+import type { QuotaStatus } from './preferences.models';
 import { LocalQuotaService } from './local-quota.service';
+import type { RequestDialogKind } from './recipe-request.service';
 
+/** Remaining generations for the current IP and (when known) for the whole app. */
+export interface QuotaRemainingSummary {
+  perIpRemaining: number;
+  perIpLimit: number;
+  globalRemaining: number | null;
+  globalLimit: number | null;
+}
+
+/** Time zone in which the server counts its calendar-day quota. */
+const SERVER_TIME_ZONE = 'Europe/Berlin';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Formats a date as calendar day ('YYYY-MM-DD') in the server time zone.
+ * @param date - Date to format (defaults to now).
+ * @returns The calendar day key.
+ */
+export function toServerDateKey(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SERVER_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+/**
+ * Returns the time until the next midnight in the server time zone.
+ * @param referenceMs - Reference time in milliseconds (defaults to now).
+ * @returns Milliseconds until the server quota resets.
+ */
+export function msUntilServerMidnight(referenceMs = Date.now()): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SERVER_TIME_ZONE, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(new Date(referenceMs));
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((item) => item.type === type)?.value ?? 0);
+  const elapsedMs = ((part('hour') * 60 + part('minute')) * 60 + part('second')) * 1000 + (referenceMs % 1000);
+  return Math.max(0, DAY_MS - elapsedMs);
+}
+
+/**
+ * Holds the quota state of the preferences page and combines local usage with the last server quota.
+ */
 @Injectable({ providedIn: 'root' })
 export class PreferencesQuotaService {
+  private readonly localQuota = inject(LocalQuotaService);
+  private readonly serverQuotaKey = 'cac-last-server-quota';
+
   readonly status = signal<QuotaStatus | null>(null);
   readonly message = signal<string | null>(null);
+  readonly details = signal<string[]>([]);
   readonly exceeded = signal(false);
   readonly dialogVisible = signal(false);
-  readonly dialogKind = signal<'notice' | 'limit' | 'connection'>('notice');
+  readonly dialogKind = signal<RequestDialogKind>('notice');
   readonly loading = signal(true);
 
-  constructor(private readonly localQuota: LocalQuotaService) {}
+  /**
+   * Synchronizes the local quota config and restores today's last known server quota.
+   */
+  initialize(): void {
+    this.localQuota.ensureConfig();
+    const storedQuota = this.readStoredServerQuota();
+    if (this.isForToday(storedQuota)) {
+      this.status.set(storedQuota);
+    }
+  }
 
-  initialize(): void { this.localQuota.ensureConfig(); }
-  setLoading(value: boolean): void { this.loading.set(value); }
-  getLimit(): number { return this.localQuota.getLimit(); }
-  getUsage(ip: string, referenceMs = Date.now()): number { return this.localQuota.getUsage(ip, referenceMs); }
-  increment(ip: string, referenceMs = Date.now()): void { this.localQuota.increment(ip, referenceMs); }
-  getResetMs(ip: string, referenceMs = Date.now()): number { return this.localQuota.getTimeUntilReset(ip, referenceMs); }
+  /**
+   * Marks whether the initial quota check is still running.
+   * @param value - True while loading.
+   */
+  setLoading(value: boolean): void {
+    this.loading.set(value);
+  }
 
+  /**
+   * Returns the local per-IP daily limit.
+   * @returns The limit.
+   */
+  getLimit(): number {
+    return this.localQuota.getLimit();
+  }
+
+  /**
+   * Returns today's local usage of an IP.
+   * @param ip - Client IP address.
+   * @param referenceMs - Reference time in milliseconds (defaults to now).
+   * @returns Number of generations used today.
+   */
+  getUsage(ip: string, referenceMs = Date.now()): number {
+    return this.localQuota.getUsage(ip, referenceMs);
+  }
+
+  /**
+   * Records one successful generation locally.
+   * @param ip - Client IP address.
+   * @param referenceMs - Time of the generation (defaults to now).
+   */
+  increment(ip: string, referenceMs = Date.now()): void {
+    this.localQuota.increment(ip, referenceMs);
+  }
+
+  /**
+   * Returns the time until the used-up quota resets (local or server calendar day).
+   * @param ip - Client IP address.
+   * @param referenceMs - Reference time in milliseconds (defaults to now).
+   * @returns Milliseconds until reset, or 0 when no limit is reached.
+   */
+  getResetMs(ip: string, referenceMs = Date.now()): number {
+    const localResetMs = this.localQuota.getTimeUntilReset(ip, referenceMs);
+    const serverResetMs = this.isServerQuotaUsedUp(this.status()) ? msUntilServerMidnight(referenceMs) : 0;
+    return Math.max(localResetMs, serverResetMs);
+  }
+
+  /**
+   * Drops usage and server quota of previous days and clears the limit state when it no longer applies.
+   * @param ip - Client IP address.
+   * @param referenceMs - Reference time in milliseconds (defaults to now).
+   */
   clearExpired(ip: string, referenceMs = Date.now()): void {
     this.localQuota.clearExpiredLock(ip, referenceMs);
-    if (this.getUsage(ip, referenceMs) < this.getLimit()) {
-      this.exceeded.set(false);
-      if (this.message() && this.getResetMs(ip, referenceMs) <= 0) this.message.set(null);
+    if (this.status() && !this.isForToday(this.status())) {
+      this.status.set(null);
+    }
+
+    const stillReached = this.hasReached(this.status(), this.getUsage(ip, referenceMs));
+    this.exceeded.set(stillReached);
+    if (!stillReached && this.dialogKind() === 'limit') {
+      this.message.set(null);
     }
   }
 
-  isForToday(quota: QuotaStatus | null): boolean {
-    return !!quota && quota.date === new Date().toISOString().slice(0, 10);
+  /**
+   * Checks whether a quota belongs to the current server calendar day.
+   * @param quota - Quota status with a 'YYYY-MM-DD' date (ISO timestamps are accepted too).
+   * @returns True when the quota is from today.
+   */
+  isForToday(quota: QuotaStatus | null): quota is QuotaStatus {
+    return !!quota && typeof quota.date === 'string' && quota.date.slice(0, 10) === toServerDateKey();
   }
 
+  /**
+   * Checks whether no further generation is possible today.
+   * @param quota - Last known server quota.
+   * @param localUsage - Today's local usage.
+   * @returns True when the local limit or a server limit is used up.
+   */
   hasReached(quota: QuotaStatus | null, localUsage: number): boolean {
-    return localUsage >= this.getLimit() || (!!quota && quota.perIpRemaining <= 0);
+    return localUsage >= this.getLimit() || (this.isForToday(quota) && this.isServerQuotaUsedUp(quota));
   }
 
-  buildLocal(ip: string, localUsage: number): QuotaStatus {
-    const ipVersion = this.localQuota.detectIpVersion(ip);
-    const usage = Math.max(0, localUsage);
-    const limit = this.getLimit();
-    return { date: new Date().toISOString().slice(0, 10), ipAddress: ip, ipVersion, perIpLimit: limit,
-      perIpUsed: usage, perIpRemaining: Math.max(0, limit - usage), globalLimit: limit,
-      globalUsed: usage, globalRemaining: Math.max(0, limit - usage) };
-  }
-
+  /**
+   * Stores a quota reported by the server and updates the limit state.
+   * @param quota - Quota from a webhook response.
+   */
   sync(quota: QuotaStatus): void {
     this.status.set(quota);
-    this.exceeded.set(quota.perIpRemaining <= 0);
-  }
-
-  cardSummary(ip: string): QuotaCardSummary {
-    const quota = this.status();
-    const localUsage = this.getUsage(ip);
-    const localExceeded = localUsage >= this.getLimit();
-    const message = this.message();
-    if (quota) return { show: true, kind: localExceeded ? 'local' : 'remote', localUsage,
-      perIpRemaining: quota.perIpRemaining, globalRemaining: quota.globalRemaining, message };
-    if (localExceeded || (typeof message === 'string' && message.trim().length > 0)) {
-      return { show: true, kind: localExceeded ? 'local' : 'remote', localUsage,
-        perIpRemaining: null, globalRemaining: null, message };
+    this.exceeded.set(this.isServerQuotaUsedUp(quota));
+    try {
+      localStorage.setItem(this.serverQuotaKey, JSON.stringify(quota));
+    } catch (error) {
+      console.error('Unable to persist server quota:', error);
     }
-    return { show: false, kind: 'none', localUsage, perIpRemaining: null, globalRemaining: null, message };
   }
 
-  readFromPayload(payload: unknown): QuotaStatus | null {
-    if (typeof payload !== 'object' || payload === null) return null;
-    const quota = (payload as RecipeResponsePayload).quota;
-    if (!quota || typeof quota !== 'object') return null;
-    const candidate = quota as Partial<QuotaStatus>;
-    if (typeof candidate.date !== 'string' || typeof candidate.ipAddress !== 'string'
-      || typeof candidate.perIpLimit !== 'number' || typeof candidate.perIpUsed !== 'number'
-      || typeof candidate.perIpRemaining !== 'number' || typeof candidate.globalLimit !== 'number'
-      || typeof candidate.globalUsed !== 'number' || typeof candidate.globalRemaining !== 'number') return null;
-    return { date: candidate.date, ipAddress: candidate.ipAddress,
-      ipVersion: candidate.ipVersion === 'ipv4' || candidate.ipVersion === 'ipv6' ? candidate.ipVersion : 'unknown',
-      perIpLimit: candidate.perIpLimit, perIpUsed: candidate.perIpUsed, perIpRemaining: candidate.perIpRemaining,
-      globalLimit: candidate.globalLimit, globalUsed: candidate.globalUsed, globalRemaining: candidate.globalRemaining };
+  /**
+   * Combines local usage and today's server quota into remaining generations.
+   * @param ip - Client IP address.
+   * @returns Remaining generations for the IP and, when known, for the app.
+   */
+  buildRemainingSummary(ip: string): QuotaRemainingSummary {
+    const quota = this.status();
+    const serverQuota = this.isForToday(quota) ? quota : null;
+    const perIpLimit = serverQuota?.perIpLimit ?? this.getLimit();
+    const used = Math.max(this.getUsage(ip), serverQuota?.perIpUsed ?? 0);
+    const serverRemaining = serverQuota?.perIpRemaining ?? Number.POSITIVE_INFINITY;
+
+    return {
+      perIpRemaining: Math.max(0, Math.min(perIpLimit - used, serverRemaining)),
+      perIpLimit,
+      globalRemaining: serverQuota ? Math.max(0, serverQuota.globalRemaining) : null,
+      globalLimit: serverQuota?.globalLimit ?? null,
+    };
   }
 
+  /**
+   * Builds the quota line shown on the preferences page.
+   * @param ip - Client IP address.
+   * @returns For example "2 of 3 left today for your IP · 9 of 12 left in the app today".
+   */
+  buildSummaryText(ip: string): string {
+    const summary = this.buildRemainingSummary(ip);
+    const ipText = `${summary.perIpRemaining} of ${summary.perIpLimit} left today for your IP`;
+    if (summary.globalRemaining === null || summary.globalLimit === null) {
+      return ipText;
+    }
+    return `${ipText} · ${summary.globalRemaining} of ${summary.globalLimit} left in the app today`;
+  }
+
+  /**
+   * Builds the fallback message for a reached daily limit when the server sent no message.
+   * @param usage - Today's local usage.
+   * @param quota - Last known server quota.
+   * @returns The limit message.
+   */
   buildDailyMessage(usage: number, quota: QuotaStatus | null = this.status()): string {
+    if (quota && quota.globalRemaining <= 0 && quota.perIpRemaining > 0) {
+      return `All ${quota.globalLimit} recipe generations of the app are used up for today. Please try again tomorrow.`;
+    }
     const used = Math.max(usage, quota?.perIpUsed ?? 0);
-    return `Daily limit reached: ${used} of ${quota?.perIpLimit ?? this.getLimit()} requests have already been used. Please try again later.`;
+    const limit = quota?.perIpLimit ?? this.getLimit();
+    return `Daily limit reached: ${Math.min(used, limit)} of ${limit} recipe generations have been used today. Please try again tomorrow.`;
   }
 
-  buildExceededMessage(quota: QuotaStatus): string {
-    const label = quota.ipVersion === 'ipv4' ? 'IPv4' : quota.ipVersion === 'ipv6' ? 'IPv6' : 'IP';
-    if (quota.perIpRemaining <= 0) return `24h quota reached for this ${label} address. You have used ${quota.perIpUsed} of ${quota.perIpLimit} recipe generations in the last 24 hours.`;
-    return `24h quota reached. ${quota.globalUsed} of ${quota.globalLimit} generations have already been used in the last 24 hours.`;
+  /**
+   * Checks whether the per-IP or the global server quota is used up.
+   * @param quota - Server quota.
+   * @returns True when no generations remain.
+   */
+  private isServerQuotaUsedUp(quota: QuotaStatus | null): boolean {
+    return !!quota && (quota.perIpRemaining <= 0 || quota.globalRemaining <= 0);
+  }
+
+  /**
+   * Reads the last server quota from localStorage.
+   * @returns The stored quota, or null when missing or invalid.
+   */
+  private readStoredServerQuota(): QuotaStatus | null {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.serverQuotaKey) ?? 'null') as QuotaStatus | null;
+      return parsed && typeof parsed.date === 'string' && typeof parsed.perIpRemaining === 'number'
+        && typeof parsed.globalRemaining === 'number' ? parsed : null;
+    } catch {
+      return null;
+    }
   }
 }

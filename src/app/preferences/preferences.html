@@ -1,136 +1,150 @@
-<section class="preferences">
+<section class="preferences" aria-labelledby="preferences-title">
   @if (submitState() === 'loading') {
   <div class="content-limited">
-    <div class="generate-loading" aria-live="polite" aria-busy="true">
+    <div class="generate-loading" role="status" aria-live="polite" aria-busy="true">
       <app-images-component class="loading-hero-image" [class]="'hero-image'" [src]="heroImage"
-        label="Hero Image"></app-images-component>
-      <div class="loading-card">
-
-        <img [src]="schusselIcon" alt="Schüssel Icon" />
-        <img [src]="karotteIcon" alt="Karotte Icon" />
-        <img [src]="kohlIcon2" alt="Kohl Icon" />
-        <img [src]="rettichIcon3" alt="Rettich Icon" />
+        label="Code à Cuisine logo"></app-images-component>
+      <div class="loading-card" aria-hidden="true">
+        <img [src]="schusselIcon" alt="" />
+        <img [src]="karotteIcon" alt="" />
+        <img [src]="kohlIcon2" alt="" />
+        <img [src]="rettichIcon3" alt="" />
       </div>
       <p>Generating ...</p>
     </div>
   </div>
   } @else {
   <div class="content-limited">
-    <div class="top-section">
-      <a [routerLink]="'/generate-recipe'" class="router-link"><app-images-component [class]="arrowClass"
-          [src]="heroImageArrow" label="Arrow Icon"></app-images-component>Ingredients</a>
-    </div>
+    <nav class="top-section" aria-label="Previous step">
+      <a [routerLink]="'/generate-recipe'" class="router-link"><app-images-component
+          [class]="arrowClass" [src]="heroImageArrow" label=""></app-images-component>Ingredients</a>
+    </nav>
 
-    <div class="preferences-content">
-      <h1>Choose your preferences</h1>
+    <form class="preferences-content" (submit)="onSubmit($event)" aria-labelledby="preferences-title">
+      <header class="preferences-header">
+        <h1 id="preferences-title">Choose your preferences</h1>
+        @if (quotaSummaryText(); as summary) {
+        <p class="quota-summary" role="status" aria-live="polite">{{ summary }}</p>
+        }
+      </header>
 
       @if (!showQuotaDialog() && quotaMessage(); as message) {
-      <p class="quota-message" aria-live="assertive">{{ message }}</p>
+      <p class="quota-message" role="alert">{{ message }}</p>
       }
 
-      <article class="preferences-intro">
-        <div class="pref-selection-content">
-          <h2>How many portions you need?</h2>
-          <div class="pref-number-stepper" role="group" aria-label="Portions">
+      <div class="preferences-intro">
+        <fieldset class="pref-selection-content">
+          <legend><h2>How many portions you need?</h2></legend>
+          <div class="pref-number-stepper">
             <button class="pref-stepper-btn" type="button" aria-label="Reduce portions"
               [disabled]="portions() <= 1" (click)="decrementPortions()">-</button>
-            <span class="pref-value">{{ portions() }}</span>
+            <output class="pref-value" aria-live="polite">{{ portions() }}</output>
             <span class="pref-value-label">Portions</span>
             <button class="pref-stepper-btn" type="button" aria-label="Increase portions"
               [disabled]="portions() >= 12" (click)="incrementPortions()">+</button>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="pref-selection-content">
-          <h2>How many are cooking?</h2>
-          <div class="pref-number-stepper" role="group" aria-label="Number of cooks">
+        <fieldset class="pref-selection-content">
+          <legend><h2>How many are cooking?</h2></legend>
+          <div class="pref-number-stepper">
             <button class="pref-stepper-btn" type="button" aria-label="Reduce cooks"
-              [disabled]="cooks() <= 1" (click)="decrementCooks()"><span>-</span></button>
-            <span class="pref-value">{{ cooks() }}</span>
-            <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'Person' }}</span>
+              [disabled]="cooks() <= 1" (click)="decrementCooks()">-</button>
+            <output class="pref-value" aria-live="polite">{{ cooks() }}</output>
+            <span class="pref-value-label">{{ cooks() === 1 ? 'Person' : 'Persons' }}</span>
             <button class="pref-stepper-btn" type="button" aria-label="Increase cooks"
-              [disabled]="cooks() >= 3" (click)="incrementCooks()"><span>+</span></button>
+              [disabled]="cooks() >= 3" (click)="incrementCooks()">+</button>
           </div>
-        </div>
-      </article>
+        </fieldset>
+      </div>
 
-      <article class="card">
-        <div class="pref-block">
-          <div class="pref-block-header">
-            <app-images-component [class]="'hero-image'" [src]="prefBlockIconClock"
-              label="Hero Image"></app-images-component>
+      <div class="card">
+        <fieldset class="pref-block">
+          <legend class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconClock" label=""></app-images-component>
             <h2>Cooking time:</h2>
-          </div>
-          <div class="chip-grid chip-grid-time" role="radiogroup" aria-label="Cooking time">
+          </legend>
+          <ul class="chip-grid chip-grid-time">
             @for (option of cookingTimeOptions; track option.id) {
-            <div class="chip-time-wrapper">
+            <li class="chip-time-wrapper">
               <button type="button" class="chip chip-time" [class.selected]="selectedCookingTime() === option.id"
-                (click)="selectCookingTime(option.id)">
+                [attr.aria-pressed]="selectedCookingTime() === option.id"
+                [attr.aria-describedby]="'cooking-time-hint-' + option.id" (click)="selectCookingTime(option.id)">
                 <span class="chip-title">{{ option.label }}</span>
               </button>
-              <span class="chip-subtitle">{{ option.hint }}</span>
-            </div>
+              <span class="chip-subtitle" [id]="'cooking-time-hint-' + option.id">{{ option.hint }}</span>
+            </li>
             }
-          </div>
-        </div>
+          </ul>
+        </fieldset>
 
-        <div class="pref-block">
-          <div class="pref-block-header">
-            <app-images-component [class]="'hero-image'" [src]="prefBlockIconCuisine"
-              label="Hero Image"></app-images-component>
+        <fieldset class="pref-block">
+          <legend class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconCuisine" label=""></app-images-component>
             <h2>Cuisine</h2>
-          </div>
-          <div class="chip-grid" role="radiogroup" aria-label="Cuisine">
+          </legend>
+          <ul class="chip-grid">
             @for (option of cuisineOptions; track option.id) {
-            <button type="button" class="chip" [class.selected]="selectedCuisine() === option.id"
-              (click)="selectCuisine(option.id)">
-              {{ option.label }}
-            </button>
+            <li>
+              <button type="button" class="chip" [class.selected]="selectedCuisine() === option.id"
+                [attr.aria-pressed]="selectedCuisine() === option.id" (click)="selectCuisine(option.id)">
+                {{ option.label }}
+              </button>
+            </li>
             }
-          </div>
-        </div>
+          </ul>
+        </fieldset>
 
-        <div class="pref-block">
-          <div class="pref-block-header">
-            <app-images-component [class]="'hero-image'" [src]="prefBlockIconDiet"
-              label="Hero Image"></app-images-component>
+        <fieldset class="pref-block">
+          <legend class="pref-block-header">
+            <app-images-component [class]="'hero-image'" [src]="prefBlockIconDiet" label=""></app-images-component>
             <h2>Diet preferences</h2>
-          </div>
-          <div class="chip-grid" role="group" aria-label="Diet preferences">
+          </legend>
+          <ul class="chip-grid">
             @for (option of dietOptions; track option.id) {
-            <button type="button" class="chip" [class.selected]="isDietSelected(option.id)"
-              (click)="toggleDiet(option.id)">
-              {{ option.label }}
-            </button>
+            <li>
+              <button type="button" class="chip" [class.selected]="isDietSelected(option.id)"
+                [attr.aria-pressed]="isDietSelected(option.id)" (click)="toggleDiet(option.id)">
+                {{ option.label }}
+              </button>
+            </li>
             }
-          </div>
-        </div>
-      </article>
+          </ul>
+        </fieldset>
+      </div>
 
-      <div class="footer-actions">
-        <button class="btn --generate-btn" type="button" [disabled]="!canSubmitRecipe()" (click)="generateRecipe()">
+      <footer class="footer-actions">
+        <button class="btn --generate-btn" type="submit" [disabled]="!canSubmitRecipe()">
           {{ generateButtonLabel() }}
         </button>
-      </div>
-      @if (showQuotaDialog()) {
-      <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()" aria-hidden="true">
-        <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title">
-          <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
-          <p>{{ quotaDialogMessage() }}</p>
-          @if (quotaResetHint(); as hint) {
-          <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>
+      </footer>
+    </form>
 
-          }<div class="dialog-button-content">
-
-            <a (click)="closeQuotaDialog()" [routerLink]="'/generate-recipe'"
-              class="btn --generate-btn quota-dialog-btn router-link"><app-images-component [class]="arrowClass"
-                [src]="heroImageArrowLight" label="Arrow Icon"></app-images-component>Go back to ingredients</a>
-          </div>
-          <!-- <button class="btn --generate-btn quota-dialog-btn" type="button" (click)="closeQuotaDialog()">Go back to ingredients</button> -->
-        </dialog>
-      </div>
+    @if (showQuotaDialog()) {
+    <div class="quota-dialog-backdrop" (click)="closeQuotaDialog()"></div>
+    <dialog class="quota-dialog" open aria-modal="true" aria-labelledby="quota-dialog-title"
+      aria-describedby="quota-dialog-message">
+      <button class="quota-dialog-close" type="button" aria-label="Close dialog" (click)="closeQuotaDialog()"
+        autofocus>×</button>
+      <h2 id="quota-dialog-title">{{ quotaDialogTitle() }}</h2>
+      <p id="quota-dialog-message">{{ quotaDialogMessage() }}</p>
+      @if (quotaDialogKind() === 'invalid' && quotaDetails().length) {
+      <ul class="quota-dialog-errors">
+        @for (detail of quotaDetails(); track $index) {
+        <li>{{ detail }}</li>
+        }
+      </ul>
       }
-    </div>
+      @if (quotaResetHint(); as hint) {
+      <p class="quota-reset-hint quota-reset-hint--dialog">{{ hint }}</p>
+      }
+      <div class="dialog-button-content">
+        <a (click)="closeQuotaDialog()" [routerLink]="'/generate-recipe'"
+          class="btn --generate-btn quota-dialog-btn router-link"><app-images-component [class]="arrowClass"
+            [src]="heroImageArrowLight" label=""></app-images-component>Go back to ingredients</a>
+      </div>
+    </dialog>
+    }
   </div>
   }
 </section>

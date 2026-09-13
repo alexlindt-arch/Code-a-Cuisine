@@ -34,6 +34,16 @@ h2 {
 
 section {
   height: calc(100svh - 100px);
+
+  @include mixin.tablet {
+    height: auto;
+    min-height: calc(100svh - 100px);
+  }
+
+  @include mixin.smartphone {
+    height: auto;
+    min-height: calc(100svh - 100px);
+  }
   background-color: var.$secondary-bg;
   color: var.$secondary-text-color;
   padding: var.$pd-medium;
@@ -203,6 +213,7 @@ section {
   }
 
   @include mixin.smartphone {
+    flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
   }
@@ -278,10 +289,12 @@ section {
       background-color: transparent;
       color: var.$secondary-text-color;
       text-align: left;
+      min-height: 44px;
       padding: 8px 10px;
       font-family: var.$font-family;
       font-size: var.$font-size-md;
       cursor: pointer;
+      touch-action: manipulation;
       border-radius: var.$border-radius;
 
       &:hover {
@@ -332,7 +345,7 @@ ul {
       padding: 6px 0px;
 
       @include mixin.smartphone {
-        gap: 70px;
+        gap: var.$mgr-small;
       }
     }
 
@@ -432,6 +445,8 @@ ul {
 
     button {
       width: 85px;
+      min-height: 44px;
+      touch-action: manipulation;
       border: none;
       background: transparent;
       color: var.$secondary-text-color;
@@ -481,6 +496,8 @@ ul {
 
     button {
       width: 80px;
+      min-height: 44px;
+      touch-action: manipulation;
       border: none;
       background: transparent;
       color: var.$secondary-text-color;
@@ -505,6 +522,7 @@ ul {
   gap: 10px;
 
   @include mixin.smartphone {
+    flex-wrap: wrap;
     gap: 2px;
   }
 }
@@ -552,6 +570,7 @@ ul {
     width: 100%;
 
     @include mixin.smartphone {
+      flex-wrap: wrap;
       gap: 5px;
     }
   }

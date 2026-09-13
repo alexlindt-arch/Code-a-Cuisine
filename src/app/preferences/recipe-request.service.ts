@@ -1,101 +1,253 @@
+/**
+ * @file recipe-request.service.ts
+ * @description Sends recipe requests to the n8n webhook and interprets its error responses.
+ */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { QuotaStatus, RecipeRequestPayload } from './preferences.models';
 
+/** Kind of dialog shown after a failed request; decides title and actions. */
+export type RequestDialogKind = 'notice' | 'limit' | 'throttle' | 'invalid' | 'blocked' | 'failed' | 'connection';
+
+/** Error details extracted from a failed webhook request. */
+export interface ApiErrorDetails {
+  status: number | null;
+  code: string | null;
+  message: string | null;
+  errors: string[];
+  quota: QuotaStatus | null;
+}
+
+/** Fallback text when the webhook cannot be reached at all. */
+export const CONNECTION_ERROR_MESSAGE = 'The recipe API is currently unavailable. Please try again in a few minutes.';
+
+/**
+ * Posts recipe requests to the n8n webhook and maps its error responses to messages and dialog kinds.
+ */
 @Injectable({ providedIn: 'root' })
 export class RecipeRequestService {
   private readonly http = inject(HttpClient);
   private readonly webhookPath = environment.recipeWebhookUrl;
 
+  /**
+   * Returns the configured recipe webhook URLs that pass validation.
+   * @returns Unique, valid webhook URLs.
+   */
   getWebhookUrls(): string[] {
-    return Array.from(new Set([`${this.webhookPath}code-a-cuisine-recipe`])).filter((url) => this.isValidWebhookUrl(url));
+    return Array.from(new Set([`${this.webhookPath}code-a-cuisine-recipe`]))
+      .filter((url) => this.isValidWebhookUrl(url));
   }
 
+  /**
+   * Posts the payload to each URL until one succeeds.
+   * @param payload - Recipe request body.
+   * @param urls - Webhook URLs to try in order.
+   * @returns The response body of the first successful request.
+   * @throws The last error when every URL failed.
+   */
   async send(payload: RecipeRequestPayload, urls: string[]): Promise<unknown> {
     let lastError: unknown = null;
     for (const url of urls) {
-      try { return await firstValueFrom(this.http.post(url, payload)); }
-      catch (error) { lastError = error; console.warn(`Webhook request failed for ${url}:`, error); }
+      try {
+        return await firstValueFrom(this.http.post(url, payload));
+      } catch (error) {
+        lastError = error;
+        console.warn(`Webhook request failed for ${url}:`, error);
+      }
     }
     throw lastError ?? new Error('All webhook endpoints failed.');
   }
 
-  toErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const quotaMessage = this.getQuotaMessage(error.error);
-      if (quotaMessage) return quotaMessage;
-      if (error.status === 0) return 'Network/TLS/CORS error. Verify that the webhook URL is reachable, uses a valid HTTPS certificate, and allows CORS.';
-      if (error.status === 404) return 'Webhook not found (404). Verify the configured recipe webhook URL and that the n8n workflow is active.';
-      return `n8n request failed (${error.status} ${error.statusText || 'Error'}).`;
+  /**
+   * Extracts status, code, message, validation errors and quota from a failed request.
+   * @param error - Error thrown by send().
+   * @returns The normalized error details.
+   */
+  readApiError(error: unknown): ApiErrorDetails {
+    if (!(error instanceof HttpErrorResponse)) {
+      return { status: null, code: null, message: null, errors: [], quota: null };
     }
-    return this.extractErrorText(error).trim() || 'n8n request failed. Check webhook URL and n8n runtime.';
+
+    const body = typeof error.error === 'object' && error.error !== null
+      ? error.error as { message?: unknown; code?: unknown; errors?: unknown }
+      : {};
+    return {
+      status: error.status,
+      code: typeof body.code === 'string' ? body.code : null,
+      message: typeof body.message === 'string' && body.message.trim() ? body.message.trim() : null,
+      errors: Array.isArray(body.errors) ? body.errors.filter((item): item is string => typeof item === 'string') : [],
+      quota: this.readQuota(error.error),
+    };
   }
 
-  isQuotaError(error: unknown, message: string, localUsage: number, limit: number): boolean {
-    if (localUsage >= limit || (error instanceof HttpErrorResponse && (error.status === 429 || error.status === 503))) return true;
-    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
-    return ['quota', 'limit reached', 'daily limit', 'too many requests', 'try again in a few seconds',
-      'failed to fetch', 'fetch failed', 'http failure response', 'unknown error', 'temporarily unavailable'].some((part) => normalized.includes(part));
+  /**
+   * Builds the user-facing error message, preferring the message sent by the server.
+   * @param error - Error thrown by send().
+   * @returns The server message or a fallback for network and unknown errors.
+   */
+  toErrorMessage(error: unknown): string {
+    const details = this.readApiError(error);
+    if (details.message) {
+      return details.message;
+    }
+    if (details.status === 0) {
+      return CONNECTION_ERROR_MESSAGE;
+    }
+    if (details.status === 404) {
+      return 'Webhook not found (404). Verify the configured recipe webhook URL and that the n8n workflow is active.';
+    }
+    if (details.status !== null) {
+      return this.getStatusFallbackMessage(details.status);
+    }
+    return this.extractErrorText(error).trim() || 'The recipe request failed. Please try again later.';
   }
 
-  isLimitError(error: unknown, message: string, localUsage: number, limit: number): boolean {
-    if (localUsage >= limit || (error instanceof HttpErrorResponse && error.status === 429)) return true;
-    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
-    return ['quota', 'limit reached', 'daily limit', 'too many requests', '24h', 'generation limit'].some((part) => normalized.includes(part));
+  /**
+   * Maps a failed request to the dialog kind that explains it best.
+   * @param error - Error thrown by send().
+   * @returns The dialog kind.
+   */
+  getDialogKind(error: unknown): RequestDialogKind {
+    const details = this.readApiError(error);
+    switch (details.code) {
+      case 'QUOTA_EXCEEDED':
+      case 'GLOBAL_QUOTA_EXCEEDED':
+        return 'limit';
+      case 'THROTTLED':
+        return 'throttle';
+      case 'IP_NOT_DETECTED':
+        return 'blocked';
+      case 'INVALID_REQUEST':
+        return 'invalid';
+      case 'RECIPE_GENERATION_FAILED':
+        return 'failed';
+    }
+    return this.getDialogKindFromStatus(details.status, error);
   }
 
-  isConnectionError(error: unknown, message: string): boolean {
-    if (error instanceof HttpErrorResponse && error.status === 0) return true;
-    const normalized = `${message} ${this.extractErrorText(error)}`.toLowerCase();
-    return ['failed to fetch', 'fetch failed', 'http failure response', 'unknown error', 'network', 'cors', 'ssl', 'tls', 'certificate', 'protocol error'].some((part) => normalized.includes(part));
+  /**
+   * Checks whether a failed request was rejected because a daily limit is used up.
+   * @param error - Error thrown by send().
+   * @returns True for QUOTA_EXCEEDED and GLOBAL_QUOTA_EXCEEDED responses.
+   */
+  isLimitError(error: unknown): boolean {
+    return this.getDialogKind(error) === 'limit';
   }
 
-  toDialogMessage(error: unknown, fallback: string, localUsage: number, limit: number): string {
-    if (this.isLimitError(error, fallback, localUsage, limit)) return 'Daily limit reached. Please try again later.';
-    if (this.isConnectionError(error, fallback)) return 'The recipe API is currently unavailable. Please try again in a few minutes.';
-    const raw = this.extractErrorText(error).trim();
-    return ['failed to fetch', 'fetch failed', 'http failure response', 'unknown error'].some((part) => raw.toLowerCase().includes(part))
-      ? 'The recipe API is currently unavailable. Please try again in a few minutes.' : raw || fallback;
+  /**
+   * Checks whether a failed request never reached the server (network, TLS or CORS problem).
+   * @param error - Error thrown by send().
+   * @returns True for connection errors.
+   */
+  isConnectionError(error: unknown): boolean {
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0;
+    }
+    const normalized = this.extractErrorText(error).toLowerCase();
+    return ['failed to fetch', 'fetch failed', 'network', 'cors', 'ssl', 'tls', 'certificate']
+      .some((part) => normalized.includes(part));
   }
 
-  getQuotaMessage(payload: unknown): string | null {
-    if (typeof payload !== 'object' || payload === null) return null;
-    const message = (payload as { message?: unknown }).message;
-    const quota = this.readQuota(payload);
-    if (typeof message !== 'string' || !message.trim()) return null;
-    if (!quota || (quota.perIpRemaining > 0 && quota.globalRemaining > 0)) return message;
-    return `${message} Remaining today: ${quota.perIpRemaining} of ${quota.perIpLimit} for this IP, ${quota.globalRemaining} of ${quota.globalLimit} globally.`;
-  }
-
+  /**
+   * Reads and validates the quota object of a webhook response body.
+   * @param payload - Response or error body.
+   * @returns The quota status, or null when it is missing or incomplete.
+   */
   readQuota(payload: unknown): QuotaStatus | null {
-    if (typeof payload !== 'object' || payload === null) return null;
+    if (typeof payload !== 'object' || payload === null) {
+      return null;
+    }
     const quota = (payload as { quota?: unknown }).quota;
-    if (!quota || typeof quota !== 'object') return null;
+    if (!quota || typeof quota !== 'object') {
+      return null;
+    }
+
     const candidate = quota as Partial<QuotaStatus>;
-    return typeof candidate.date === 'string' && typeof candidate.ipAddress === 'string' && typeof candidate.perIpLimit === 'number'
-      && typeof candidate.perIpUsed === 'number' && typeof candidate.perIpRemaining === 'number' && typeof candidate.globalLimit === 'number'
-      && typeof candidate.globalUsed === 'number' && typeof candidate.globalRemaining === 'number'
-      ? { ...candidate, ipVersion: candidate.ipVersion === 'ipv4' || candidate.ipVersion === 'ipv6' ? candidate.ipVersion : 'unknown' } as QuotaStatus : null;
+    const numberFields = [
+      candidate.perIpLimit, candidate.perIpUsed, candidate.perIpRemaining,
+      candidate.globalLimit, candidate.globalUsed, candidate.globalRemaining,
+    ];
+    const isComplete = typeof candidate.date === 'string'
+      && typeof candidate.ipAddress === 'string'
+      && numberFields.every((value) => typeof value === 'number' && Number.isFinite(value));
+    if (!isComplete) {
+      return null;
+    }
+
+    const ipVersion = candidate.ipVersion === 'ipv4' || candidate.ipVersion === 'ipv6' ? candidate.ipVersion : 'unknown';
+    return { ...candidate, ipVersion } as QuotaStatus;
   }
 
+  /**
+   * Chooses a dialog kind for errors without a known server code.
+   * @param status - HTTP status, or null for non-HTTP errors.
+   * @param error - Original error.
+   * @returns The dialog kind.
+   */
+  private getDialogKindFromStatus(status: number | null, error: unknown): RequestDialogKind {
+    if (this.isConnectionError(error)) {
+      return 'connection';
+    }
+    if (status === 429) {
+      return 'limit';
+    }
+    if (status === 400) {
+      return 'invalid';
+    }
+    return status !== null && status >= 500 ? 'failed' : 'notice';
+  }
+
+  /**
+   * Returns a fallback message for HTTP errors without a server message.
+   * @param status - HTTP status.
+   * @returns A readable fallback text.
+   */
+  private getStatusFallbackMessage(status: number): string {
+    if (status === 429) {
+      return 'Too many requests. Please try again later.';
+    }
+    if (status === 400) {
+      return 'The recipe request was rejected. Please check your ingredients and preferences.';
+    }
+    return `The recipe request failed (${status}). Please try again later.`;
+  }
+
+  /**
+   * Checks that a webhook URL uses HTTP(S) and points to an n8n production webhook path.
+   * @param url - URL to validate.
+   * @returns True when the URL is usable.
+   */
   private isValidWebhookUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
-      return ['http:', 'https:'].includes(parsed.protocol) && (/^\/webhook(?:\/|$)/i.test(parsed.pathname)) && !/^\/workflow(?:\/|$)/i.test(parsed.pathname);
-    } catch { return false; }
+      return ['http:', 'https:'].includes(parsed.protocol)
+        && /^\/webhook(?:\/|$)/i.test(parsed.pathname)
+        && !/^\/workflow(?:\/|$)/i.test(parsed.pathname);
+    } catch {
+      return false;
+    }
   }
 
+  /**
+   * Collects all readable text from an unknown error value.
+   * @param error - Any thrown value.
+   * @returns The joined text parts (possibly empty).
+   */
   private extractErrorText(error: unknown): string {
     const values: string[] = [];
-    if (typeof error === 'string') values.push(error);
-    if (error instanceof Error) values.push(error.message);
+    if (typeof error === 'string') {
+      values.push(error);
+    }
     if (typeof error === 'object' && error !== null) {
       const object = error as { message?: unknown; error?: unknown; detail?: unknown };
-      for (const value of [object.message, object.error, object.detail]) if (typeof value === 'string') values.push(value);
+      for (const value of [object.message, object.error, object.detail]) {
+        if (typeof value === 'string') {
+          values.push(value);
+        }
+      }
     }
-    if (error instanceof HttpErrorResponse && typeof error.statusText === 'string') values.push(error.statusText);
     return values.join(' ').trim();
   }
 }
