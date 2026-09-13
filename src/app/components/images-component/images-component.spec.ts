@@ -17,6 +17,8 @@ describe('ImagesComponent', () => {
 
     fixture = TestBed.createComponent(ImagesComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('src', 'assets/img/logo-dark.png');
+    fixture.componentRef.setInput('class', 'hero-image');
     await fixture.whenStable();
   });
 
