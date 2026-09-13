@@ -38,21 +38,25 @@
 ```mermaid
 flowchart LR
     A[Angular app] -- "POST ingredients + preferences" --> B[n8n webhook]
-    B --> C{IP quota check}
+    B --> V{Validate request}
+    V -- invalid --> X[400 response]
+    V -- ok --> C{IP quota + throttle}
     C -- "limit reached" --> D[429 response]
-    C -- ok --> E[AI agent]
+    C -- ok --> E[LLM chain]
     E <--> F[Ollama Cloud<br/>gemma4:31b]
     E --> G[Validate 3 recipes]
+    G -- "rule broken, 1 retry" --> E
     G --> A
     C <--> H[(Firebase<br/>Realtime DB)]
     A <-- "cookbook, likes, ingredients" --> H
 ```
 
 1. The app sends the ingredient list and preferences to the n8n webhook `code-a-cuisine-recipe`.
-2. The workflow reads the caller IP from the proxy headers and checks the rolling 24h quota in Firebase.
-3. An AI agent with a structured output parser asks the model for exactly three recipes as JSON.
-4. The result is validated (falls back to simple recipes if the model output is unusable) and returned to the app.
-5. The app stores the recipes in Firebase so they show up in the cookbook.
+2. The workflow validates the request again (ingredients, quantities, units, portions, cooks, time, cuisine, diets) and answers invalid input with 400.
+3. It reads the caller IP (IPv4 or IPv6) from the proxy headers and enforces 3 recipes per IP per day, 12 per day in total and a 15 second throttle, stored in Firebase (429 with a readable message).
+4. A Basic LLM Chain asks the model in JSON mode for exactly three recipes: at least 70 % of your ingredients, at most 3 extras, scaled quantities, tasks per cook with parallel steps, and nutrition per portion and in total.
+5. The answer is checked against these rules and retried once with feedback. Failures are logged in Firebase and answered with 500; crashes trigger the error workflow with an email.
+6. The app stores the recipes in Firebase so they show up in the cookbook.
 
 ## Tech stack
 
