@@ -122,9 +122,35 @@ section {
   padding: var.$pd-xxl;
   border-radius: var.$border-radius;
   background-color: rgba(var.$primary-bg, 0.3);
+  // Heading top left, ingredient rows directly below it (ingredients-list-title-style).
+  align-items: stretch;
+  gap: 12px;
+
+  & > h2 {
+    text-align: left;
+    font-family: 'quicksand-book-regular', sans-serif;
+    font-size: var.$font-size-xl;
+    font-weight: var.$font-weight-small;
+    color: var.$secondary-text-color;
+
+    @include mixin.smartphone {
+      font-size: var.$font-size-lg;
+    }
+  }
+
+  & > .ingredients-list {
+    width: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  & .ingredients-empty {
+    text-align: left;
+  }
 
   @include mixin.smartphone {
     @include mixin.flex-start();
+    align-items: stretch;
     max-height: 210px;
     padding: var.$pd-small;
   }
